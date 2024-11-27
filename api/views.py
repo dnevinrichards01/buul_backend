@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
-from .models import Note, WaitlistEmail
+from .models import WaitlistEmail
 from rest_framework import generics
-from .serializers import UserSerializer, NoteSerializer, WaitlistEmailSerializer
+from .serializers import UserSerializer, WaitlistEmailSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.http import HttpResponseBadRequest, HttpResponse
 from django.core.exceptions import ValidationError
@@ -15,7 +15,7 @@ class CreateUserView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
-
+"""
 class NoteListCreate(generics.ListCreateAPIView):
     serializer_class = NoteSerializer
     permission_classes = [IsAuthenticated]
@@ -35,6 +35,7 @@ class NoteDelete(generics.DestroyAPIView):
     
     def get_queryset(self):
         return Note.objects.filter(author=self.request.user)
+"""
 
 class AddToWaitlist(generics.CreateAPIView):
     queryset = WaitlistEmail.objects.all()
