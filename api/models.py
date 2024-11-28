@@ -17,7 +17,7 @@ class UserBrokerageInfo(models.Model):
 
 class UserPlaidInfo(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    countryCodes = models.CharField(choices=[], max_length=2)
+    countryCodes = models.CharField(choices=[], max_length=2) # create a class with these choices in serializers?
     language = models.CharField(choices=[], max_length=2)
     userToken = models.CharField(max_length=255)
     accessToken = models.CharField(max_length=255)

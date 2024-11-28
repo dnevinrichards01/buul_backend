@@ -37,5 +37,3 @@ class WaitlistEmailSerializer(serializers.ModelSerializer):
             return email
         except: 
             raise ValidationError()
-
-        
