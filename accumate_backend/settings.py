@@ -113,8 +113,13 @@ WSGI_APPLICATION = 'accumate_backend.wsgi.application'
 DB_ROOT = env.str("VOLUMES_DATA_ROOT")
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(DB_ROOT, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': env.str("DB_NAME"),
+        'USER': env.str("DB_USER"),
+        'PASSWORD': env.str("DB_PASSWORD"),
+        'HOST': env.str("DB_HOST"),
+        'PORT': env.str("DB_PORT"),
+        #'NAME': os.path.join(DB_ROOT, 'db.sqlite3'),
     }
 }
 #DATABASES = {
@@ -172,6 +177,8 @@ WHITENOISE_AUTOREFRESH = DEBUG
 
 MEDIA_ROOT = env("MEDIA_ROOT", default=BASE_DIR / "media")  
 MEDIA_URL = env("MEDIA_PATH", default="/media/")
+
+REDIS_URL = env("REDIS_URL", default=None)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

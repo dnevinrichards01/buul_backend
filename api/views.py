@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.models import User
 from .models import WaitlistEmail
 from rest_framework import generics
-from .serializers import UserSerializer, WaitlistEmailSerializer
+from .serializers.accumateAccountSerializers import UserSerializer, WaitlistEmailSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.http import HttpResponseBadRequest, HttpResponse
 from django.core.exceptions import ValidationError

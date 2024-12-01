@@ -1,0 +1,37 @@
+x-app: &app
+  build: .
+  restart: always
+  env_file:
+    - .env
+  volumes:
+    - .:/code
+  links:
+    - db
+    - redis
+  depends_on:
+    - db
+    - redis
+
+services:
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+  db:
+    image: postgres:17
+    environment:
+      - POSTGRES_USER=nevinrichards
+      - POSTGRES_PASSWORD=password123
+    ports:
+      - "5432:5432"
+  web:
+    <<: *app
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "127.0.0.1:8000:8000"
+  celery:
+    <<: *app
+    command: celery -A project.accumate_backend:app  worker -Q default -n accumate_backend.%%h --loglevel=INFO --max-memory-per-child=512000 --concurrency=1
+  beat:
+    <<: *app
+    command: celery -A project.accumate_backend:app beat -S redbeat.RedBeatScheduler  --loglevel=DEBUG --pidfile /tmp/celerybeat.pid
