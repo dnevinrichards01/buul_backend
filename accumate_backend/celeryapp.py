@@ -7,6 +7,8 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "accumate_backend.settings")
 app = Celery("accumate_backend")
 app.autodiscover_tasks()
 app.conf.broker_url = REDIS_URL
+app.conf.task_default_queue = 'default' # me
+#app.conf.broker_connection_retry_on_startup = True #me
 app.conf.result_backend = REDIS_URL
 app.conf.accept_content = ["application/json"]
 app.conf.task_serializer = "json"

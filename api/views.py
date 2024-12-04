@@ -7,6 +7,11 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.http import HttpResponseBadRequest, HttpResponse
 from django.core.exceptions import ValidationError
 
+from celery import current_app
+from functools import partial
+from django.db import transaction
+
+import time
 
 
 # Create your views here.
@@ -57,3 +62,17 @@ class AddToWaitlist(generics.CreateAPIView):
         serializer.save()
         return HttpResponse(status=201)
 
+
+def test_celery_task_view(request):
+    result = transaction.on_commit(
+        partial(
+            current_app.send_task, 
+            "test_celery_task", 
+            kwargs={}
+        )
+    )
+    return HttpResponse(status=201, content="celery applied if this came though immediately")
+
+def test_placebo_task_view(request):
+    time.sleep(5)
+    return HttpResponse(status=201, content="celery not applied")

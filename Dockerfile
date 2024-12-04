@@ -11,7 +11,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV COLUMNS 80
 RUN apt-get update \
  && apt-get install -y --force-yes \
- curl nano python3-pip gettext chrpath libssl-dev libxft-dev \
+ curl nano python3-pip gettext chrpath libssl-dev libxft-dev netcat \
  libfreetype6 libfreetype6-dev  libfontconfig1 libfontconfig1-dev \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /code/
@@ -19,4 +19,6 @@ COPY requirements.txt /code/
 RUN pip install wheel
 RUN pip install -r requirements.txt
 COPY . /code/
+WORKDIR /code/
+RUN chmod +x docker-setup.sh
 USER app
