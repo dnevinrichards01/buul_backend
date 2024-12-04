@@ -125,6 +125,7 @@ DATABASES = {
 #    "default": env.db(default="sqlite:///db.sqlite3"),
 #}
 
+SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 SECURE_REFERRER_POLICY = "strict-origin"
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
