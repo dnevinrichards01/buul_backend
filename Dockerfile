@@ -22,3 +22,4 @@ COPY . /code/
 WORKDIR /code/
 RUN chmod +x docker-setup.sh
 USER app
+CMD ["./docker-setup.sh"]

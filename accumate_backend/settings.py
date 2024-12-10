@@ -114,8 +114,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': env.str("DB_NAME"),
-        'USER': env.str("DB_USER"),
-        'PASSWORD': env.str("DB_PASSWORD"),
+        'USER': env.dict("DB_CREDENTIALS").get("username"),
+        'PASSWORD': env.dict("DB_CREDENTIALS").get("password"),
         'HOST': env.str("DB_HOST"),
         'PORT': env.str("DB_PORT"),
         #'NAME': os.path.join(DB_ROOT, 'db.sqlite3'),
@@ -125,10 +125,10 @@ DATABASES = {
 #    "default": env.db(default="sqlite:///db.sqlite3"),
 #}
 
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-SECURE_REFERRER_POLICY = "strict-origin"
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+#SECURE_SSL_REDIRECT = True
+#SESSION_COOKIE_SECURE = True
+#SECURE_REFERRER_POLICY = "strict-origin"
+#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 LOGGING = {  
     "version": 1,  
