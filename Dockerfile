@@ -18,21 +18,20 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /code/
 COPY requirements.txt /code/
 RUN pip install wheel
+COPY Dockerfile accumate_backend api entrypoint.sh manage.py \
+ requirements.txt staticfiles /code/
 RUN pip install -r requirements.txt
-COPY . /code/
-WORKDIR /code/
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY conf_files/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY conf_files/nginx.conf /etc/nginx/nginx.conf
 RUN mkdir /run/gunicorn/
 RUN chown www-data: /var/log/ /var/log/nginx /var/lib/nginx /var/www/
 RUN chown www-data: /etc/nginx /etc/nginx/conf.d /etc/nginx/nginx.conf
 RUN chmod 755 /run
 RUN chmod 777 /etc
 RUN mkdir /etc/letsencrypt /etc/letsencrypt/live /etc/letsencrypt/live/accumate-backend.link/
-COPY fullchain.pem /etc/letsencrypt/live/accumate-backend.link/fullchain.pem
-COPY privkey.pem /etc/letsencrypt/live/accumate-backend.link/privkey.pem 
+COPY conf_files/fullchain.pem /etc/letsencrypt/live/accumate-backend.link/fullchain.pem
+COPY conf_files/privkey.pem /etc/letsencrypt/live/accumate-backend.link/privkey.pem
 RUN mkdir /run/nginx/
 RUN chown www-data: /run/nginx/ /run/gunicorn/
-
 USER www-data
 CMD ["./entrypoint.sh"]

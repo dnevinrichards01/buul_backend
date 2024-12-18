@@ -9,6 +9,6 @@ echo "Database is ready!"
 
 python manage.py makemigrations
 python manage.py migrate 
-#exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
-exec tail -f /dev/null
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+#exec tail -f /dev/null
 #exec python manage.py runserver 0.0.0.0:8000
