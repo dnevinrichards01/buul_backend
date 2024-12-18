@@ -1,6 +1,6 @@
 x-app: &app
   build: .
-  restart: always
+  restart: no #always
   env_file:
     - .env
   volumes:
@@ -22,13 +22,14 @@ services:
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     ports:
       - "5432:5432"
   web:
     <<: *app
-    command: ./docker-setup.sh
+    # removed the command bc it's done in the Dockerfile now
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8000:443"
   celery:
     <<: *app
     command: celery -A accumate_backend.celeryapp:app  worker -n accumate_backend.%%h --loglevel=INFO --max-memory-per-child=512000 --concurrency=1

@@ -17,11 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from api.urls import urlpatterns
-from main import views
+from api.views import healthCheck
 
 
 urlpatterns = [
-    path('', views.main_page),
+    path('', healthCheck),
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     path('api/', include('api.urls')) 

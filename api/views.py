@@ -13,6 +13,8 @@ from django.db import transaction
 
 import time
 
+def healthCheck(request):
+    return HttpResponse("healthy", status=200)
 
 # Create your views here.
 class CreateUserView(generics.CreateAPIView):

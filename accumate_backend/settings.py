@@ -31,20 +31,6 @@ DEBUG = env("DEBUG", default=True)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
 
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-mc=#(8rmrx(7u-i+srkv87gqrixmu2x6!g-6pknd7!@bdq@p2a'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ["*"]
-#mb change this later
-
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -109,25 +95,22 @@ WSGI_APPLICATION = 'accumate_backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+db_cred_dict = dict([pair.split(":") for pair in env("DB_CREDENTIALS").replace('"',"").strip("{").strip("}").split(",")])
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': env.str("DB_NAME"),
-        'USER': env.dict("DB_CREDENTIALS").get("username"),
-        'PASSWORD': env.dict("DB_CREDENTIALS").get("password"),
+        'USER': db_cred_dict.get("username"),
+        'PASSWORD': db_cred_dict.get("password"),
         'HOST': env.str("DB_HOST"),
         'PORT': env.str("DB_PORT"),
-        #'NAME': os.path.join(DB_ROOT, 'db.sqlite3'),
     }
 }
-#DATABASES = {
-#    "default": env.db(default="sqlite:///db.sqlite3"),
-#}
 
-#SECURE_SSL_REDIRECT = True
-#SESSION_COOKIE_SECURE = True
-#SECURE_REFERRER_POLICY = "strict-origin"
-#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+SECURE_REFERRER_POLICY = "strict-origin"
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 LOGGING = {  
     "version": 1,  
