@@ -1,5 +1,4 @@
 x-app: &app
-  build: .
   restart: no #always
   env_file:
     - .env
@@ -27,12 +26,18 @@ services:
       - "5432:5432"
   web:
     <<: *app
-    # removed the command bc it's done in the Dockerfile now
+    build: 
+      context: .
+      dockerfile: Dockerfile.app
     ports:
       - "127.0.0.1:8000:443"
   celery:
     <<: *app
-    command: celery -A accumate_backend.celeryapp:app  worker -n accumate_backend.%%h --loglevel=INFO --max-memory-per-child=512000 --concurrency=1
+    build: 
+      context: .
+      dockerfile: Dockerfile.celery
   beat:
     <<: *app
-    command: celery -A accumate_backend.celeryapp:app beat -S redbeat.RedBeatScheduler  --loglevel=DEBUG --pidfile /tmp/celerybeat.pid
+    build: 
+      context: .
+      dockerfile: Dockerfile.beat
