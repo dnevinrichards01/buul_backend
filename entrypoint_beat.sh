@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-if redis-cli -h redis -p 6379 ping | grep -q "PONG"; then
+if redis-cli -h $REDIS_HOST -p $REDIS_PORT ping | grep -q "PONG"; then
     echo "Redis is ready to accept connections."
 else
     echo "Redis is not ready or unreachable."
