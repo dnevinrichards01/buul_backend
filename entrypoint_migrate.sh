@@ -8,9 +8,10 @@ done
 echo "Database is ready!"
 
 show_migrations=$(eval "python manage.py showmigrations")
-if show_migrations | grep -q "[ ]"; then
+if echo [$show_migrations | grep -q "[ ]"]; then
     echo "migrations already made"
 else
     echo "making migrations"
     python manage.py makemigrations
     python manage.py migrate
+fi
