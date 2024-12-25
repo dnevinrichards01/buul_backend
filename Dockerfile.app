@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /code/
 COPY requirements.txt /code/
 RUN pip install wheel
-COPY Dockerfile.app accumate_backend api entrypoint_app.sh manage.py \
+COPY Dockerfile.app accumate_backend api entrypoint_app.sh entrypoint_migrate.sh manage.py \
  requirements.txt staticfiles /code/
 RUN pip install -r requirements.txt
 COPY conf_files/supervisord_app.conf /etc/supervisor/conf.d/supervisord.conf

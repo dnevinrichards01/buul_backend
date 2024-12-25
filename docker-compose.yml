@@ -7,11 +7,17 @@ x-app: &app
   links:
     - db
     - redis
-  depends_on:
-    - db
-    - redis
 
 services:
+  migrate:
+    <<: *app
+    depends_on:
+      - db
+      - redis
+    build: 
+      context: .
+      dockerfile: Dockerfile.app
+    command: ["./entrypoint_migrate.sh"]
   redis:
     image: redis:7
     ports:
@@ -26,6 +32,10 @@ services:
       - "5432:5432"
   web:
     <<: *app
+    depends_on:
+      - db
+      - redis
+      - migrate
     build: 
       context: .
       dockerfile: Dockerfile.app
@@ -33,11 +43,19 @@ services:
       - "127.0.0.1:8000:443"
   celery:
     <<: *app
+    depends_on:
+      - db
+      - redis
+      - migrate
     build: 
       context: .
       dockerfile: Dockerfile.celery
   beat:
     <<: *app
+    depends_on:
+      - db
+      - redis
+      - migrate
     build: 
       context: .
       dockerfile: Dockerfile.beat

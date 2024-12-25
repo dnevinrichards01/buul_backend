@@ -7,11 +7,11 @@ until pg_isready -h $DB_HOST -p $DB_PORT; do
 done
 echo "Database is ready!"
 
-if redis-cli -h $REDIS_HOST -p $REDIS_PORT ping | grep -q "PONG"; then
-    echo "Redis is ready to accept connections."
-else
-    echo "Redis is not ready or unreachable."
-fi
+until redis-cli -h $REDIS_HOST -p $REDIS_PORT ping | grep -q "PONG"; do
+    echo "Waiting for redis..."
+    sleep 1
+done
+echo "Redis is ready!"
 
 #doing this twice (once before in django app) causes errors
 #python manage.py makemigrations
