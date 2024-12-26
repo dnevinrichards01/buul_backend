@@ -30,5 +30,6 @@ RUN mkdir /run/nginx/
 RUN chown www-data: /run/nginx/ /run/gunicorn/
 RUN chmod 775 /var/run/ /run
 RUN chown :www-data /var/run/ /run/
+RUN chown -R www-data: /code/
 USER www-data
 CMD ["./entrypoint_app.sh"]

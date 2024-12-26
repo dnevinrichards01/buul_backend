@@ -27,5 +27,6 @@ RUN chmod 775 /var/run/ /run
 RUN mkdir /run/beat/
 RUN chown www-data: /run/beat/
 RUN chown :www-data /var/run/ /run/
+RUN chown -R www-data: /code/
 USER www-data
 CMD ["./entrypoint_beat.sh"]
