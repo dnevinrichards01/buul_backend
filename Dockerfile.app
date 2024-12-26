@@ -12,10 +12,8 @@ RUN apt-get update && apt-get install -y \
  snapd redis-tools \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /code/
-COPY requirements.txt /code/
 RUN pip install wheel
-COPY Dockerfile.app accumate_backend api entrypoint_app.sh entrypoint_migrate.sh manage.py \
- requirements.txt staticfiles /code/
+COPY . /code/
 RUN pip install -r requirements.txt
 COPY conf_files/supervisord_app.conf /etc/supervisor/conf.d/supervisord.conf
 COPY conf_files/nginx.conf /etc/nginx/nginx.conf
