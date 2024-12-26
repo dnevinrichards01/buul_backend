@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
  curl nano python3-pip gettext chrpath libssl-dev libxft-dev postgresql-client supervisor \
  libfreetype6 libfreetype6-dev libfontconfig1 libfontconfig1-dev sudo ufw systemd \
  python3-venv python3-dev libpq-dev postgresql postgresql-contrib nginx systemd-sysv \
- snapd redis-tools \
+ snapd redis-tools openssl \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /code/
 RUN pip install wheel
