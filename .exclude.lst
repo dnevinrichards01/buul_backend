@@ -1,2 +1,7 @@
 .git/*
 api/migrations/*
+docker-compose.yml
+.env
+.gitignore
+psql_redis_images/*
+.DS_Store

@@ -1,0 +1,8 @@
+.git
+.gitignore
+*.zip
+.DS_Store
+.exclude.lst
+*__pycache__
+migrations/
+accumate_backend_aws.zip

@@ -104,6 +104,10 @@ DATABASES = {
         'PASSWORD': db_cred_dict.get("password"),
         'HOST': env.str("DB_HOST"),
         'PORT': env.str("DB_PORT"),
+        'OPTIONS': {
+            'sslmode': 'verify-full',  # Enforces server certificate validation
+            'sslrootcert': env("DB_CAFILE_PATH")  # Path to the server's certificate
+        }
     }
 }
 
