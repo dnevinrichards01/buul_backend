@@ -1,19 +1,16 @@
 import os
 from celery import Celery
 from kombu import Queue
-from .settings import REDIS_URL
+from .settings import REDIS_URL, REDIS_CAFILE_PATH
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "accumate_backend.settings")
+
 app = Celery("accumate_backend")
 app.autodiscover_tasks()
-
-# Redis broker URL with `rediss://` for TLS
-app.conf.broker_url = 'rediss://:your_redis_password@your_redis_host:6379/0'
 
 # TLS options
 app.conf.broker_transport_options = {
     'ssl_cert_reqs': 'CERT_REQUIRED',  # Enforce server certificate validation
-    'ssl_ca_certs': '/path/to/ca-cert.pem',  # Path to your CA cert file
+    'ssl_ca_certs': REDIS_CAFILE_PATH  # Path to your CA cert file
 }
 app.conf.broker_url = 'rediss://' + REDIS_URL
 app.conf.task_default_queue = 'default' # me

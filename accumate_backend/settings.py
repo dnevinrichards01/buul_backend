@@ -103,23 +103,14 @@ DATABASES = {
         'USER': db_cred_dict.get("username"),
         'PASSWORD': db_cred_dict.get("password"),
         'HOST': env.str("DB_HOST"),
-        'PORT': env.str("DB_PORT"),
-        'OPTIONS': {
-            'sslmode': 'verify-full',  # Enforces server certificate validation
-            'sslrootcert': env("DB_CAFILE_PATH")  # Path to the server's certificate
-        }
+        'PORT': env.str("DB_PORT")
     }
 }
 
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "rediss://" + env("REDIS_URL"),
-        
-        "OPTIONS": {
-            'SSL_CERT_REQS': 'CERT_REQUIRED',  # Enforce server certificate validation
-            'SSL_CA_CERTS': env("REDIS_CAFILE_PATH")
-        }
+        "LOCATION": "rediss://" + env("REDIS_URL")
     }
 }
 
@@ -178,6 +169,7 @@ MEDIA_ROOT = env("MEDIA_ROOT", default=BASE_DIR / "media")
 MEDIA_URL = env("MEDIA_PATH", default="/media/")
 
 REDIS_URL = env("REDIS_URL", default=None)
+REDIS_CAFILE_PATH = env("REDIS_CAFILE_PATH", default=None)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
