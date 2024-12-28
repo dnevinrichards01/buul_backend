@@ -111,16 +111,16 @@ DATABASES = {
     }
 }
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "rediss://" + env("REDIS_URL"),
-        "OPTIONS": {
-            'SSL_CERT_REQS': 'CERT_REQUIRED',  # Enforce server certificate validation
-            'SSL_CA_CERTS': env("REDIS_CAFILE_PATH")
-        }
-    }
-}
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django.core.cache.backends.redis.RedisCache",
+#         "LOCATION": "rediss://" + env("REDIS_URL"),
+#         "OPTIONS": {
+#             'SSL_CERT_REQS': 'CERT_REQUIRED',  # Enforce server certificate validation
+#             'SSL_CA_CERTS': env("REDIS_CAFILE_PATH")
+#         }
+#     }
+# }
 
 
 SECURE_SSL_REDIRECT = True
