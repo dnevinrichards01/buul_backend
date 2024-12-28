@@ -1,5 +1,4 @@
 .git/*
-api/migrations/*
 docker-compose.yml
 .env
 .gitignore
