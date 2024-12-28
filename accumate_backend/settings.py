@@ -177,7 +177,7 @@ WHITENOISE_AUTOREFRESH = DEBUG
 MEDIA_ROOT = env("MEDIA_ROOT", default=BASE_DIR / "media")  
 MEDIA_URL = env("MEDIA_PATH", default="/media/")
 
-REDIS_URL = env("REDIS_URL", default=None)
+REDIS_URL = 'rediss://' + env("REDIS_URL", default=None) + '?ssl_cert_reqs=CERT_REQUIRED'
 REDIS_CAFILE_PATH = env("REDIS_CAFILE_PATH", default=None)
 
 # Default primary key field type
