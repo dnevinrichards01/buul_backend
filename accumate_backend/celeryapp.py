@@ -7,13 +7,13 @@ from .settings import REDIS_URL, REDIS_CAFILE_PATH
 app = Celery("accumate_backend")
 app.autodiscover_tasks()
 
-# TLS options
-# app.conf.broker_transport_options = {
-#     'ssl_cert_reqs': 'CERT_REQUIRED',  # Enforce server certificate validation
-#     'ssl_ca_certs': REDIS_CAFILE_PATH  # Path to your CA cert file
-# }
-# app.conf.broker_url = 'rediss://' + REDIS_URL
-app.conf.broker_url = 'redis://' + REDIS_URL
+#TLS options
+app.conf.broker_transport_options = {
+    'ssl_cert_reqs': 'CERT_REQUIRED',  # Enforce server certificate validation
+    'ssl_ca_certs': REDIS_CAFILE_PATH  # Path to your CA cert file
+}
+app.conf.broker_url = 'rediss://' + REDIS_URL
+# app.conf.broker_url = 'redis://' + REDIS_URL
 app.conf.task_default_queue = 'default' # me
 #app.conf.broker_connection_retry_on_startup = True #me
 app.conf.result_backend = 'rediss://' + REDIS_URL

@@ -103,16 +103,25 @@ DATABASES = {
         'USER': db_cred_dict.get("username"),
         'PASSWORD': db_cred_dict.get("password"),
         'HOST': env.str("DB_HOST"),
-        'PORT': env.str("DB_PORT")
+        'PORT': env.str("DB_PORT"),
+        'OPTIONS': {
+            'sslmode': 'verify-full',  # Enforces server certificate validation
+            'sslrootcert': env("DB_CAFILE_PATH")  # Path to the server's certificate
+        }
     }
 }
 
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "rediss://" + env("REDIS_URL")
+        "LOCATION": "rediss://" + env("REDIS_URL"),
+        "OPTIONS": {
+            'SSL_CERT_REQS': 'CERT_REQUIRED',  # Enforce server certificate validation
+            'SSL_CA_CERTS': env("REDIS_CAFILE_PATH")
+        }
     }
 }
+
 
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
