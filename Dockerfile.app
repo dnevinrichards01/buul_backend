@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
  curl nano python3-pip gettext chrpath libssl-dev libxft-dev postgresql-client supervisor \
  libfreetype6 libfreetype6-dev libfontconfig1 libfontconfig1-dev sudo ufw systemd \
  python3-venv python3-dev libpq-dev postgresql postgresql-contrib nginx systemd-sysv \
- snapd redis-tools openssl \
+ snapd redis-tools openssl libcap2-bin \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /code/
 RUN pip install wheel
@@ -29,5 +29,6 @@ RUN chown www-data: /run/nginx/ /run/gunicorn/
 RUN chmod 775 /var/run/ /run
 RUN chown :www-data /var/run/ /run/
 RUN chown -R www-data: /code/
+RUN setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx
 USER www-data
 CMD ["./entrypoint_app.sh"]
