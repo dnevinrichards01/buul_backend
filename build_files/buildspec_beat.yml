@@ -10,7 +10,7 @@ phases:
     commands:
       - echo Build started
       - echo Building the beat docker image
-      - docker build -t 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-beat-ecr:latest -f build_files/Dockerfile.beat ..
+      - docker build -t 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-beat-ecr:latest -f build_files/Dockerfile.beat .
 
   post_build:
     commands:
