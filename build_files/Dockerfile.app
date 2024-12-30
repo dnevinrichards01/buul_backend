@@ -31,4 +31,4 @@ RUN chown :www-data /var/run/ /run/
 RUN chown -R www-data: /code/
 RUN setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx
 USER www-data
-CMD ["./build_files/entrypoint_app.sh"]
+ENTRYPOINT ["./build_files/entrypoint_app.sh"]

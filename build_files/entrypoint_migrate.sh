@@ -17,3 +17,5 @@ if echo [$show_migrations | grep -q "[ ]"]; then
 else
     echo "migrations already made"
 fi
+
+exec wait 600 &
