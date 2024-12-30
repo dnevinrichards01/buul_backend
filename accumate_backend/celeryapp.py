@@ -23,7 +23,7 @@ app.conf.result_backend_transport_options = {
     'key_prefix': '{celery}'
 }
 
-app.conf.accept_content = ["application/json"]
+app.conf.accept_content = ["application/json"] 
 app.conf.task_serializer = "json"
 app.conf.result_serializer = "json" 
 app.conf.task_default_queue = "main"
