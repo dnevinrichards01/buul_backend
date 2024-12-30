@@ -23,7 +23,6 @@ phases:
                "ab-django-app-ecr" "528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-django-app-ecr:latest"
                > imagedefinitions.json
 
-
 artifacts:
   files:
     - imagedefinitions.json
