@@ -1,0 +1,77 @@
+x-app: &app
+  restart: no #always
+  env_file:
+    - .env
+  volumes:
+    - .:/code
+  links:
+    - db
+    - redis
+  environment:
+    - DB_HOST=${DB_HOST}
+    - DB_CREDENTIALS=${DB_CREDENTIALS}
+    - DB_NAME=${DB_NAME}
+    - DB_PASSWORD=${DB_PASSWORD}
+    - DB_PORT=${DB_PORT}
+    - DB_USER=${DB_USER}
+    - REDIS_URL=${REDIS_URL}
+    - REDIS_HOST=${REDIS_HOST}
+    - REDIS_URL=${REDIS_URL}
+    - REDIS_HOST=${REDIS_HOST}
+    - REDIS_PORT=${REDIS_PORT}
+    - DB_CAFILE_PATH=${DB_CAFILE_PATH}
+
+services:
+  migrate:
+    <<: *app
+    depends_on:
+      - db
+      - redis
+    build: 
+      context: .
+      dockerfile: build_files/Dockerfile.app
+    entrypoint: [".build_files/entrypoint_migrate.sh"]
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+  db:
+    image: postgres:17
+    # build:
+    #   context: psql_redis_images
+    #   dockerfile: Dockerfile.psql
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - "5432:5432"
+  web:
+    <<: *app
+    depends_on:
+      - db
+      - redis
+      - migrate
+    build: 
+      context: .
+      dockerfile: build_files/Dockerfile.app
+    ports:
+      - "127.0.0.1:8000:443"
+  celery:
+    <<: *app
+    depends_on:
+      - db
+      - redis
+      - migrate
+    build: 
+      context: .
+      dockerfile: build_files/Dockerfile.celery
+  beat:
+    <<: *app
+    depends_on:
+      - db
+      - redis
+      - migrate
+    build: 
+      context: .
+      dockerfile: build_files/Dockerfile.beat
