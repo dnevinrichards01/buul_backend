@@ -18,6 +18,7 @@ phases:
       - echo pushing django app image in to docker ECR...
       - docker push 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-django-app-ecr:latest
       - echo Writing django app image definition file..
+      - printf '[{"name":"%s","imageUri":"%s"}]' "ab-django-app" "528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-django-app-ecr:latest" > imagedefinitions_app.json
       - printf '[{"name":"%s","imageUri":"%s"}]' "ab-migrate" "528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-django-app-ecr:latest" > imagedefinitions_app.json
      
 artifacts:
