@@ -18,7 +18,7 @@ phases:
       - echo pushing beat image in to docker ECR...
       - docker push 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-beat-ecr:latest
       - echo Writing image definition file..
-      - printf '[{"name":"%s","imageUri":"%s"}], "ab-beat-ecr" "528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-beat-ecr:latest" > imagedefinitions.json
+      - printf '[{"name":"%s","imageUri":"%s"}], "ab-beat" "528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-beat-ecr:latest" > imagedefinitions.json
 
 artifacts:
   files:

@@ -18,7 +18,7 @@ phases:
       - echo pushing celery image in to docker ECR...
       - docker push 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-celery-ecr:latest
       - echo Writing image definition file..
-      - printf '[{"name":"%s","imageUri":"%s"}]' "ab-celery-ecr" "528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-celery-ecr:latest" > imagedefinitions.json
+      - printf '[{"name":"%s","imageUri":"%s"}]' "ab-celery" "528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-celery-ecr:latest" > imagedefinitions.json
 
 artifacts:
   files:
