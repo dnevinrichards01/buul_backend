@@ -27,4 +27,4 @@ RUN chown www-data: /run/beat/
 RUN chown :www-data /var/run/ /run/
 RUN chown -R www-data: /code/
 USER www-data
-ENTRYPOINT ["./build_files/entrypoint_beat.sh"]
+CMD ["./build_files/entrypoint_beat.sh"]
