@@ -19,6 +19,7 @@ phases:
       - docker push 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-celery-ecr:latest
       - echo Writing celery image definition file..
       - aws ecs describe-task-definition --task-definition ab-celery-task > ab-celery-task.json
+      - cat ab-celery-task.json
       
 artifacts:
   files:

@@ -20,6 +20,8 @@ phases:
       - echo Writing django app image definition file..
       - aws ecs describe-task-definition --task-definition ab-app-task > ab-app-task.json
       - aws ecs describe-task-definition --task-definition ab-migrate-task > ab-migrate-task.json
+      - cat ab-migrate-task.json
+      - cat ab-app-task.json
      
 artifacts:
   files:
