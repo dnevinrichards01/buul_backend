@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-cd .. || exit
-
 until redis-cli -h $REDIS_HOST -p $REDIS_PORT --tls ping | grep -q "PONG"; do
     echo "Waiting for redis..."
     sleep 1

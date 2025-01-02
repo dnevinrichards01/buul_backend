@@ -1,0 +1,17 @@
+{
+  "version": 0.0,
+  "Resources": [
+    {
+      "TargetService": {
+        "Type": "AWS::ECS::Service",
+        "Properties": {
+          "TaskDefinition": "arn:aws:ecs:us-west-1:528757822565:task-definition/ab-app-task",
+          "LoadBalancerInfo": {
+            "ContainerName": "ab-django-app",
+            "ContainerPort": 443
+          }
+        }
+      }
+    }
+  ]
+}

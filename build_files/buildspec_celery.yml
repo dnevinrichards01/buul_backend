@@ -18,9 +18,9 @@ phases:
       - echo pushing celery image in to docker ECR...
       - docker push 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-celery-ecr:latest
       - echo Writing celery image definition file..
-      - aws ecs describe-task-definition --task-definition ab-celery-task > ab-celery-task.json
-      - cat ab-celery-task.json
+      - aws ecs describe-task-definition --task-definition your-task-family > taskdefinition_celery.json
+      - printf '{"ImageURI":"%s"}' > imagedefinitions_celery.json
       
 artifacts:
   files:
-    -  ab-celery-task.json
+    - imagedefinitions_celery.json

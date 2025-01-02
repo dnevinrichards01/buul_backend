@@ -18,9 +18,8 @@ phases:
       - echo pushing beat image in to docker ECR...
       - docker push 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-beat-ecr:latest
       - echo Writing beat image definition file..
-      - aws ecs describe-task-definition --task-definition ab-beat-task > ab-beat-task.json
-      - cat ab-beat-task.json
+      - printf '{"ImageURI":"%s"}' > imagedefinitions_beat.json
 
 artifacts:
   files:
-    - ab-beat-task.json
+    - imagedefinitions_beat.json

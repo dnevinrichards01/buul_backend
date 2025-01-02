@@ -1,0 +1,21 @@
+{
+  "version": 0.0,
+  "Resources": [
+    {
+      "TargetService": {
+        "Type": "AWS::ECS::Service",
+        "Properties": {
+          "TaskDefinition": "arn:aws:ecs:us-west-1:528757822565:task-definition/ab-migrate-task"
+        },
+      "PlatformVersion": "LATEST",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "Subnets": ["subnet-072487db829eb07c2","subnet-03b677059109dc657"],
+            "SecurityGroups": ["sg-053ebe75ce90376fe"],
+            "AssignPublicIp": "DISABLED"
+          }
+        }
+      }
+    }
+  ]
+}

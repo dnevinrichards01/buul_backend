@@ -18,12 +18,8 @@ phases:
       - echo pushing django app image in to docker ECR...
       - docker push 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-django-app-ecr:latest
       - echo Writing django app image definition file..
-      - aws ecs describe-task-definition --task-definition ab-app-task > ab-app-task.json
-      - aws ecs describe-task-definition --task-definition ab-migrate-task > ab-migrate-task.json
-      - cat ab-migrate-task.json
-      - cat ab-app-task.json
+      - printf '{"ImageURI":"%s"}' > imagedefinitions_app.json
      
 artifacts:
   files:
-    - ab-app-task.json
-    - ab-migrate-task.json
+    - imagedefinitions_app.json

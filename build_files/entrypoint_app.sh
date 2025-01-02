@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-cd .. || exit
-
 until pg_isready -h $DB_HOST -p $DB_PORT; do
   echo "Waiting for database..."
   sleep 1
