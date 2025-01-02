@@ -17,9 +17,3 @@ phases:
       - echo build completed
       - echo pushing django app image in to docker ECR...
       - docker push 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-django-app-ecr:latest
-      - echo Writing django app image definition file..
-      - printf '{"ImageURI":"%s"}' > imagedefinitions_app.json
-     
-artifacts:
-  files:
-    - imagedefinitions_app.json

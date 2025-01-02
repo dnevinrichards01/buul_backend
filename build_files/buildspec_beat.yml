@@ -17,9 +17,3 @@ phases:
       - echo build completed
       - echo pushing beat image in to docker ECR...
       - docker push 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-beat-ecr:latest
-      - echo Writing beat image definition file..
-      - printf '{"ImageURI":"%s"}' > imagedefinitions_beat.json
-
-artifacts:
-  files:
-    - imagedefinitions_beat.json
