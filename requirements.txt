@@ -28,6 +28,7 @@ psycopg==3.2.3
 psycopg-binary==3.2.3
 psycopg2==2.9.10
 psycopg2-binary==2.9.10
+pycurl==7.45.4
 PyJWT==2.9.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1

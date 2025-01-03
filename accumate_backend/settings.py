@@ -180,6 +180,10 @@ MEDIA_URL = env("MEDIA_PATH", default="/media/")
 REDIS_URL = 'rediss://' + env("REDIS_URL", default=None) + '?ssl_cert_reqs=CERT_REQUIRED'
 REDIS_CAFILE_PATH = env("REDIS_CAFILE_PATH", default=None)
 
+SQS_LONG_RUNNING_URL = env("SQS_LONG_RUNNING_URL", default=None)
+SQS_USER_INTERACTION_URL = env("SQS_USER_INTERACTION_URL", default=None)
+SQS_DLQ_URL = env("SQS_DLQ_URL", default=None)
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -189,4 +193,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 #mb change this eventually
 CORS_ALLOWS_CREDENTIALS = True
 #? 
+
+
 
