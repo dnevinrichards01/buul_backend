@@ -30,7 +30,7 @@ app = Celery(
 
 
 app.conf.broker_connection_retry_on_startup = True
-app.conf.task_default_queue = 'long-running'
+app.conf.task_default_queue = 'ab-long-running-sqs.fifo'
 
 #app.conf.result_backend = REDIS_URL
 #app.conf.result_backend_transport_options = {
