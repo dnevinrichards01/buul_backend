@@ -1,6 +1,5 @@
 import os
 from celery import Celery
-from kombu import Queue
 from .settings import SQS_LONG_RUNNING_URL, SQS_USER_INTERACTION_URL, SQS_DLQ_URL
 
 app = Celery(

@@ -9,11 +9,20 @@ RUN apt-get update && apt-get install -y \
  curl nano python3-pip gettext chrpath libssl-dev libxft-dev postgresql-client supervisor \
  libfreetype6 libfreetype6-dev libfontconfig1 libfontconfig1-dev sudo ufw systemd \
  python3-venv python3-dev libpq-dev postgresql postgresql-contrib nginx systemd-sysv \
- snapd redis-tools openssl libcap2-bin \
+ snapd redis-tools openssl libcap2-bin gpg \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /code/
 RUN pip install wheel
 COPY . /code/
+
+RUN curl -o /code/conf_files/awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" 
+RUN gpg --import /code/conf_files/aws.pem
+RUN curl -o /code/conf_files/awscliv2.sig "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip.sig"
+RUN gpg --verify /code/conf_files/awscliv2.sig /code/conf_files/awscliv2.zip
+RUN unzip /code/conf_files/awscliv2.zip -d /code/conf_files/
+RUN bash /code/conf_files/aws/install -i /usr/local/aws-cli -b /usr/local/bin
+RUN rm -rf /code/conf_files/awscliv2.sig /code/conf_files/awscliv2.zip /code/conf_files/aws/
+
 RUN pip install -r requirements.txt
 COPY conf_files/supervisord_app.conf /etc/supervisor/conf.d/supervisord.conf
 COPY conf_files/nginx.conf /etc/nginx/nginx.conf

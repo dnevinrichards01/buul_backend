@@ -14,6 +14,15 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /code/
 RUN pip install wheel
 COPY . /code/
+
+RUN curl -o /code/conf_files/awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" 
+RUN gpg --import /code/conf_files/aws.pem
+RUN curl -o /code/conf_files/awscliv2.sig "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip.sig"
+RUN gpg --verify /code/conf_files/awscliv2.sig /code/conf_files/awscliv2.zip
+RUN unzip /code/conf_files/awscliv2.zip -d /code/conf_files/
+RUN bash /code/conf_files/aws/install -i /usr/local/aws-cli -b /usr/local/bin
+RUN rm -rf /code/conf_files/awscliv2.sig /code/conf_files/awscliv2.zip /code/conf_files/aws/
+
 RUN pip install -r requirements.txt
 COPY conf_files/supervisord_celery.conf /etc/supervisor/conf.d/supervisord.conf
 RUN chown www-data: /var/log/ /var/www/
