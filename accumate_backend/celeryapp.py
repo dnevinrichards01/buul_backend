@@ -14,13 +14,13 @@ app = Celery(
     broker_transport_options={
         "region": "us-west-1", # your AWS SQS region
         "predefined_queues": {
-            "long-running": {  ## the name of the SQS queue
+            "ab-long-running-sqs.fifo": {  ## the name of the SQS queue
                 "url": SQS_LONG_RUNNING_URL
             },
-            "user-interaction": {
+            "ab-user-interaction-sqs.fifo": {
                 "url": SQS_USER_INTERACTION_URL
             },
-            "dlq": {
+            "ab-dlq-sqs.fifo": {
                 "url": SQS_DLQ_URL
             }
         },
