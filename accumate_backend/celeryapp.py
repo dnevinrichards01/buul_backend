@@ -13,7 +13,7 @@ app = Celery(
 
 # autodiscover tasks in installed apps
 django.setup() # imports those installed apps
-app.autodiscover_tasks()
+app.autodiscover_tasks(['app'])
 
 # Explicitly disable dynamic reply queues, won't be able to use inspect command
 #app.conf.worker_direct = False
