@@ -32,10 +32,10 @@ app = Celery(
 app.conf.broker_connection_retry_on_startup = True
 app.conf.task_default_queue = 'ab-long-running-sqs.fifo'
 
-#app.conf.result_backend = REDIS_URL
-#app.conf.result_backend_transport_options = {
+app.conf.result_backend = 'django-db'
+# app.conf.result_backend_transport_options = {
 #    'key_prefix': '{celery}'
-#}
+# }
 
 app.conf.accept_content = ["application/json"] 
 app.conf.task_serializer = "json"
