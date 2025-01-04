@@ -1,6 +1,6 @@
 import os
 from celery import Celery
-from .settings import SQS_LONG_RUNNING_URL, SQS_USER_INTERACTION_URL, SQS_DLQ_URL, SQS_CELERY_PIDBOX_URL
+from .settings import SQS_LONG_RUNNING_URL, SQS_USER_INTERACTION_URL, SQS_DLQ_URL, SQS_CONTROL_URL
 import django
 from kombu import Queue
 
@@ -33,6 +33,9 @@ app = Celery(
             "ab-dlq": {
                 "url": SQS_DLQ_URL
             },
+            "ab-control": {
+                "url": SQS_CONTROL_URL
+            }
         },
     },
     task_create_missing_queues=True,
@@ -49,3 +52,5 @@ app.conf.broker_pool_limit = 1
 app.conf.broker_connection_timeout = 30
 app.conf.worker_prefetch_multiplier = 1
 #app.conf.redbeat_redis_url = REDIS_URL
+
+app.conf.control_queue = 'ab-control'
