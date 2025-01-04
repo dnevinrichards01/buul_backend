@@ -2,6 +2,8 @@ import os
 from celery import Celery
 from .settings import SQS_LONG_RUNNING_URL, SQS_USER_INTERACTION_URL, SQS_DLQ_URL
 
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'accumate_backend.settings')
+
 app = Celery(
     "accumate_backend",
 
