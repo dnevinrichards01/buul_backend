@@ -1,6 +1,6 @@
 import os
 from celery import Celery
-from .settings import SQS_LONG_RUNNING_URL, SQS_USER_INTERACTION_URL, SQS_DLQ_URL
+from .settings import SQS_LONG_RUNNING_URL, SQS_USER_INTERACTION_URL, SQS_DLQ_URL, SQS_CELERY_PIDBOX_URL
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'accumate_backend.settings')
 
@@ -24,6 +24,9 @@ app = Celery(
             },
             "ab-dlq-sqs.fifo": {
                 "url": SQS_DLQ_URL
+            },
+            "ab-celery-pidbox.fifo": {
+                "url": SQS_CELERY_PIDBOX_URL
             }
         },
     },
@@ -46,3 +49,8 @@ app.conf.broker_pool_limit = 1
 app.conf.broker_connection_timeout = 30
 app.conf.worker_prefetch_multiplier = 1
 #app.conf.redbeat_redis_url = REDIS_URL
+
+app.conf.control_queue = 'ab-celery-pidbox.fifo'
+app.conf.control_exchange = 'ab-celery-pidbox.fifo'
+app.conf.control_exchange_type = 'fanout'
+app.conf.control_routing_key = 'ab-celery-pidbox.fifo'
