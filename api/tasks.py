@@ -3,6 +3,7 @@ import time
 
 @shared_task(name="test_celery_task")
 def test_celery_task():
+    time.sleep(5)
     return True
     # we'll call a method in services which implements the logic. 
     # we'll call it in a celery task, and also in a view for future
