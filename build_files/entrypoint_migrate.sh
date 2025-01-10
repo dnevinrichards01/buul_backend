@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+pip install -e /code/build_files/accumate_robinstocks
+
 until pg_isready -h $DB_HOST -p $DB_PORT; do
   echo "Waiting for database..."
   sleep 1
@@ -16,4 +18,4 @@ else
     echo "migrations already made"
 fi
 
-exec wait 600 &
+exec tail -f /dev/null

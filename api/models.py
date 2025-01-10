@@ -12,8 +12,6 @@ class UserBrokerageInfo(models.Model):
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     brokerage = models.CharField(choices=BROKERAGE_CHOICES, max_length=255)
-    username = models.CharField(max_length=255) # find the consraints RH places
-    password = models.CharField(max_length=255) # find the consraints RH places
 
 class UserPlaidInfo(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

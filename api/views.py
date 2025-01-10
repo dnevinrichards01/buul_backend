@@ -1,80 +1,63 @@
-from django.shortcuts import render
 from django.contrib.auth.models import User
 from .models import WaitlistEmail
 from rest_framework import generics
+from rest_framework.views import APIView
 from .serializers.accumateAccountSerializers import UserSerializer, WaitlistEmailSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.http import HttpResponseBadRequest, HttpResponse
+from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
 from django.core.exceptions import ValidationError
 
 from celery import current_app
 from functools import partial
 from django.db import transaction
+from api.tasks import test_celery_task
 
 import time
 
 def healthCheck(request):
-    return HttpResponse("healthy", status=200)
+    return JsonResponse({"success": "healthy"}, status=200)
 
-# Create your views here.
-class CreateUserView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+class CreateUserView(APIView):
     permission_classes = [AllowAny]
 
-"""
-class NoteListCreate(generics.ListCreateAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        # Use the serializer to validate input data
+        serializer = UserSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            serializer.save() # error here indicates duplicate
+            return JsonResponse({"success": "user registered"}, status=200)
+        except Exception as e:
+            return JsonResponse(e.args[0], status=400)
 
-    def get_queryset(self):
-        return Note.objects.filter(author=self.request.user)
-    
-    def perform_create(self, serializer):
-        if serializer.is_valid():
-            serializer.save(author=self.request.user)
-        else:
-            print(serializer.errors) #why not raise serializers.SerializerError?
 
-class NoteDelete(generics.DestroyAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return Note.objects.filter(author=self.request.user)
-"""
-
-class AddToWaitlist(generics.CreateAPIView):
-    queryset = WaitlistEmail.objects.all()
-    serializer_class = WaitlistEmailSerializer
+class AddToWaitlist(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
 
-    def create(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         # check if valid email
-        serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            print(serializer.errors)
-            return HttpResponseBadRequest(serializer.errors)
-        # check if duplicate
-        email = serializer.validated_data['email']
-        if WaitlistEmail.objects.filter(email=email).exists():
-            return HttpResponseBadRequest("duplicate")
-        # save
-        serializer.save()
-        return HttpResponse(status=201)
+        serializer = WaitlistEmailSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            email = serializer.validated_data['email']
+            if WaitlistEmail.objects.filter(email=email).exists():
+                raise Exception("duplicate")
+            serializer.save()
+            return JsonResponse({"success": "email added"}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": e.args[0]}, status=400)
 
 
 def test_celery_task_view(request):
     result = transaction.on_commit(
         partial(
-            current_app.send_task, 
-            "test_celery_task", 
+            test_celery_task.apply_async,
             kwargs={}
         )
     )
-    return HttpResponse(status=201, content="celery applied if this came though immediately")
+    return JsonResponse({"success": "celery applied if this came though immediately"}, status=201)
 
 def test_placebo_task_view(request):
     time.sleep(5)
-    return HttpResponse(status=201, content="celery not applied")
+    return JsonResponse({"success": "celery not applied"}, status=201)
