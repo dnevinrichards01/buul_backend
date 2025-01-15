@@ -15,12 +15,12 @@ class UserBrokerageInfo(models.Model):
 
 class UserPlaidInfo(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    countryCodes = models.CharField(choices=[], max_length=2) # create a class with these choices in serializers?
-    language = models.CharField(choices=[], max_length=2)
-    userToken = models.CharField(max_length=255)
-    accessToken = models.CharField(max_length=255)
-    clientUserId = models.CharField(max_length=255)
-    itemId = models.CharField(max_length=255)
+    countryCodes = models.CharField(choices=[], max_length=2, default=None) # create a class with these choices in serializers?
+    language = models.CharField(choices=[], max_length=2, null=True, default=None)
+    userToken = models.CharField(max_length=255, null=True, default=None)
+    accessToken = models.CharField(max_length=255, null=True, default=None)
+    clientUserId = models.CharField(max_length=255, null=True, default=None)
+    itemId = models.CharField(max_length=255, null=True, default=None)
 
 class PlaidCashbackTransaction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
