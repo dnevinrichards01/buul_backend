@@ -9,7 +9,8 @@ urlpatterns = [
     path('user/register/', views.CreateUserView.as_view(), {"action": "post"}, name='register'),
     path('token/', TokenObtainPairView.as_view(), name='get_token'),
     path('token/refresh/', TokenRefreshView.as_view(), name='refresh'),
-    path('waitlist/', views.AddToWaitlist.as_view(), name='waitlist')
+    path('waitlist/', views.AddToWaitlist.as_view(), name='waitlist'),
+    path('plaid/publictokenexchange/', views.PlaidItemPublicTokenExchange.as_view(), name='public_token_exchange')
 ]
 
 

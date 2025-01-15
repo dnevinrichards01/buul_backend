@@ -1,6 +1,6 @@
-from django.core.exceptions import ValidationErrors
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
-from errorSerializer import ErrorSerializer
+from .errorSerializer import ErrorSerializer
 from choices import PaymentChannelChoices, TransactionTypeChoices
 
 # /transactions/sync request

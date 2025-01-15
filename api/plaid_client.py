@@ -1,4 +1,3 @@
-# myapp/plaid_client.py
 from plaid import ApiClient, Configuration
 from plaid.api import plaid_api
 

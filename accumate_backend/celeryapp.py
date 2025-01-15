@@ -5,6 +5,7 @@ import django
 from kombu import Queue
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'accumate_backend.settings')
+django.setup()
 
 app = Celery(
     "accumate_backend",

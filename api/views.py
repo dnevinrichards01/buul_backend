@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User
 from .models import WaitlistEmail
-from rest_framework import generics
 from rest_framework.views import APIView
 from .serializers.accumateAccountSerializers import UserSerializer, WaitlistEmailSerializer
 from .serializers.PlaidSerializers.itemSerializers import ItemPublicTokenExchangeRequestSerializer
@@ -56,7 +55,8 @@ class PlaidItemPublicTokenExchange(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        
+        # import pdb
+        # breakpoint()
         # Use the serializer to validate input data
         serializer = ItemPublicTokenExchangeRequestSerializer(data=request.data)
         try:
@@ -74,12 +74,7 @@ class PlaidItemPublicTokenExchange(APIView):
             json.dumps({"message": "pending", "error": None}),
             timeout=120
         )
-        result = transaction.on_commit(
-            partial(
-                plaid_item_public_token_exchange.apply_async,
-                kwargs=validated_data
-            )
-        )
+        plaid_item_public_token_exchange.apply_async(kwargs=validated_data)
         return JsonResponse({"success": "recieved"}, status=201)
     
     def get(self, request, *args, **kwargs):
