@@ -1,0 +1,690 @@
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+Internal Server Error: /api/user/register/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/psycopg/cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedTable: relation "auth_user" does not exist
+LINE 1: SELECT 1 AS "a" FROM "auth_user" WHERE "auth_user"."username...
+                             ^
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/code/api/views.py", line 27, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/serializers.py", line 223, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/serializers.py", line 442, in run_validation
+    value = self.to_internal_value(data)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/serializers.py", line 499, in to_internal_value
+    validated_value = field.run_validation(primitive_value)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/fields.py", line 757, in run_validation
+    return super().run_validation(data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/fields.py", line 539, in run_validation
+    self.run_validators(value)
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/fields.py", line 551, in run_validators
+    validator(value, self)
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/validators.py", line 73, in __call__
+    if qs_exists(queryset):
+       ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/validators.py", line 21, in qs_exists
+    return queryset.exists()
+           ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 1288, in exists
+    return self.query.has_results(using=self.db)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/query.py", line 660, in has_results
+    return compiler.has_results()
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1542, in has_results
+    return bool(self.execute_sql(SINGLE))
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1574, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/psycopg/cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+django.db.utils.ProgrammingError: relation "auth_user" does not exist
+LINE 1: SELECT 1 AS "a" FROM "auth_user" WHERE "auth_user"."username...
+                             ^
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/api/views.py", line 31, in post
+    return JsonResponse(e.args[0], status=400)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/response.py", line 726, in __init__
+    raise TypeError(
+TypeError: In order to allow non-dict objects to be serialized set the safe parameter to False.
+[15/Jan/2025 02:41:03] "POST /api/user/register/ HTTP/1.1" 500 145
+[15/Jan/2025 02:41:05] "POST /api/user/register/ HTTP/1.1" 200 30
+[15/Jan/2025 02:41:19] "POST /api/token/ HTTP/1.1" 200 483
+
+def login_robinhood(**kwargs):
+    return 1
+
+
+def group(self, tasks, result, group_id, partial_args, add_to_parent=0):
+    return 1
+
+
+def xmap(task, it):
+    return 1
+
+
+def backend_cleanup():
+    return 1
+
+
+def refresh_robinhood():
+    return 1
+
+
+def chain(*args, **kwargs):
+    return 1
+
+
+def xstarmap(task, it):
+    return 1
+
+
+def accumulate(self, *args, **kwargs):
+    return 1
+
+
+def test_celery_task():
+    return 1
+
+
+def chord(self, header, body, partial_args=0, interval=1, countdown=2, max_retries=3, eager=4, **kwargs):
+    return 1
+
+
+def chunks(task, it, n):
+    return 1
+
+
+def unlock_chord(self, group_id, callback, interval=0, max_retries=1, result=2, Result=3, GroupResult=4, result_from_tuple=5, **kwargs):
+    return 1
+
+[15/Jan/2025 02:41:34] "POST /rh/login/ HTTP/1.1" 201 8
+Internal Server Error: /rh/login/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/build_files/accumate_robinstocks/robin_stocks/views.py", line 39, in get
+    challenge = cache.get(f"uid_{uid}_challenge")
+                ^^^^^
+  File "/usr/local/lib/python3.12/bdb.py", line 90, in trace_dispatch
+    return self.dispatch_line(frame)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/bdb.py", line 115, in dispatch_line
+    if self.quitting: raise BdbQuit
+                      ^^^^^^^^^^^^^
+bdb.BdbQuit
+[15/Jan/2025 02:43:33] "GET /rh/login/ HTTP/1.1" 500 145
+Internal Server Error: /rh/login/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/build_files/accumate_robinstocks/robin_stocks/views.py", line 39, in get
+    challenge = cache.get(f"uid_{uid}_challenge")
+                ^^^^^
+  File "/usr/local/lib/python3.12/bdb.py", line 90, in trace_dispatch
+    return self.dispatch_line(frame)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/bdb.py", line 115, in dispatch_line
+    if self.quitting: raise BdbQuit
+                      ^^^^^^^^^^^^^
+bdb.BdbQuit
+[15/Jan/2025 02:43:34] "GET /rh/login/ HTTP/1.1" 500 145
+Internal Server Error: /rh/login/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/build_files/accumate_robinstocks/robin_stocks/views.py", line 39, in get
+    challenge = cache.get(f"uid_{uid}_challenge")
+                ^^^^^
+  File "/usr/local/lib/python3.12/bdb.py", line 90, in trace_dispatch
+    return self.dispatch_line(frame)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/bdb.py", line 115, in dispatch_line
+    if self.quitting: raise BdbQuit
+                      ^^^^^^^^^^^^^
+bdb.BdbQuit
+[15/Jan/2025 02:43:35] "GET /rh/login/ HTTP/1.1" 500 145
+[15/Jan/2025 02:43:42] "POST /api/token/ HTTP/1.1" 200 483
+Internal Server Error: /rh/login/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/build_files/accumate_robinstocks/robin_stocks/views.py", line 39, in get
+    challenge = cache.get(f"uid_{uid}_challenge")
+                ^^^^^
+  File "/usr/local/lib/python3.12/bdb.py", line 90, in trace_dispatch
+    return self.dispatch_line(frame)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/bdb.py", line 115, in dispatch_line
+    if self.quitting: raise BdbQuit
+                      ^^^^^^^^^^^^^
+bdb.BdbQuit
+[15/Jan/2025 02:43:44] "GET /rh/login/ HTTP/1.1" 500 145
+[15/Jan/2025 02:45:04] "POST /rh/login/ HTTP/1.1" 201 8
+/code/build_files/accumate_robinstocks/robin_stocks/serializers.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks
+  File "/code/build_files/accumate_robinstocks/robin_stocks/serializers.py", line 9
+    by_sms = serializers.BooleanField(default=True, allow_null=True, default=None)
+                                                                     ^^^^^^^^^^^^
+SyntaxError: keyword argument repeated: default
