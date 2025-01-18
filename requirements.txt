@@ -38,6 +38,7 @@ mccabe==0.7.0
 mysqlclient==2.2.6
 nulltype==2.3.1
 packaging==24.2
+phonenumbers==8.13.52
 plaid-python==28.0.0
 prompt_toolkit==3.0.48
 psycopg==3.2.3

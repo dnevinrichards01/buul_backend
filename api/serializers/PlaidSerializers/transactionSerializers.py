@@ -1,7 +1,9 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from .errorSerializer import ErrorSerializer
-from choices import PaymentChannelChoices, TransactionTypeChoices
+from .choices import PaymentChannelChoices, TransactionTypeChoices
+from .balanceSerializers import AccountSerializer
+from .itemSerializers import ItemSerializer
 
 # /transactions/sync request
 
@@ -254,7 +256,7 @@ class TransactionSerializer(serializers.Serializer):
         help_text="The original description of the transaction."
     )
     payment_channel = serializers.ChoiceField(
-        choices=PaymentChannelChoices.CHOICES,
+        choices=PaymentChannelChoices.choices(),
         help_text="The payment channel of the transaction."
     )
     payment_meta = PaymentMetaSerializer(
@@ -278,7 +280,7 @@ class TransactionSerializer(serializers.Serializer):
         help_text="The ID of the category."
     )
     transaction_type = serializers.ChoiceField(
-        choices=TransactionTypeChoices.CHOICES,
+        choices=TransactionTypeChoices.choices(),
         help_text="The type of transaction."
     )
     personal_finance_category = PersonalFinanceCategorySerializer(
@@ -317,6 +319,9 @@ class TransactionsSyncResponseSerializer(serializers.Serializer):
     """
     Serializer for the response data received from /transactions/sync endpoint.
     """
+    accounts = serializers.ListField(
+        child=AccountSerializer()
+    )
     added = TransactionSerializer(
         many=True,
         help_text="Transactions that have been added since the last sync."
@@ -338,3 +343,16 @@ class TransactionsSyncResponseSerializer(serializers.Serializer):
     request_id = serializers.CharField(
         help_text="A unique identifier for the request, used for troubleshooting."
     )
+
+# /transactions/get response
+
+class TransactionsGetResponseSerializer(serializers.Serializer):
+    transactions = serializers.ListField(
+        child=TransactionSerializer()
+    )
+    accounts = serializers.ListField(
+        child=AccountSerializer()
+    )
+    item = ItemSerializer()
+    total_transactions = serializers.IntegerField()
+    request_id = serializers.CharField()

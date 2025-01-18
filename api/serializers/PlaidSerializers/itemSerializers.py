@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from .errorSerializer import ErrorSerializer
+from .choices import ProductChoices, ItemUpdateType, ItemAuthMethod
 
 
 class ItemSerializer(serializers.Serializer):
@@ -8,35 +9,77 @@ class ItemSerializer(serializers.Serializer):
     Serializer for the 'item' field in Plaid responses.
     """
     # Define fields as per Plaid's Item object
+    auth_method = serializers.ChoiceField(
+        choices=ItemAuthMethod.choices(),
+        help_text="The method used to populate Auth data for the Item",
+        allow_null=True,
+        required=False
+    )
     available_products = serializers.ListField(
-        child=serializers.CharField(),
-        help_text="Products available for the Item."
+        child=serializers.ChoiceField(choices=ProductChoices.choices()),
+        help_text="Products available for the Item.",
+        allow_null=True,
+        required=False
     )
     billed_products = serializers.ListField(
-        child=serializers.CharField(),
-        help_text="Products billed for the Item."
+        child=serializers.ChoiceField(choices=ProductChoices.choices()),
+        help_text="Products billed for the Item.",
+        allow_null=True,
+        required=False
+    )
+    products = serializers.ListField(
+        child=serializers.ChoiceField(choices=ProductChoices.choices()),
+        help_text="Products added to the Item.",
+        allow_null=True,
+        required=False
+    )
+    consented_products = serializers.ListField(
+        child=serializers.ChoiceField(choices=ProductChoices.choices()),
+        help_text="Products that the user has consented to via Data Transparency Messaging.",
+        allow_null=True,
+        required=False
     )
     consent_expiration_time = serializers.DateTimeField(
         allow_null=True,
-        help_text="Time when the Item's consent will expire."
+        help_text="Time when the Item's consent will expire.",
+        required=False
     )
     error = ErrorSerializer(
         allow_null=True,
-        help_text="Error object containing error details, if any."
+        help_text="Error object containing error details, if any.",
+        required=False
     )
     institution_id = serializers.CharField(
         allow_null=True,
-        help_text="The Plaid institution ID associated with the Item."
+        help_text="The Plaid institution ID associated with the Item.",
+        required=False
     )
     item_id = serializers.CharField(
-        help_text="A unique ID identifying the Item."
-    )
-    update_type = serializers.CharField(
-        help_text="The type of update for the Item."
-    )
-    webhook = serializers.CharField(
+        help_text="A unique ID identifying the Item.",
         allow_null=True,
-        help_text="The webhook URL associated with the Item."
+        required=False
+    )
+    institution_id = serializers.CharField(
+        help_text="Plaid Institution ID associated with the Item.",
+        allow_null=True,
+        required=False
+    )
+    institution_name = serializers.CharField(
+        help_text="The name of the institution associated with the Item.",
+        allow_null=True,
+        required=False
+    )
+    update_type = serializers.ChoiceField(
+        choices=ItemUpdateType.choices(),
+        help_text="The type of update for the Item.",
+        allow_null=True,
+        required=False
+    )
+    webhook = serializers.URLField(
+        allow_null=True,
+        help_text="The webhook URL associated with the Item.",
+        max_length=255,
+        required=False
     )
 
 # item/get
@@ -108,9 +151,6 @@ class ItemRemoveResponseSerializer(serializers.Serializer):
     """
     request_id = serializers.CharField(
         help_text="A unique identifier for the request, used for troubleshooting."
-    )
-    removed = serializers.BooleanField(
-        help_text="Indicates if the Item was successfully removed."
     )
 
 # item/webhook/update

@@ -5,7 +5,7 @@ import django
 from kombu import Queue
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'accumate_backend.settings')
-django.setup()
+# django.setup()
 
 app = Celery(
     "accumate_backend",
@@ -14,7 +14,11 @@ app = Celery(
 
 # autodiscover tasks in installed apps
 #django.setup() # imports those installed apps
-app.autodiscover_tasks(['api', 'robin_stocks'], force=True)
+# app.autodiscover_tasks(['api', 'robin_stocks'], force=True)
+app.conf.imports = [
+    "api.tasks",
+    "robin_stocks.tasks",
+]
 
 # Explicitly disable dynamic reply queues, won't be able to use inspect command
 #app.conf.worker_direct = False

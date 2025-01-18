@@ -14,7 +14,6 @@ from pathlib import Path
 import environ
 import os
 from datetime import timedelta
-#import robin_stocks
 
 env = environ.Env()  
 
@@ -27,6 +26,14 @@ SECRET_KEY = env("SECRET_KEY", default="change_me")
 DEBUG = env("DEBUG", default=False)  
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
+DOMAIN = "127.0.0.1:8000"
+
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_HOST_USER = "accumate-verify@accumatewealth.com"
+EMAIL_HOST_PASSWORD = "tjeyouapnqagnvso"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 
 REST_FRAMEWORK = {
@@ -193,6 +200,7 @@ SQS_CONTROL_URL = env("SQS_CONTROL_URL", default=None)
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+AUTH_USER_MODEL = 'api.User'
 
 CORS_ALLOW_ALL_ORIGINS = True
 #mb change this eventually
