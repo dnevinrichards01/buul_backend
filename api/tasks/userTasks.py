@@ -1,7 +1,7 @@
 from celery import shared_task, chain
 import time
 from ..plaid_client import plaid_client
-from ..twilio_client import twilio_client
+# from ..twilio_client import twilio_client
 from django.core.cache import cache 
 from django.core.mail import send_mail
 
@@ -304,11 +304,12 @@ def send_verification_code(**kwargs):
             fail_silently=False,
         )
     else:
-        twilio_client.messages.create(
-            to = kwargs["sendTo"],
-            from_ = TWILIO_PHONE_NUMBER,
-            body = f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}"
-        )
+        return
+        # twilio_client.messages.create(
+        #     to = kwargs["sendTo"],
+        #     from_ = TWILIO_PHONE_NUMBER,
+        #     body = f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}"
+        # )
 
 @shared_task(name="send_waitlist_email")
 def send_waitlist_email(**kwargs):

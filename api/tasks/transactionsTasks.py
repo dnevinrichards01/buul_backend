@@ -1,12 +1,10 @@
 from celery import shared_task, chain
-from accumate_backend.settings import TWILIO_PHONE_NUMBER
 import robin_stocks.robinhood as r
 from django.core.cache import cache 
 from django.core.mail import send_mail
 from django.utils import timezone
 
 from ..plaid_client import plaid_client
-from ..twilio_client import twilio_client
 from ..jsonUtils import filter_jsons
 
 from datetime import datetime, timedelta
