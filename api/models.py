@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 import uuid
@@ -16,21 +17,29 @@ class User(AbstractUser):
         validators=[RegexValidator(regex=r'^\+?[1-9]\d{1,14}$', message='Enter a valid phone number.')],
     )
 
-class PasswordReset(models.Model):
-    email = models.EmailField(primary_key=True)
-    token = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)
-
 class WaitlistEmail(models.Model):
     email = models.EmailField(primary_key=True)
     date_enrolled = models.DateField(auto_now=True)
 
 class UserBrokerageInfo(models.Model):
     BROKERAGE_CHOICES = [
-        ('RH', 'Robinhood')
+        ('robinhood', 'robinhood')
+    ]
+    SYMBOL_CHOICES = [
+        ('VOO', 'VOO')
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     brokerage = models.CharField(choices=BROKERAGE_CHOICES, max_length=255)
+    symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255)
+
+class StockData(models.Model):
+    SYMBOL_CHOICES = [
+        ('VOO', 'VOO')
+    ]
+    symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255)
+    dailyPrice = ArrayField(models.FloatField(), default=list)
+    cursor = models.DateTimeField(auto_now=True)
+    startDate = models.DateTimeField(auto_now=True)
 
 class PlaidUser(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -48,26 +57,45 @@ class PlaidItem(models.Model):
 
 class PlaidCashbackTransaction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    cardAccountId = models.CharField(max_length=255)
-    transactionId = models.CharField(max_length=255)
+    account_id = models.CharField(max_length=255)
+    transaction_id = models.CharField(max_length=255)
     amount = models.FloatField()
-    withdrawAccountId = models.CharField(max_length=255) # check which is connected to brokerage
-    hasBalance = models.BooleanField(default=False)
+    # currency = models.CharField(max_length=10)
+    authorized_date =  models.DateTimeField(max_length=255)
+    deposited = models.BooleanField(default=False) 
 
 class RobinhoodCashbackDeposit(models.Model):
+    deposit_id = models.CharField(max_length=255)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    transactionId = models.CharField(max_length=255) # bank transfers
-    depositId = models.CharField(max_length=255)
-    depositState = models.CharField(choices=[], max_length=255)
-    deposited = models.BooleanField(default=False)
-
-class RobinhoodInvest(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    orderId = models.CharField(max_length=255)
-    orderState = models.CharField(choices=[], max_length=255)
-    price = models.FloatField()
-    quantity = models.FloatField()
+    transaction = models.ForeignKey(PlaidCashbackTransaction, on_delete=models.SET_NULL, null=True) # bank transfers
+    rh_account_id = models.CharField(max_length=255)
+    rh_account_ach = models.CharField(max_length=255)
+    plaid_account_id = models.CharField(max_length=255)
+    mask = models.CharField(max_length=4)
+    state = models.CharField(max_length=255)
+    amount = models.FloatField()
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+    expected_landing_datetime = models.DateTimeField()
+    cancel = models.CharField(max_length=255, null=True)
     invested = models.BooleanField(default=False)
+    # user canceled request state?
+
+class RobinhoodStockOrder(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    deposit = models.ForeignKey(RobinhoodCashbackDeposit, on_delete=models.SET_NULL, null=True)
+    order_id = models.CharField(max_length=255)
+    cancel = models.CharField(max_length=255, null=True)
+    instrument_id = models.CharField(max_length=255) # uid for security!!!!!
+    state = models.CharField(max_length=255) # 'queued', filled
+    side = models.CharField(max_length=255) # 'buy'
+    quantity = models.FloatField()
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField() # a bit after created_at. check if has changed to see if updated...
+    pending_cancel_open_agent = models.CharField(max_length=255, null=True)
+    requested_amount = models.FloatField()
+    executed_amount = models.FloatField(null=True)
+    user_cancel_request_state = models.CharField(max_length=255) # 'no_cancel_requested', 'order_finalized'
 
 
 

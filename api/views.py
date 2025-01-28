@@ -1,8 +1,9 @@
 # from django.contrib.auth.models import User
-from .models import User, WaitlistEmail, PlaidUser, PasswordReset
+from .models import User, WaitlistEmail, PlaidUser, UserBrokerageInfo
 from rest_framework.views import APIView
 from .serializers.accumateAccountSerializers import ResetPasswordRequestSerializer, \
-    ResetPasswordSerializer
+    ResetPasswordSerializer, VerificationCodeSerializer, WaitlistEmailSerializer, \
+    EmailPhoneValidationSerializer, UserBrokerageInfoSerializer
 from .serializers.accumateAccountSerializers import UserSerializer, WaitlistEmailSerializer
 from .serializers.PlaidSerializers.itemSerializers import ItemPublicTokenExchangeRequestSerializer
 from .serializers.PlaidSerializers.linkSerializers import \
@@ -20,17 +21,18 @@ from accumate_backend.settings import DOMAIN
 from celery import current_app, chain
 from functools import partial
 from django.db import transaction
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from .tasks import test_celery_task, plaid_item_public_token_exchange, \
+from .tasks.userTasks import plaid_item_public_token_exchange, \
     plaid_link_token_create, plaid_user_create, accumate_user_remove, \
-    plaid_user_remove, send_recovery_email
+    plaid_user_remove, send_verification_code, send_waitlist_email
+from .tasks.transactionsTasks import get_investment_graph_data
 
 import time
 from django.core.mail import send_mail
 from django.urls import reverse
+import secrets 
 
-
-
+def createVerificationCode():
+    return secrets.randbelow(999999) + 100000
 
 def healthCheck(request):
     return JsonResponse({"success": "healthy"}, status=200)
@@ -49,7 +51,7 @@ class CreateUserView(APIView):
         except Exception as e:
             return JsonResponse(e.args[0], status=400)
 
-
+# send them a confirmation email along with this??
 class AddToWaitlist(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -63,11 +65,67 @@ class AddToWaitlist(APIView):
             if WaitlistEmail.objects.filter(email=email).exists():
                 raise Exception("duplicate")
             serializer.save()
+
+            send_waitlist_email.apply_async(kwargs={"sendTo": email})
             return JsonResponse({"success": "email added"}, status=200)
         except Exception as e:
             return JsonResponse({"error": e.args[0]}, status=400)
 
+class EmailPhoneValidation(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
+    def get(self, request, *args, **kwargs):
+        serializer = VerificationCodeSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+        
+        code = serializer.validated_data["code"]
+        cached_code = cache.get(f"verify_code_{code}")
+        if cached_code is None:
+            return JsonResponse({"error": "Code is invalid or expired"})
+        else:
+            cache.delete(f"verify_code_{code}")
+            return JsonResponse({"success": "verification code valid"})
+
+
+    def post(self, request, *args, **kwargs):
+        serializer = EmailPhoneValidationSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+        
+        if 'email' in serializer.validated_data:
+            email = serializer.validated_data['email']
+            sms = None
+        elif 'sms' in serializer.validated_data:
+            email = None
+            sms = serializer.validated_data['sms']
+        else:
+            return JsonResponse({"error": "must return 'email' or 'sms'"}, status=400)
+        
+        code = createVerificationCode()
+
+        cache.delete(f"verify_code_{code}")
+        cache.set(
+            f"verify_code_{code}",
+            json.dumps({"email": email, "sms": sms}),
+            timeout=300
+        )
+
+        send_verification_code.apply_async(
+            kwargs = {
+                "useEmail": bool(email), 
+                "sendTo": email or sms,
+                "code": code
+            }
+        )
+
+        return JsonResponse({'success': 'verification code sent'}, status=200)
+    
 class RequestPasswordReset(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -79,30 +137,65 @@ class RequestPasswordReset(APIView):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
         
-        try:
+        if 'email' in serializer.validated_data:
             email = serializer.validated_data['email']
-            user = User.objects.get(email=email)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+            sms = None
+            try:
+                user = User.objects.get(email=email)
+            except Exception as e:
+                JsonResponse({"error": "user not found"}, status=400)
+        elif 'sms' in serializer.validated_data:
+            email = None
+            sms = serializer.validated_data['sms']
+            try:
+                user = User.objects.get(sms=sms)
+            except Exception as e:
+                JsonResponse({"error": "user not found"}, status=400)
+        else:
+            return JsonResponse({"error": "must return 'email' or 'sms'"}, status=400)
+        
+        code = createVerificationCode()
 
-        token_generator = PasswordResetTokenGenerator()
-        token = token_generator.make_token(user) 
-
-        reset_url = f"https://{DOMAIN}/resetpassword/{token}"
-
-        passwordReset, created = PasswordReset.objects.update_or_create(
-            email=email, 
-            token=token
+        cache.delete(f"verify_code_{code}")
+        cache.set(
+            f"verify_code_{code}",
+            json.dumps({"email": email, "sms": sms}),
+            timeout=300
         )
 
-        send_recovery_email.apply_async(kwargs={"email": email, "url": reset_url})
+        send_verification_code.apply_async(
+            kwargs = {
+                "useEmail": bool(email), 
+                "sendTo": email or sms,
+                "code": code
+            }
+        )
 
-        return JsonResponse({'success': 'We have sent you a link to reset your password'}, status=200)
-
+        return JsonResponse({'success': 'verification code sent'}, status=200)
 
 class ResetPassword(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
+
+    def get(self, request, *args, **kwargs):
+        serializer = VerificationCodeSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+        
+        code = serializer.validated_data["code"]
+        cached_code = cache.get(f"verify_code_{code}")
+        if cached_code is None:
+            raise JsonResponse({"error": "Code is invalid or expired"})
+        # refreshing code to last longer
+        cached_code = json.loads(cached_code)
+        cache.set(
+            f"verify_code_{code}",
+            json.dumps({"email": cached_code["email"], "sms": cached_code["sms"]}),
+            timeout=300
+        )
+        return JsonResponse({"success": "verification code valid"})
 
     def post(self, request, *args, **kwargs):
         serializer = ResetPasswordSerializer(data=request.data)
@@ -117,23 +210,24 @@ class ResetPassword(APIView):
         if new_password != confirm_password:
             return JsonResponse({"error": "Passwords do not match"}, status=400)
         
-        try:
-            token = kwargs['token']
-            reset_obj = PasswordReset.objects.get(token=token)
-        except:
-            return JsonResponse({'error':'Invalid token'}, status=400)
+        code = serializer.validated_data["code"]
+        cached_code = cache.get(f"verify_code_{code}")
+        if cached_code is None:
+            raise JsonResponse({"error": "Code is invalid or expired"})
+        cached_code = json.loads(cached_code)
         
         try:
-            user = User.objects.get(email=reset_obj.email)
-            user.set_password(serializer.validated_data['new_password'])
-            user.save()
-            reset_obj.delete()
-        except:
-            return JsonResponse({"error": str(e)}, status=400)
+            if cached_code["email"]:
+                user = User.objects.get(email=cached_code["email"])
+            else: 
+                user = User.objects.get(sms=cached_code["sms"])
+        except Exception as e:
+            return JsonResponse({"error": "user not found"}, status=400)
+        user.set_password(serializer.validated_data['new_password'])
+        user.save()
+        cache.delete(f"verify_code_{code}")
         
         return JsonResponse({'success':'Password updated'}, status=200)
-
-
 
 class PlaidItemPublicTokenExchange(APIView):
     permission_classes = [IsAuthenticated]
@@ -168,7 +262,6 @@ class PlaidItemPublicTokenExchange(APIView):
             return JsonResponse(json.loads(task_status), status=201)
         else:
             return JsonResponse({"error": "no cache value found"}, status=400)
-
 
 class PlaidLinkTokenCreate(APIView):
     permission_classes = [IsAuthenticated]
@@ -218,7 +311,6 @@ class PlaidLinkTokenCreate(APIView):
         else:
             return JsonResponse({"error": "no cache value found"}, status=400)
 
-
 class PlaidUserCreate(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -226,12 +318,11 @@ class PlaidUserCreate(APIView):
         # import pdb
         # breakpoint()
         
-        
         uid = self.request.user.id
 
         try:
             if PlaidUser.objects.filter(user__id=uid).count() != 0:
-                raise Exception("plaid user already exists for this account") 
+                raise Exception("plaid user already exists for this account")
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
     
@@ -251,7 +342,6 @@ class PlaidUserCreate(APIView):
             return JsonResponse(json.loads(task_status), status=201)
         else:
             return JsonResponse({"error": "no cache value found"}, status=400)
-
 
 class DeleteAccount(APIView):
     permission_classes = [IsAuthenticated]
@@ -283,18 +373,54 @@ class DeleteAccount(APIView):
         # }
         return JsonResponse({"error": "user not deleted"}, status=400)
 
+class BrokerageInvestment(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request, *args, **kwargs):
+        # import pdb
+        # breakpoint()
+        
+        uid = self.request.user.id
 
-
-def test_celery_task_view(request):
-    result = transaction.on_commit(
-        partial(
-            test_celery_task.apply_async,
-            kwargs={}
+        serializer = UserBrokerageInfoSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+        
+        userBrokerageInfo = UserBrokerageInfo(
+            user = User.objects.get(id=uid),
+            brokerage = serializer.validated_data["brokerage"],
+            symbol = serializer.validated_data["symbol"]
         )
-    )
-    return JsonResponse({"success": "celery applied if this came though immediately"}, status=201)
+        userBrokerageInfo.save()
 
-def test_placebo_task_view(request):
-    time.sleep(5)
-    return JsonResponse({"success": "celery not applied"}, status=201)
+        return JsonResponse({"success": "recieved"}, status=201)
+    
+class StockGraphData(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        uid = self.request.user.id
+
+        cache.delete(f"uid_{uid}_get_investment_graph_data")
+        cache.set(
+            f"uid_{uid}_get_investment_graph_data",
+            json.dumps({"message": "pending", "error": None}),
+            timeout=120
+        )
+        get_investment_graph_data.apply_async(uid)
+        return JsonResponse({"success": "recieved"}, status=201)
+    
+    def get(self, request, *args, **kwargs):
+        uid = self.request.user.id
+        task_status = cache.get(f"uid_{uid}_get_investment_graph_data")
+        if task_status:
+            return JsonResponse(json.loads(task_status), status=201)
+        else:
+            return JsonResponse({"error": "no cache value found"}, status=400)
+
+
+
+
+

@@ -2,17 +2,23 @@ from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from .errorSerializer import ErrorSerializer
 from .choices import LanguageChoices, CountryCodes, LinkTokenProductChoices
-import phonenumbers
+from phonenumbers import parse, is_valid_number, format_number, PhoneNumberFormat
 
 
 def e164_phone_number_validator(value):
     try:
-        parsed = phonenumbers.parse(value, None)
-        if not phonenumbers.is_valid_number(parsed):
+        parsed = parse(value, None)
+
+        if not is_valid_number(parsed):
             raise serializers.ValidationError("Invalid phone number")
-    except:
+        
+        formatted = format_number(parsed, PhoneNumberFormat.E164)
+        if value != formatted:
+            raise serializers.ValidationError("Phone number not in E.164 format")
+        
+        return value
+    except Exception as e:
         raise serializers.ValidationError("Invalid phone number")
-    return parsed
 
 # /link/create/token request
 

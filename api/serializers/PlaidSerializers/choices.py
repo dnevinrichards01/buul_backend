@@ -93,8 +93,6 @@ class LinkTokenProductChoices(Enum):
     def choices(cls):
         return [(choice.value, choice.name) for choice in cls]
 
-from enum import Enum
-
 class ProductChoices(Enum):
     ASSETS = 'assets'
     AUTH = 'auth'
@@ -156,3 +154,100 @@ class ItemAuthMethod(Enum):
     @classmethod
     def choices(cls):
         return [(choice.value, choice.name) for choice in cls]
+
+
+# accounts
+
+ACCOUNT_SUBTYPES = (
+    ('401a', '401a'),
+    ('401k', '401k'),
+    ('403B', '403B'),
+    ('457b', '457b'),
+    ('529', '529'),
+    ('auto', 'auto'),
+    ('brokerage', 'brokerage'),
+    ('business', 'business'),
+    ('cash isa', 'cash isa'),
+    ('cash management', 'cash management'),
+    ('cd', 'cd'),
+    ('checking', 'checking'),
+    ('commercial', 'commercial'),
+    ('construction', 'construction'),
+    ('consumer', 'consumer'),
+    ('credit card', 'credit card'),
+    ('crypto exchange', 'crypto exchange'),
+    ('ebt', 'ebt'),
+    ('education savings account', 'education savings account'),
+    ('fixed annuity', 'fixed annuity'),
+    ('gic', 'gic'),
+    ('health reimbursement arrangement', 'health reimbursement arrangement'),
+    ('home equity', 'home equity'),
+    ('hsa', 'hsa'),
+    ('isa', 'isa'),
+    ('ira', 'ira'),
+    ('keogh', 'keogh'),
+    ('lif', 'lif'),
+    ('life insurance', 'life insurance'),
+    ('line of credit', 'line of credit'),
+    ('lira', 'lira'),
+    ('loan', 'loan'),
+    ('lrif', 'lrif'),
+    ('lrsp', 'lrsp'),
+    ('money market', 'money market'),
+    ('mortgage', 'mortgage'),
+    ('mutual fund', 'mutual fund'),
+    ('non-custodial wallet', 'non-custodial wallet'),
+    ('non-taxable brokerage account', 'non-taxable brokerage account'),
+    ('other', 'other'),
+    ('other insurance', 'other insurance'),
+    ('other annuity', 'other annuity'),
+    ('overdraft', 'overdraft'),
+    ('paypal', 'paypal'),
+    ('payroll', 'payroll'),
+    ('pension', 'pension'),
+    ('prepaid', 'prepaid'),
+    ('prif', 'prif'),
+    ('profit sharing plan', 'profit sharing plan'),
+    ('rdsp', 'rdsp'),
+    ('resp', 'resp'),
+    ('retirement', 'retirement'),
+    ('rlif', 'rlif'),
+    ('roth', 'roth'),
+    ('roth 401k', 'roth 401k'),
+    ('rrif', 'rrif'),
+    ('rrsp', 'rrsp'),
+    ('sarsep', 'sarsep'),
+    ('savings', 'savings'),
+    ('sep ira', 'sep ira'),
+    ('simple ira', 'simple ira'),
+    ('sipp', 'sipp'), 
+    ('stock plan', 'stock plan'),
+    ('student', 'student'),
+    ('thrift savings plan', 'thrift savings plan'),
+    ('tfsa', 'tfsa'),
+    ('trust', 'trust'),
+    ('ugma', 'ugma'),
+    ('utma', 'utma'),
+    ('variable annuity', 'variable annuity'),
+)
+
+ACCOUNT_TYPES = (
+    ('brokerage', 'brokerage'),
+    ('credit', 'credit'),
+    ('depository', 'depository'),
+    ('loan', 'loan'),
+    ('investment', 'investment'),
+    ('other', 'other'),
+)
+
+ACCOUNT_VERIFICATION_STATUSES = (
+    ('pending_automatic_verification', 'pending_automatic_verification'),
+    ('pending_manual_verification', 'pending_manual_verification'),
+    ('manually_verified', 'manually_verified'),
+    ('automatically_verified', 'automatically_verified'),
+    ('verification_expired', 'verification_expired'),
+    ('verification_failed', 'verification_failed'),
+    ('database_insights_pass', 'database_insights_pass'),
+    ('database_insights_pass_with_caution', 'database_insights_pass_with_caution'),
+    ('database_insights_fail', 'database_insights_fail')
+)

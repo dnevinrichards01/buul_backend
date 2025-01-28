@@ -229,6 +229,11 @@ class TransactionSerializer(serializers.Serializer):
         required=False,
         help_text="The date the transaction was authorized."
     )
+    authorized_datetime = serializers.DateField(
+        allow_null=True,
+        required=False,
+        help_text="The date the transaction was authorized."
+    )
     pending = serializers.BooleanField(
         help_text="Indicates if the transaction is pending or posted."
     )
