@@ -1,432 +1,300 @@
-from django.shortcuts import render
-from django.contrib.auth.models import User
-from .models import Note, WaitlistEmail
-from rest_framework import generics
-from .serializers import UserSerializer, NoteSerializer, WaitlistEmailSerializer
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.http import HttpResponseBadRequest, HttpResponse
-from django.core.exceptions import ValidationError
+# from django.contrib.auth.models import User
+from .models import User, WaitlistEmail, PlaidUser, PasswordReset
 from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .serializers.balance_serializers import (
-    BalanceGetRequestSerializer,
-    BalanceGetResponseSerializer
-)
-from rest_framework.authentication import TokenAuthentication  # Or any other authentication class you use
-from .serializers import (
-    ItemRemoveRequestSerializer,
-    ItemRemoveResponseSerializer,
-    ItemWebhookUpdateRequestSerializer,
-    ItemWebhookUpdateResponseSerializer,
-    ItemPublicTokenExchangeRequestSerializer,
-    ItemPublicTokenExchangeResponseSerializer,
-    ItemAccessTokenInvalidateRequestSerializer,
-    ItemAccessTokenInvalidateResponseSerializer,
-    TransactionsSyncRequestSerializer,
-    TransactionsSyncResponseSerializer,
-    LinkTokenCreateRequestSerializer,
-    LinkTokenCreateResponseSerializer,
-    ErrorSerializer,
-)
-from plaid import Client
-from plaid.errors import PlaidError
-from .serializers import UserGetRequestSerializer, UserGetResponseSerializer
-import os
+from .serializers.accumateAccountSerializers import ResetPasswordRequestSerializer, \
+    ResetPasswordSerializer
+from .serializers.accumateAccountSerializers import UserSerializer, WaitlistEmailSerializer
+from .serializers.PlaidSerializers.itemSerializers import ItemPublicTokenExchangeRequestSerializer
+from .serializers.PlaidSerializers.linkSerializers import \
+    LinkTokenCreateRequestTransactionsSerializer, LinkTokenCreateRequestSerializer
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
-# Initialize Plaid client (Replace with your actual Plaid credentials)
-plaid_client = Client(
-    client_id=os.environ.get('PLAID_CLIENT_ID'),
-    secret=os.environ.get('PLAID_SECRET'),
-    environment=os.environ.get('PLAID_ENVIRONMENT', 'sandbox')
-)
-# Create your views here.
-class CreateUserView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [AllowAny]
+from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
+from django.core.exceptions import ValidationError
+from django.core.cache import cache
+import json
+import phonenumbers
+
+from accumate_backend.settings import DOMAIN
+from celery import current_app, chain
+from functools import partial
+from django.db import transaction
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from .tasks import test_celery_task, plaid_item_public_token_exchange, \
+    plaid_link_token_create, plaid_user_create, accumate_user_remove, \
+    plaid_user_remove, send_recovery_email
+
+import time
+from django.core.mail import send_mail
+from django.urls import reverse
 
 
-class NoteListCreate(generics.ListCreateAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Note.objects.filter(author=self.request.user)
-    
-    def perform_create(self, serializer):
-        if serializer.is_valid():
-            serializer.save(author=self.request.user)
-        else:
-            print(serializer.errors) #why not raise serializers.SerializerError?
 
-class NoteDelete(generics.DestroyAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return Note.objects.filter(author=self.request.user)
+def healthCheck(request):
+    return JsonResponse({"success": "healthy"}, status=200)
 
-class AddToWaitlist(generics.CreateAPIView):
-    queryset = WaitlistEmail.objects.all()
-    serializer_class = WaitlistEmailSerializer
+class CreateUserView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
 
-    def create(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
+        # Use the serializer to validate input data
+        serializer = UserSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            serializer.save() # error here indicates duplicate
+            return JsonResponse({"success": "user registered"}, status=200)
+        except Exception as e:
+            return JsonResponse(e.args[0], status=400)
+
+
+class AddToWaitlist(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request, *args, **kwargs):
         # check if valid email
-        serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            print(serializer.errors)
-            return HttpResponseBadRequest(serializer.errors)
-        # check if duplicate
-        email = serializer.validated_data['email']
-        if WaitlistEmail.objects.filter(email=email).exists():
-            return HttpResponseBadRequest("duplicate")
-        # save
-        serializer.save()
-        return HttpResponse(status=201)
+        serializer = WaitlistEmailSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            email = serializer.validated_data['email']
+            if WaitlistEmail.objects.filter(email=email).exists():
+                raise Exception("duplicate")
+            serializer.save()
+            return JsonResponse({"success": "email added"}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": e.args[0]}, status=400)
 
-# Balance Views
 
-class BalanceGetView(APIView):
-    """
-    View to handle /accounts/balance/get requests.
-    """
-    def post(self, request):
-        # Deserialize and validate the incoming request data
-        serializer = BalanceGetRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            # Process the request using Plaid's API (pseudo-code)
-            # response_data = plaid_client.Accounts.balance.get(**serializer.validated_data)
-            # For the purpose of this example, we'll mock response_data
-            response_data = {
-                "accounts": [...],  # Replace with actual account data
-                "item": {...},      # Replace with actual item data
-                "request_id": "unique-request-id"
-            }
-            # Serialize the response data
-            response_serializer = BalanceGetResponseSerializer(data=response_data)
-            if response_serializer.is_valid():
-                return Response(response_serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(response_serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class RequestPasswordReset(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
-# Users Views
+    def post(self, request, *args, **kwargs):
+        serializer = ResetPasswordRequestSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+        
+        try:
+            email = serializer.validated_data['email']
+            user = User.objects.get(email=email)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
 
-class UserGetView(APIView):
-    """
-    View to handle /users/get requests.
-    """
-    def post(self, request):
-        # Deserialize and validate the incoming request data
-        serializer = UserGetRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            # Process the request using Plaid's API (pseudo-code)
-            # response_data = plaid_client.Users.get(**serializer.validated_data)
-            # For the purpose of this example, we'll mock response_data
-            response_data = {
-                "user": {
-                    "names": [
-                        {
-                            "full_name": "John Doe",
-                            "first_name": "John",
-                            "last_name": "Doe",
-                            "middle_name": None,
-                            "suffix": None,
-                            "prefix": None
-                        }
-                    ],
-                    "emails": [
-                        {
-                            "data": "john.doe@example.com",
-                            "primary": True,
-                            "type": "personal"
-                        }
-                    ],
-                    "phone_numbers": [
-                        {
-                            "data": "+1234567890",
-                            "primary": True,
-                            "type": "mobile"
-                        }
-                    ],
-                    "addresses": [
-                        {
-                            "data": {
-                                "street": "123 Main St",
-                                "city": "Anytown",
-                                "region": "CA",
-                                "postal_code": "12345",
-                                "country": "US"
-                            },
-                            "primary": True,
-                            "type": "home"
-                        }
-                    ]
-                },
-                "request_id": "unique-request-id",
-                "error": None
-            }
-            # Serialize the response data
-            response_serializer = UserGetResponseSerializer(data=response_data)
-            if response_serializer.is_valid():
-                return Response(response_serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(response_serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        token_generator = PasswordResetTokenGenerator()
+        token = token_generator.make_token(user) 
 
-#Items views
+        reset_url = f"https://{DOMAIN}/resetpassword/{token}"
 
-class ItemRemoveView(APIView):
-    """
-    View to handle /item/remove requests.
-    """
-    # Uncomment the following lines if you want to enforce authentication
-    # authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticated]
+        passwordReset, created = PasswordReset.objects.update_or_create(
+            email=email, 
+            token=token
+        )
 
-    def post(self, request):
-        # Deserialize and validate the incoming request data
-        serializer = ItemRemoveRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            access_token = serializer.validated_data['access_token']
-            try:
-                # Call Plaid's /item/remove endpoint
-                response = plaid_client.Item.remove(access_token)
-                # Serialize the response data
-                response_serializer = ItemRemoveResponseSerializer(data=response)
-                if response_serializer.is_valid():
-                    return Response(response_serializer.data, status=status.HTTP_200_OK)
-                else:
-                    # Handle serialization errors
-                    return Response(response_serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            except PlaidError as e:
-                # Handle Plaid errors
-                error_data = e.to_dict()
-                error_serializer = ErrorSerializer(data=error_data)
-                if error_serializer.is_valid():
-                    return Response(error_serializer.data, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    return Response(
-                        {'error': 'An unknown error occurred.'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
-        else:
-            # Return validation errors
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        send_recovery_email.apply_async(kwargs={"email": email, "url": reset_url})
 
-class ItemWebhookUpdateView(APIView):
-    """
-    View to handle /item/webhook/update requests.
-    """
-    # Uncomment the following lines if you want to enforce authentication
-    # authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticated]
+        return JsonResponse({'success': 'We have sent you a link to reset your password'}, status=200)
 
-    def post(self, request):
-        # Deserialize and validate the incoming request data
-        serializer = ItemWebhookUpdateRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            access_token = serializer.validated_data['access_token']
-            webhook = serializer.validated_data['webhook']
-            try:
-                # Call Plaid's /item/webhook/update endpoint
-                response = plaid_client.Item.webhook_update(access_token, webhook)
-                # Serialize the response data
-                response_serializer = ItemWebhookUpdateResponseSerializer(data=response)
-                if response_serializer.is_valid():
-                    return Response(response_serializer.data, status=status.HTTP_200_OK)
-                else:
-                    return Response(response_serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            except PlaidError as e:
-                # Handle Plaid errors
-                error_data = e.to_dict()
-                error_serializer = ErrorSerializer(data=error_data)
-                if error_serializer.is_valid():
-                    return Response(error_serializer.data, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    return Response(
-                        {'error': 'An unknown error occurred.'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ItemPublicTokenExchangeView(APIView):
-    """
-    View to handle /item/public_token/exchange requests.
-    """
-    # Uncomment the following lines if you want to enforce authentication
-    # authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticated]
+class ResetPassword(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
-    def post(self, request):
-        # Deserialize and validate the incoming request data
+    def post(self, request, *args, **kwargs):
+        serializer = ResetPasswordSerializer(data=request.data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+        
+        new_password = serializer.validated_data['new_password']
+        confirm_password = serializer.validated_data['confirm_password']
+        if new_password != confirm_password:
+            return JsonResponse({"error": "Passwords do not match"}, status=400)
+        
+        try:
+            token = kwargs['token']
+            reset_obj = PasswordReset.objects.get(token=token)
+        except:
+            return JsonResponse({'error':'Invalid token'}, status=400)
+        
+        try:
+            user = User.objects.get(email=reset_obj.email)
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            reset_obj.delete()
+        except:
+            return JsonResponse({"error": str(e)}, status=400)
+        
+        return JsonResponse({'success':'Password updated'}, status=200)
+
+
+
+class PlaidItemPublicTokenExchange(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        # import pdb
+        # breakpoint()
+        # Use the serializer to validate input data
         serializer = ItemPublicTokenExchangeRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            public_token = serializer.validated_data['public_token']
-            try:
-                # Call Plaid's /item/public_token/exchange endpoint
-                response = plaid_client.Item.public_token.exchange(public_token)
-                # Serialize the response data
-                response_serializer = ItemPublicTokenExchangeResponseSerializer(data=response)
-                if response_serializer.is_valid():
-                    return Response(response_serializer.data, status=status.HTTP_200_OK)
-                else:
-                    return Response(response_serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            except PlaidError as e:
-                # Handle Plaid errors
-                error_data = e.to_dict()
-                error_serializer = ErrorSerializer(data=error_data)
-                if error_serializer.is_valid():
-                    return Response(error_serializer.data, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    return Response(
-                        {'error': 'An unknown error occurred.'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+        # Access the validated data
+        validated_data = serializer.validated_data
+        uid = self.request.user.id
+        validated_data['uid'] = uid
+
+        cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
+        cache.set(
+            f"uid_{uid}_plaid_item_public_token_exchange",
+            json.dumps({"message": "pending", "error": None}),
+            timeout=120
+        )
+        plaid_item_public_token_exchange.apply_async(kwargs=validated_data)
+        return JsonResponse({"success": "recieved"}, status=201)
+    
+    def get(self, request, *args, **kwargs):
+        uid = self.request.user.id
+        task_status = cache.get(f"uid_{uid}_plaid_item_public_token_exchange")
+        if task_status:
+            return JsonResponse(json.loads(task_status), status=201)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"error": "no cache value found"}, status=400)
 
-class ItemAccessTokenInvalidateView(APIView):
-    """
-    View to handle /item/access_token/invalidate requests.
-    """
-    # Uncomment the following lines if you want to enforce authentication
-    # authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        # Deserialize and validate the incoming request data
-        serializer = ItemAccessTokenInvalidateRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            access_token = serializer.validated_data['access_token']
-            try:
-                # Call Plaid's /item/access_token/invalidate endpoint
-                response = plaid_client.Item.access_token.invalidate(access_token)
-                # Serialize the response data
-                response_serializer = ItemAccessTokenInvalidateResponseSerializer(data=response)
-                if response_serializer.is_valid():
-                    return Response(response_serializer.data, status=status.HTTP_200_OK)
-                else:
-                    return Response(response_serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            except PlaidError as e:
-                # Handle Plaid errors
-                error_data = e.to_dict()
-                error_serializer = ErrorSerializer(data=error_data)
-                if error_serializer.is_valid():
-                    return Response(error_serializer.data, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    return Response(
-                        {'error': 'An unknown error occurred.'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
+class PlaidLinkTokenCreate(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        # import pdb
+        # breakpoint()
+        # Use the serializer to validate input data
+        data = request.data.copy()
+
+        try:
+            phone_number = request.data.get("user", {}).get("phone_number")
+            parsed_phone_number = phonenumbers.parse(phone_number, None)
+            if not phonenumbers.is_valid_number(parsed_phone_number):
+                raise Exception("Invalid phone number.")
+            data["user"]["phone_number"] = phonenumbers.format_number(
+                parsed_phone_number, 
+                phonenumbers.PhoneNumberFormat.E164
+            )
+        except Exception as e:
+            return JsonResponse({"error": "invalid phone number"}, status=400)
+        
+        serializer = LinkTokenCreateRequestSerializer(data=data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+        # Access the validated data
+        validated_data = serializer.validated_data
+        uid = self.request.user.id
+        validated_data['uid'] = uid
+
+        cache.delete(f"uid_{uid}_plaid_link_token_create")
+        cache.set(
+            f"uid_{uid}_plaid_link_token_create",
+            json.dumps({"message": "pending", "error": None}),
+            timeout=120
+        )
+        plaid_link_token_create.apply_async(kwargs=validated_data)
+        return JsonResponse({"success": "recieved"}, status=201)
+    
+    def get(self, request, *args, **kwargs):
+        uid = self.request.user.id
+        task_status = cache.get(f"uid_{uid}_plaid_link_token_create")
+        if task_status:
+            return JsonResponse(json.loads(task_status), status=201)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"error": "no cache value found"}, status=400)
 
-#Transactions Sync Views
 
-class TransactionsSyncView(APIView):
-    """
-    View to handle /transactions/sync requests.
-    """
-    # Uncomment the following lines if you want to enforce authentication
-    # authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticated]
+class PlaidUserCreate(APIView):
+    permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        # Deserialize and validate the incoming request data
-        serializer = TransactionsSyncRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            access_token = serializer.validated_data['access_token']
-            cursor = serializer.validated_data.get('cursor')
-            count = serializer.validated_data.get('count')
-            options = serializer.validated_data.get('options', {})
-            try:
-                # Prepare options for Plaid API call
-                plaid_options = {}
-                if options.get('include_personal_finance_category'):
-                    plaid_options['include_personal_finance_category'] = options['include_personal_finance_category']
-                if options.get('include_original_description'):
-                    plaid_options['include_original_description'] = options['include_original_description']
+    def post(self, request, *args, **kwargs):
+        # import pdb
+        # breakpoint()
+        
+        
+        uid = self.request.user.id
 
-                # Call Plaid's /transactions/sync endpoint
-                response = plaid_client.Transactions.sync(
-                    access_token,
-                    cursor=cursor,
-                    count=count,
-                    options=plaid_options
-                )
-
-                # Serialize the response data
-                response_serializer = TransactionsSyncResponseSerializer(data=response)
-                if response_serializer.is_valid():
-                    return Response(response_serializer.data, status=status.HTTP_200_OK)
-                else:
-                    # Handle serialization errors
-                    return Response(response_serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            except PlaidError as e:
-                # Handle Plaid errors
-                error_data = e.to_dict()
-                error_serializer = ErrorSerializer(data=error_data)
-                if error_serializer.is_valid():
-                    return Response(error_serializer.data, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    return Response(
-                        {'error': 'An unknown error occurred.'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
+        try:
+            if PlaidUser.objects.filter(user__id=uid).count() != 0:
+                raise Exception("plaid user already exists for this account") 
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+    
+        cache.delete(f"uid_{uid}_plaid_user_create")
+        cache.set(
+            f"uid_{uid}_plaid_user_create",
+            json.dumps({"message": "pending", "error": None}),
+            timeout=120
+        )
+        plaid_user_create.apply_async(kwargs={"uid": uid})
+        return JsonResponse({"success": "recieved"}, status=201)
+    
+    def get(self, request, *args, **kwargs):
+        uid = self.request.user.id
+        task_status = cache.get(f"uid_{uid}_plaid_user_create")
+        if task_status:
+            return JsonResponse(json.loads(task_status), status=201)
         else:
-            # Return validation errors
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-#LinkTokenCreate Views
+            return JsonResponse({"error": "no cache value found"}, status=400)
 
-class LinkTokenCreateView(APIView):
-    """
-    View to handle /link/token/create requests.
-    """
-    # Uncomment the following lines if you want to enforce authentication
-    # authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        # Deserialize and validate the incoming request data
-        serializer = LinkTokenCreateRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            try:
-                # Prepare data for Plaid API call
-                link_token_request_data = serializer.validated_data
-                # Flatten the 'user' dictionary
-                link_token_request_data['user'] = link_token_request_data['user']
-                # Remove any None values (Plaid API may not accept nulls)
-                link_token_request_data = {
-                    k: v for k, v in link_token_request_data.items() if v is not None
-                }
-                # Call Plaid's /link/token/create endpoint
-                response = plaid_client.LinkToken.create(link_token_request_data)
-                # Serialize the response data
-                response_serializer = LinkTokenCreateResponseSerializer(data=response)
-                if response_serializer.is_valid():
-                    return Response(response_serializer.data, status=status.HTTP_200_OK)
-                else:
-                    # Handle serialization errors
-                    return Response(response_serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            except PlaidError as e:
-                # Handle Plaid errors
-                error_data = e.to_dict()
-                error_serializer = ErrorSerializer(data=error_data)
-                if error_serializer.is_valid():
-                    return Response(error_serializer.data, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    return Response(
-                        {'error': 'An unknown error occurred.'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
-        else:
-            # Return validation errors
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class DeleteAccount(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        # import pdb
+        # breakpoint()
+        
+        uid = self.request.user.id
+
+        cache.delete(f"uid_{uid}_accumate_user_remove")
+        cache.set(
+            f"uid_{uid}_accumate_user_remove",
+            json.dumps({"message": "pending", "error": None}),
+            timeout=120
+        )
+        chain(
+            plaid_user_remove.s(uid),
+            accumate_user_remove.si(uid)
+        ).apply_async()
+        # accumate_user_remove.apply_async(kwargs={"uid": uid})
+        return JsonResponse({"success": "recieved"}, status=201)
+    
+    def get(self, request, *args, **kwargs):
+        # should never be successfully called (can't authenticate non-existent user)
+        # {
+        #     "detail": "User not found",
+        #     "code": "user_not_found"
+        # }
+        return JsonResponse({"error": "user not deleted"}, status=400)
+
+
+
+
+def test_celery_task_view(request):
+    result = transaction.on_commit(
+        partial(
+            test_celery_task.apply_async,
+            kwargs={}
+        )
+    )
+    return JsonResponse({"success": "celery applied if this came though immediately"}, status=201)
+
+def test_placebo_task_view(request):
+    time.sleep(5)
+    return JsonResponse({"success": "celery not applied"}, status=201)

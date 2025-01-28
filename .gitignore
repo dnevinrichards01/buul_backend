@@ -1,1 +1,10 @@
 .DS_Store
+env/
+.idea/
+__pycache__/
+*.py[cod]
+*$py.class
+.vscode/
+.DS_Store  
+.AppleDouble  
+.LSOverride

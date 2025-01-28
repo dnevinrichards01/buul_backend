@@ -1,0 +1,16 @@
+FROM postgres:17-alpine
+
+COPY ./certs/out/db.key /var/lib/postgresql
+COPY ./certs/out/db.crt /var/lib/postgresql
+
+WORKDIR /conf_files/
+COPY pg_hba.conf pg_hba.conf
+COPY postgresql.conf postgresql.conf
+COPY entrypoint_postgres.sh entrypoint_postgres.sh 
+
+RUN chown 70:70 /var/lib/postgresql/db.key && chmod 640 /var/lib/postgresql/db.key
+RUN chown 0:70 /var/lib/postgresql/db.crt && chmod 640 /var/lib/postgresql/db.crt
+
+RUN chown 70:70 /conf_files/entrypoint_postgres.sh
+USER 70
+ENTRYPOINT ["bash", "/conf_files/entrypoint_postgres.sh"]

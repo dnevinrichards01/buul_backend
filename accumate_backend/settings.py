@@ -15,10 +15,7 @@ import environ
 import os
 from datetime import timedelta
 
-env = environ.Env(  
-    # set casting, default value  
-    DEBUG=(bool, False)  
-)  
+env = environ.Env()  
 
 BASE_DIR = Path(__file__).resolve().parent.parent  
 # Take environment variables from .env file  
@@ -29,21 +26,15 @@ SECRET_KEY = env("SECRET_KEY", default="change_me")
 DEBUG = env("DEBUG", default=False)  
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
+DOMAIN = "127.0.0.1:8000"
 
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_HOST_USER = "accumate-verify@accumatewealth.com"
+EMAIL_HOST_PASSWORD = "tjeyouapnqagnvso"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-mc=#(8rmrx(7u-i+srkv87gqrixmu2x6!g-6pknd7!@bdq@p2a'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ["*"]
-#mb change this later
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -52,6 +43,9 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',  # Enable only JSON responses
+    ),
 }
 
 SIMPLE_JWT = {
@@ -68,10 +62,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_beat',
 
     'api',
     'rest_framework',
     'corsheaders',
+    'django_celery_results',
+    'robin_stocks'
 ]
 
 MIDDLEWARE = [
@@ -109,13 +106,38 @@ WSGI_APPLICATION = 'accumate_backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
+db_cred_dict = dict([pair.split(":") for pair in env("DB_CREDENTIALS").replace('"',"").strip("{").strip("}").split(",")])
 DATABASES = {
-    "default": env.db(default="sqlite:///db.sqlite3"),
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': env.str("DB_NAME"),
+        'USER': db_cred_dict.get("username"),
+        'PASSWORD': db_cred_dict.get("password"),
+        'HOST': env.str("DB_HOST"),
+        'PORT': env.str("DB_PORT"),
+        # 'OPTIONS': {
+        #     'sslmode': 'verify-full',  # Enforces server certificate validation
+        #     'sslrootcert': env("DB_CAFILE_PATH")  # Path to the server's certificate
+        # }
+    }
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://" + env("REDIS_URL"),
+        # "OPTIONS": {
+        #     'SSL_CERT_REQS': 'CERT_REQUIRED',  # Enforce server certificate validation
+        #     'SSL_CA_CERTS': env("REDIS_CAFILE_PATH")
+        # }
+    }
 }
 
 
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# SECURE_SSL_REDIRECT = True
+# SESSION_COOKIE_SECURE = True
+# SECURE_REFERRER_POLICY = "strict-origin"
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 LOGGING = {  
     "version": 1,  
@@ -166,13 +188,24 @@ WHITENOISE_AUTOREFRESH = DEBUG
 MEDIA_ROOT = env("MEDIA_ROOT", default=BASE_DIR / "media")  
 MEDIA_URL = env("MEDIA_PATH", default="/media/")
 
+REDIS_URL = 'redis://' + env("REDIS_URL", default=None)# + '?ssl_cert_reqs=CERT_REQUIRED'
+REDIS_CAFILE_PATH = env("REDIS_CAFILE_PATH", default=None)
+
+SQS_LONG_RUNNING_URL = env("SQS_LONG_RUNNING_URL", default=None)
+SQS_USER_INTERACTION_URL = env("SQS_USER_INTERACTION_URL", default=None)
+SQS_DLQ_URL = env("SQS_DLQ_URL", default=None)
+SQS_CONTROL_URL = env("SQS_CONTROL_URL", default=None)
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+AUTH_USER_MODEL = 'api.User'
 
 CORS_ALLOW_ALL_ORIGINS = True
 #mb change this eventually
 CORS_ALLOWS_CREDENTIALS = True
 #? 
+DJANGO_CELERY_RESULTS_TASK_ID_MAX_LENGTH = 255
+
 
