@@ -15,10 +15,7 @@ import environ
 import os
 from datetime import timedelta
 
-env = environ.Env(  
-    # set casting, default value  
-    DEBUG=(bool, False)  
-)  
+env = environ.Env()  
 
 BASE_DIR = Path(__file__).resolve().parent.parent  
 # Take environment variables from .env file  
@@ -26,9 +23,17 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = env("SECRET_KEY", default="change_me")  
 
-DEBUG = env("DEBUG", default=True)  
+DEBUG = env("DEBUG", default=False)  
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
+
+
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_HOST_USER = "accumate-verify@accumatewealth.com"
+EMAIL_HOST_PASSWORD = "tjeyouapnqagnvso"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 
 REST_FRAMEWORK = {
@@ -38,6 +43,9 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',  # Enable only JSON responses
+    ),
 }
 
 SIMPLE_JWT = {
@@ -54,11 +62,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_beat',
 
     'api',
     'rest_framework',
     'corsheaders',
-    'django_celery_results'
+    'django_celery_results',
+    'robin_stocks'
 ]
 
 MIDDLEWARE = [
@@ -112,16 +122,16 @@ DATABASES = {
     }
 }
 
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-#         "LOCATION": "rediss://" + env("REDIS_URL"),
-#         "OPTIONS": {
-#             'SSL_CERT_REQS': 'CERT_REQUIRED',  # Enforce server certificate validation
-#             'SSL_CA_CERTS': env("REDIS_CAFILE_PATH")
-#         }
-#     }
-# }
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "rediss://" + env("REDIS_URL") + '?ssl_cert_reqs=CERT_REQUIRED',
+        "OPTIONS": {
+            'SSL_CERT_REQS': 'CERT_REQUIRED',  # Enforce server certificate validation
+            'SSL_CA_CERTS': env("REDIS_CAFILE_PATH")
+        }
+    }
+}
 
 
 SECURE_SSL_REDIRECT = True
@@ -178,7 +188,6 @@ WHITENOISE_AUTOREFRESH = DEBUG
 MEDIA_ROOT = env("MEDIA_ROOT", default=BASE_DIR / "media")  
 MEDIA_URL = env("MEDIA_PATH", default="/media/")
 
-REDIS_URL = 'rediss://' + env("REDIS_URL", default=None) + '?ssl_cert_reqs=CERT_REQUIRED'
 REDIS_CAFILE_PATH = env("REDIS_CAFILE_PATH", default=None)
 
 SQS_LONG_RUNNING_URL = env("SQS_LONG_RUNNING_URL", default=None)
@@ -190,6 +199,7 @@ SQS_CONTROL_URL = env("SQS_CONTROL_URL", default=None)
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+AUTH_USER_MODEL = 'api.User'
 
 CORS_ALLOW_ALL_ORIGINS = True
 #mb change this eventually
@@ -198,3 +208,6 @@ CORS_ALLOWS_CREDENTIALS = True
 DJANGO_CELERY_RESULTS_TASK_ID_MAX_LENGTH = 255
 
 
+TWILIO_PHONE_NUMBER = env("TWILIO_PHONE_NUMBER", default="")
+TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID", default="")
+TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN", default="")

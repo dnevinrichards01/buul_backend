@@ -5,6 +5,7 @@ import django
 from kombu import Queue
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'accumate_backend.settings')
+# django.setup()
 
 app = Celery(
     "accumate_backend",
@@ -13,7 +14,14 @@ app = Celery(
 
 # autodiscover tasks in installed apps
 #django.setup() # imports those installed apps
-app.autodiscover_tasks(['api'], force=True)
+# app.autodiscover_tasks(['api', 'robin_stocks'], force=True)
+app.conf.imports = [
+    "api.tasks.userTasks",
+    "api.tasks.investTasks",
+    "api.tasks.depositTasks",
+    "api.tasks.transactionsTasks",
+    "robin_stocks.tasks",
+]
 
 # Explicitly disable dynamic reply queues, won't be able to use inspect command
 #app.conf.worker_direct = False
@@ -32,9 +40,6 @@ app = Celery(
             },
             "ab-dlq": {
                 "url": SQS_DLQ_URL
-            },
-            "ab-control": {
-                "url": SQS_CONTROL_URL
             }
         },
     },
@@ -45,6 +50,7 @@ app = Celery(
 app.conf.broker_connection_retry_on_startup = True
 app.conf.task_default_queue = 'ab-long-running'
 app.conf.result_backend = 'django-db'
+app.conf.result_extended = True
 app.conf.accept_content = ["application/json"] 
 app.conf.task_serializer = "json"
 app.conf.result_serializer = "json" 
@@ -53,4 +59,4 @@ app.conf.broker_connection_timeout = 30
 app.conf.worker_prefetch_multiplier = 1
 #app.conf.redbeat_redis_url = REDIS_URL
 
-app.conf.control_queue = 'ab-control'
+#app.conf.control_queue = 'ab-control'
