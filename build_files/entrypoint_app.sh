@@ -15,6 +15,4 @@ until redis-cli -h $REDIS_HOST -p $REDIS_PORT ping | grep -q "PONG"; do
 done
 echo "Redis is ready!"
 
-#python manage.py runserver 0.0.0.0:80 > log.txt 2> log_err.txt &
-#exec tail -f /dev/null
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf

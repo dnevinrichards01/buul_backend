@@ -18,4 +18,4 @@ else
     echo "migrations already made"
 fi
 
-exec tail -f /dev/null
+exec sleep 300 &

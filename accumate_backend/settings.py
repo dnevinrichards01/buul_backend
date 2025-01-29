@@ -14,6 +14,7 @@ from pathlib import Path
 import environ
 import os
 from datetime import timedelta
+import ssl
 
 env = environ.Env()  
 
@@ -127,8 +128,8 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": "redis://" + env("REDIS_URL"),
         # "OPTIONS": {
-        #     'SSL_CERT_REQS': 'CERT_REQUIRED',  # Enforce server certificate validation
-        #     'SSL_CA_CERTS': env("REDIS_CAFILE_PATH")
+        #     'ssl_cert_reqs': ssl.CERT_REQUIRED,  # Enforce server certificate validation
+        #     'ssl_ca_certs': env("REDIS_CAFILE_PATH")
         # }
     }
 }

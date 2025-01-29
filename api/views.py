@@ -17,7 +17,6 @@ from django.core.cache import cache
 import json
 import phonenumbers
 
-from accumate_backend.settings import DOMAIN
 from celery import current_app, chain
 from functools import partial
 from django.db import transaction
