@@ -1,4 +1,4 @@
-from django.core.exceptions import ValidationErrors
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
 class ErrorSerializer(serializers.Serializer):

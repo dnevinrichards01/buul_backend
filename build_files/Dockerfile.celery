@@ -24,6 +24,7 @@ RUN bash /code/conf_files/aws/install -i /usr/local/aws-cli -b /usr/local/bin
 RUN rm -rf /code/conf_files/awscliv2.sig /code/conf_files/awscliv2.zip /code/conf_files/aws/
 
 RUN pip install -r requirements.txt
+RUN pip install -e /code/build_files/accumate_robinstocks
 COPY conf_files/supervisord_celery.conf /etc/supervisor/conf.d/supervisord.conf
 RUN chown www-data: /var/log/ /var/www/
 RUN chmod 777 /etc

@@ -1,6 +1,6 @@
-from django.core.exceptions import ValidationErrors
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
-from errorSerializers import ErrorSerializer
+from .errorSerializer import ErrorSerializer
 
 # Plaid Webhook Serializer
 class WebhookSerializer(serializers.Serializer):

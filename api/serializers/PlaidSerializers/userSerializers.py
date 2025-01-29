@@ -1,6 +1,6 @@
-from django.core.exceptions import ValidationErrors
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
-from errorSerializer import ErrorSerializer
+from .errorSerializer import ErrorSerializer
 
 # Plaid User Serializers
 
@@ -88,3 +88,47 @@ class UserGetResponseSerializer(serializers.Serializer):
     user = UserIdentitySerializer(help_text="User identity information.")
     request_id = serializers.CharField(help_text="A unique identifier for the request, used for troubleshooting.")
     error = ErrorSerializer(allow_null=True, help_text="Error object containing error details, if any.")
+
+
+
+class UserCreateRequestSerializer(serializers.Serializer):
+    """
+    Serializer for the request data sent to /user/create endpoint.
+    """
+    client_user_id = serializers.CharField(
+        help_text="A unique ID representing the end user",
+        max_length=128
+    )
+
+class UserCreateResponseSerializer(serializers.Serializer):
+    """
+    Serializer for the response data recieved from /user/create endpoint.
+    """
+    request_id = serializers.CharField(
+        help_text="A unique identifier for the request"
+    )
+    user_token = serializers.CharField(
+        help_text="The user token associated with the User data is being requested for."
+    )
+    user_id = serializers.CharField(
+        help_text="The Plaid user_id of the User associated with this webhook, warning, or error"
+    )
+
+
+
+class UserRemoveRequestSerializer(serializers.Serializer):
+    """
+    Serializer for the request data sent to /user/remove endpoint.
+    """
+    client_user_id = serializers.CharField(
+        help_text="A unique ID representing the end user",
+        max_length=128
+    )
+
+class UserRemoveResponseSerializer(serializers.Serializer):
+    """
+    Serializer for the response data recieved from /user/remove endpoint.
+    """
+    request_id = serializers.CharField(
+        help_text="A unique identifier for the request"
+    )

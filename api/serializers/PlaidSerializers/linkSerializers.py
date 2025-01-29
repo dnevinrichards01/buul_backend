@@ -1,7 +1,24 @@
-from django.core.exceptions import ValidationErrors
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
-from errorSerializer import ErrorSerializer
-from choices import LanguageChoices, CountryCodes
+from .errorSerializer import ErrorSerializer
+from .choices import LanguageChoices, CountryCodes, LinkTokenProductChoices
+from phonenumbers import parse, is_valid_number, format_number, PhoneNumberFormat
+
+
+def e164_phone_number_validator(value):
+    try:
+        parsed = parse(value, None)
+
+        if not is_valid_number(parsed):
+            raise serializers.ValidationError("Invalid phone number")
+        
+        formatted = format_number(parsed, PhoneNumberFormat.E164)
+        if value != formatted:
+            raise serializers.ValidationError("Phone number not in E.164 format")
+        
+        return value
+    except Exception as e:
+        raise serializers.ValidationError("Invalid phone number")
 
 # /link/create/token request
 
@@ -10,6 +27,7 @@ class LinkTokenCreateRequestUserSerializer(serializers.Serializer):
     Serializer for the 'user' field in the LinkTokenCreateRequest.
     """
     client_user_id = serializers.CharField(
+        required=False,
         help_text="A unique ID representing the end user. Used for logging and analytics."
     )
     legal_name = serializers.CharField(
@@ -25,7 +43,8 @@ class LinkTokenCreateRequestUserSerializer(serializers.Serializer):
     phone_number = serializers.CharField(
         required=False,
         allow_null=True,
-        help_text="The user's phone number."
+        help_text="The user's phone number.",
+        validators=[e164_phone_number_validator]
     )
     ssn = serializers.CharField(
         required=False,
@@ -63,7 +82,7 @@ class LinkTokenCreateRequestTransactionsSerializer(serializers.Serializer):
     """
     Serializer for the 'transactions' field in the LinkTokenCreateRequest.
     """
-    daysRequested = serializers.IntegerField(
+    days_requested = serializers.IntegerField(
         min_value=30, 
         max_value=730,
         help_text="The maximum number of days of transaction history to \
@@ -75,23 +94,22 @@ class LinkTokenCreateRequestSerializer(serializers.Serializer):
     Serializer for the request data sent to /link/token/create endpoint.
     """
     client_name = serializers.CharField(
+        required=False,
         help_text="The name of your application."
     )
-    language = serializers.CharField(
+    language = serializers.ChoiceField(
         help_text="The language that Link should be displayed in.",
-        choices=LanguageChoices.CHOICES
+        choices=LanguageChoices.choices()
     )
     country_codes = serializers.ListField(
-        child=serializers.CharField(max_length=2),
+        child=serializers.ChoiceField(choices=CountryCodes.choices()),
         help_text="List of country codes supported by your application.",
-        choices=CountryCodes.CHOICES
     )
     user = LinkTokenCreateRequestUserSerializer(
         help_text="An object containing information about the end user."
     )
     products = serializers.ListField(
-        child=serializers.CharField(),
-        required=False,
+        child=serializers.ChoiceField(choices=LinkTokenProductChoices.choices()),
         help_text="List of Plaid products to use."
     )
     webhook = serializers.URLField(
