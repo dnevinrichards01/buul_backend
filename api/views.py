@@ -49,7 +49,7 @@ class CreateUserView(APIView):
             serializer.save() # error here indicates duplicate
             return JsonResponse({"success": "user registered"}, status=200)
         except Exception as e:
-            return JsonResponse(e.args[0], status=400)
+            return JsonResponse({"error": e.args[0]}, status=400)
 
 # send them a confirmation email along with this??
 class AddToWaitlist(APIView):
