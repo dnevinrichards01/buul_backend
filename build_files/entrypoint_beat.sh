@@ -13,4 +13,6 @@ until redis-cli -h $REDIS_HOST -p $REDIS_PORT --tls ping | grep -q "PONG"; do
 done
 echo "Redis is ready!"
 
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+
+
+exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf

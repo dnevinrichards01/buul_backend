@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
  curl nano python3-pip gettext chrpath libssl-dev libxft-dev postgresql-client supervisor \
  libfreetype6 libfreetype6-dev libfontconfig1 libfontconfig1-dev sudo ufw systemd \
  python3-venv python3-dev libpq-dev postgresql postgresql-contrib nginx systemd-sysv \
- snapd redis-tools openssl libcap2-bin gpg less \
+ snapd redis-tools openssl libcap2-bin gpg less certbot \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /code/
 RUN pip install wheel
@@ -31,9 +31,12 @@ RUN mkdir /run/gunicorn/
 RUN chown www-data: /var/log/ /var/log/nginx /var/lib/nginx /var/www/
 RUN chown www-data: /etc/nginx /etc/nginx/conf.d /etc/nginx/nginx.conf
 RUN chmod 777 /etc
-RUN mkdir /etc/letsencrypt /etc/letsencrypt/live /etc/letsencrypt/live/accumate-backend.link/
+RUN mkdir -p /etc/letsencrypt /etc/letsencrypt/live \
+ /etc/letsencrypt/live/accumate-backend.link/ /var/lib/letsencrypt
 COPY conf_files/fullchain.pem /etc/letsencrypt/live/accumate-backend.link/fullchain.pem
 COPY conf_files/privkey.pem /etc/letsencrypt/live/accumate-backend.link/privkey.pem
+RUN chown www-data: /etc/letsencrypt /var/lib/letsencrypt /etc/letsencrypt/live
+RUN chmod 744 /etc/letsencrypt /etc/letsencrypt/live
 RUN mkdir /run/nginx/
 RUN chown www-data: /run/nginx/ /run/gunicorn/
 RUN chmod 775 /var/run/ /run

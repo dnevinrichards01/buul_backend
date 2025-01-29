@@ -16,4 +16,4 @@ else
     echo "migrations already made"
 fi
 
-exec wait 600 &
+exec sleep 300 &
