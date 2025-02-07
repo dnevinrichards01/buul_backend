@@ -50,13 +50,14 @@ class StockOrderSerializer(serializers.Serializer):
             raise ValidationError("instrument_url")
         return url
     
-class DepositFundsToRobinhoodResponseSerializer(serializers.Serializer):
+class DepositSerializer(serializers.Serializer):
     ach_relationship = serializers.CharField() # the account
     id = serializers.CharField()
     url = serializers.CharField()
     cancel = serializers.CharField() 
     amount = serializers.FloatField()
-    status_description = serializers.CharField() # ''
+    direction = serializers.ChoiceField()
+    status_description = serializers.CharField(allow_null=True) # ''
     state = serializers.CharField() # pending
     rhs_state = serializers.CharField() # requested
     created_at = serializers.DateTimeField() 
@@ -78,44 +79,6 @@ class DepositFundsToRobinhoodResponseSerializer(serializers.Serializer):
             raise ValidationError("ach_relationship url")
         return cancel_url
 
-class GetBankTransfersResponseSerializer(serializers.Serializer):
-    id = serializers.CharField()
-    # cancel: None
-    ach_relationship = serializers.CharField() 
-    amount = serializers.FloatField() #: 1.00
-    direction = serializers.ChoiceField(choices=["deposit"])
-    state = serializers.CharField() # completed
-    rhs_state = serializers.CharField() # completed
-    status_description = serializers.CharField(allow_blank=True) # ''
-    # scheduled: False
-    created_at = serializers.DateTimeField()
-    expected_landing_datetime = serializers.DateTimeField()
-
-    def validate_ach_relationship(self, relationship_url):
-        if relationship_url[:44] != "https://api.robinhood.com/ach/relationships/":
-            raise ValidationError("ach_relationship url")
-        return relationship_url
-
-# class MyModelSerializer(serializers.ModelSerializer):
-#     # Define the input field (not in the model)
-#     status = serializers.CharField(write_only=True)
-
-#     class Meta:
-#         model = MyModel
-#         fields = ['status', 'is_special']
-
-#     def create(self, validated_data):
-#         # Transform 'status' into 'is_special'
-#         status = validated_data.pop('status', None)
-#         validated_data['is_special'] = status == 'special'
-#         return super().create(validated_data)
-
-#     def update(self, instance, validated_data):
-#         # Transform 'status' into 'is_special' during updates
-#         status = validated_data.pop('status', None)
-#         if status is not None:
-#             validated_data['is_special'] = status == 'special'
-#         return super().update(instance, validated_data)
 
 
 # 'name': 'Plaid Checking', 

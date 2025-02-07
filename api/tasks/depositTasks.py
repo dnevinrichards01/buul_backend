@@ -4,7 +4,7 @@ import robin_stocks.robinhood as r
 from django.utils import timezone
 
 from ..plaid_client import plaid_client
-from ..twilio_client import twilio_client
+# from ..twilio_client import twilio_client
 from ..jsonUtils import filter_jsons
 
 from datetime import datetime, timedelta
@@ -16,7 +16,7 @@ from plaid.model.accounts_balance_get_request import AccountsBalanceGetRequest
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \
     RobinhoodCashbackDeposit
 from ..serializers.rhSerializers import GetLinkedBankAccountsResponseSerializer, \
-    GetBankTransfersResponseSerializer, DepositFundsToRobinhoodResponseSerializer
+    DepositSerializer
 from ..serializers.PlaidSerializers.balanceSerializers import \
     BalanceGetResponseSerializer, AccountsGetResponseSerializer
 # retry all of these bc sometimes you get 
@@ -41,7 +41,7 @@ def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount):
     result = r.deposit_funds_to_robinhood_account(session, ach_relationship, amount)
     
     try:
-        serializer = DepositFundsToRobinhoodResponseSerializer(data=result)
+        serializer = DepositSerializer(data=result)
         serializer.is_valid(raise_exception=True)
     except Exception as e:
         try:
@@ -72,7 +72,7 @@ def rh_get_bank_transfers(uid, eq={}, gt={}, lt={}, lte={}, gte={},
     result = r.get_bank_transfers(session)
     
     try:
-        serializer = GetBankTransfersResponseSerializer(data=result, many=True)
+        serializer = DepositSerializer(data=result, many=True)
         serializer.is_valid(raise_exception=True)
     except Exception as e:
         return {"error": f"{str(e)}"}

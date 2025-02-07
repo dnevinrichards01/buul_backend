@@ -238,23 +238,25 @@ def find_cashback(uid):
 # stock graph data
 @shared_task(name="get_investment_graph_data")
 def get_investment_graph_data(uid, symbol):
+    # import pdb 
+    # breakpoint()
     try:
-        robinhoodInvestments = RobinhoodInvest.objects \
-            .filter(user__id=uid, invested=True) \
+        orders = RobinhoodStockOrder.objects \
+            .filter(user__id=uid, state="filled") \
             .order_by('updated_at')
     except Exception as e:
-        return {"error": f"could not find robinhoodInvest object for that {uid}"} 
+        return {"error": f"could not find robinhoodInvest object for user {uid}"} 
     
-    if robinhoodInvestments.size() == 0:
+    if orders.exists() == 0:
         return {"error": f"{uid} has no investments"}
     
-    start_date = robinhoodInvestments.first().updated_at - timedelta(days=1)
+    start_date = orders.first().updated_at - timedelta(days=1)
     total_quantity = {}
     previous_index = {}
     all_stock_prices = {}
     vector_length = 0
-    for i in range(len(robinhoodInvestments) + 1):
-        investment = robinhoodInvestments[i]
+    for i in range(len(orders) + 1):
+        investment = orders[i]
 
         if investment.symbol not in total_quantity:
             total_quantity[investment.symbol] = 0
@@ -282,7 +284,7 @@ def get_investment_graph_data(uid, symbol):
         
         if i == 0:
             vector_length = len(prices)
-        if i == len(robinhoodInvestments):
+        if i == len(orders):
             current_index = None
         
         prices[previous_index:current_index] *= total_quantity
