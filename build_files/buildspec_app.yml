@@ -1,15 +1,6 @@
 version: 0.2
 
 phases:
-  # connectivity_test:
-  #   commands:
-  #     - echo "Testing S3 connectivity..."
-  #     - curl -v https://codepipeline-us-west-1-887129366479.s3.us-west-1.amazonaws.com/ab-codepipeline-migr/SourceArti/ADDF3OA
-  #     - dig codepipeline-us-west-1-887129366479.s3.us-west-1.amazonaws.com
-  #     - nslookup codepipeline-us-west-1-887129366479.s3.us-west-1.amazonaws.com
-  #     - echo "Manually downloading source artifact..."
-  #     - aws s3 cp s3://codepipeline-us-west-1-887129366479/ab-codepipeline-migr/SourceArti/ADDF3OA
-    
   pre_build:
     commands:
       - echo Logging / auth in to Amazon ECR
