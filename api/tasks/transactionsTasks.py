@@ -202,7 +202,7 @@ def transactions_identify_cashback(transactions_response, transactions_sync=True
             for transaction in page['added' if transactions_sync else 'transactions']:
                 cashback_transactions.append(transaction)
     
-    transaction['pending'] == False
+    transaction['pending'] == False #?
     eq = {"pending": [False]}
     gt = {"amount": [0]}
     is_cashback = {"func": is_cashback, "filterset":["name"]}

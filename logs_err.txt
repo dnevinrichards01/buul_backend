@@ -1,0 +1,110 @@
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+[11/Feb/2025 08:24:12] "POST /api/user/register/ HTTP/1.1" 200 45
+[11/Feb/2025 08:24:13] "POST /api/token/ HTTP/1.1" 200 582
+[11/Feb/2025 08:24:21] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+
+def backend_cleanup():
+    return 1
+
+
+def transactions_sync(uid, item_ids=0, transactions_by_item_id=1, update_cursor=2, page_size=3):
+    return 1
+
+
+def chain(*args, **kwargs):
+    return 1
+
+
+def send_waitlist_email(**kwargs):
+    return 1
+
+
+def refresh_stock_data(symbols=0, start_date=1, end_date=2):
+    return 1
+
+
+def plaid_link_token_create(**kwargs):
+    return 1
+
+
+def accumulate(self, *args, **kwargs):
+    return 1
+
+
+def accumate_user_remove(uid):
+    return 1
+
+
+def plaid_user_create(**kwargs):
+    return 1
+
+
+def chord(self, header, body, partial_args=0, interval=1, countdown=2, max_retries=3, eager=4, **kwargs):
+    return 1
+
+
+def unlock_chord(self, group_id, callback, interval=0, max_retries=1, result=2, Result=3, GroupResult=4, result_from_tuple=5, **kwargs):
+    return 1
+
+
+def transactions_get(uid, start_date_str, end_date_str, item_ids=0, transactions_by_item_id=1, page_size=2):
+    return 1
+
+
+def xmap(task, it):
+    return 1
+
+
+def plaid_item_public_token_exchange(**kwargs):
+    return 1
+
+
+def transactions_categories_sum(transactions_response, transactions_sync=0, personal_finance_categories=1):
+    return 1
+
+
+def refresh_robinhood():
+    return 1
+
+
+def xstarmap(task, it):
+    return 1
+
+
+def send_verification_code(**kwargs):
+    return 1
+
+
+def get_investment_graph_data(uid, symbol):
+    return 1
+
+
+def plaid_user_remove(uid):
+    return 1
+
+
+def plaid_item_remove(uid, item_id):
+    return 1
+
+
+def chunks(task, it, n):
+    return 1
+
+
+def login_robinhood(**kwargs):
+    return 1
+
+
+def group(self, tasks, result, group_id, partial_args, add_to_parent=0):
+    return 1
+
+[11/Feb/2025 08:24:54] "POST /api/plaid/usercreate/ HTTP/1.1" 201 38
+[11/Feb/2025 08:24:56] "GET /api/plaid/usercreate/ HTTP/1.1" 201 37
+[11/Feb/2025 08:24:56] "POST /api/plaid/linktokencreate/ HTTP/1.1" 201 38
+[11/Feb/2025 08:24:58] "GET /api/plaid/linktokencreate/ HTTP/1.1" 201 82
+[11/Feb/2025 08:26:05] "POST /api/plaid/publictokenexchange/ HTTP/1.1" 201 38
+[11/Feb/2025 08:26:07] "GET /api/plaid/publictokenexchange/ HTTP/1.1" 201 38

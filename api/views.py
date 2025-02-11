@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
-from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
 from django.core.cache import cache
 import json
 import phonenumbers
@@ -33,6 +33,13 @@ import secrets
 def createVerificationCode():
     return secrets.randbelow(999999) + 100000
 
+def cached_task_status(cached_string):
+    cached_value = json.loads(cached_string)
+    if cached_value["success"] is None and cached_value["error"] is not None:
+        return 400
+    else:
+        return 201
+
 def healthCheck(request):
     return JsonResponse({"success": "healthy"}, status=200)
 
@@ -42,13 +49,34 @@ class CreateUserView(APIView):
 
     def post(self, request, *args, **kwargs):
         # Use the serializer to validate input data
+
         serializer = UserSerializer(data=request.data)
         try:
+            
             serializer.is_valid(raise_exception=True)
-            serializer.save() # error here indicates duplicate
-            return JsonResponse({"success": "user registered"}, status=200)
+            serializer.save()
+            return JsonResponse(
+                {"success": "user registered", "error": None}, 
+                status=200
+            )
+        except ValidationError as e:
+            error_messages = {}
+            unfiltered_error_messages = e.detail
+            for field in unfiltered_error_messages.keys():
+                if field in ["email", "password", "phone_number", "full_name"]:
+                    if len(unfiltered_error_messages[field]) >= 1:
+                        error_message = unfiltered_error_messages[field][0]
+                        if error_message[:4] == "user": #fix grammar for duplicates message
+                            error_message = "A " + error_message
+                        error_messages[field] = error_message
+                    else:
+                        error_messages[field] = None
+            return JsonResponse(
+                {"success": None, "error": error_messages}, 
+                status=200
+            )
         except Exception as e:
-            return JsonResponse({"error": e.args[0]}, status=400)
+            return JsonResponse({}, status=400)
 
 # send them a confirmation email along with this??
 class AddToWaitlist(APIView):
@@ -228,6 +256,28 @@ class ResetPassword(APIView):
         
         return JsonResponse({'success':'Password updated'}, status=200)
 
+class GetUserInfo(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        # brokerage, etf (symbol), full_name, email, phone_number
+        try:
+            userBrokerageInfo = UserBrokerageInfo.objects.get(user__id=user.id)
+            brokerage, etf = userBrokerageInfo.brokerage, userBrokerageInfo.symbol
+        except Exception as e:
+            brokerage, etf = None, None
+        return JsonResponse(
+            {
+                "full_name": user.full_name,
+                "email": user.email,
+                "phone_number": user.phone_number,
+                "brokerage": brokerage,
+                "etf": etf
+            }, 
+            status=200
+        )
+        
 class PlaidItemPublicTokenExchange(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -238,8 +288,15 @@ class PlaidItemPublicTokenExchange(APIView):
         serializer = ItemPublicTokenExchangeRequestSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+        except ValidationError as e:
+            return JsonResponse(
+                {
+                    "success": None, 
+                    "error": json.dumps(e.detail)
+                }, 
+                status=400
+            )
+        
         # Access the validated data
         validated_data = serializer.validated_data
         uid = self.request.user.id
@@ -248,19 +305,28 @@ class PlaidItemPublicTokenExchange(APIView):
         cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
         cache.set(
             f"uid_{uid}_plaid_item_public_token_exchange",
-            json.dumps({"message": "pending", "error": None}),
+            json.dumps({"success": None, "error": None}),
             timeout=120
         )
         plaid_item_public_token_exchange.apply_async(kwargs=validated_data)
-        return JsonResponse({"success": "recieved"}, status=201)
+        return JsonResponse({"success": "recieved", "error": None}, status=201)
     
     def get(self, request, *args, **kwargs):
         uid = self.request.user.id
         task_status = cache.get(f"uid_{uid}_plaid_item_public_token_exchange")
         if task_status:
-            return JsonResponse(json.loads(task_status), status=201)
+            return JsonResponse(
+                json.loads(task_status),
+                status=cached_task_status(task_status)
+            )
         else:
-            return JsonResponse({"error": "no cache value found"}, status=400)
+            return JsonResponse(
+                {
+                    "success": None, 
+                    "error": "no cache value found"
+                }, 
+                status=400
+            )
 
 class PlaidLinkTokenCreate(APIView):
     permission_classes = [IsAuthenticated]
@@ -269,46 +335,106 @@ class PlaidLinkTokenCreate(APIView):
         # import pdb
         # breakpoint()
         # Use the serializer to validate input data
-        data = request.data.copy()
+        # data = request.data.copy()
+
+        user = self.request.user
 
         try:
-            phone_number = request.data.get("user", {}).get("phone_number")
-            parsed_phone_number = phonenumbers.parse(phone_number, None)
-            if not phonenumbers.is_valid_number(parsed_phone_number):
-                raise Exception("Invalid phone number.")
-            data["user"]["phone_number"] = phonenumbers.format_number(
-                parsed_phone_number, 
-                phonenumbers.PhoneNumberFormat.E164
+            PlaidUser.objects.get(user__id=user.id)
+        except Exception:
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": "This user does not yet have a plaid user object"
+                }, 
+                status = 400
             )
-        except Exception as e:
-            return JsonResponse({"error": "invalid phone number"}, status=400)
+
+
+        data = {
+            "user": {
+                "phone_number": user.phone_number,
+                "email_address": user.email
+            },
+            "client_name": "Accumate",
+            "products": ["transactions"],
+            "transactions": {
+                "days_requested": 100
+            },
+            "country_codes": ["US"],
+            "language": "en"
+        }
+        # try:
+        #     phone_number = request.data.get("user", {}).get("phone_number")
+        #     parsed_phone_number = phonenumbers.parse(phone_number, None)
+        #     if not phonenumbers.is_valid_number(parsed_phone_number):
+        #         raise Exception("Invalid phone number.")
+        #     data["user"]["phone_number"] = phonenumbers.format_number(
+        #         parsed_phone_number, 
+        #         phonenumbers.PhoneNumberFormat.E164
+        #     )
+        # except Exception as e:
+        #     return JsonResponse(
+        #         {
+        #             "success": None,
+        #             "error": "invalid phone number"
+        #         }, 
+        #         status=400
+        #     )
         
         serializer = LinkTokenCreateRequestSerializer(data=data)
         try:
             serializer.is_valid(raise_exception=True)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+        except ValidationError as e:
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": json.dumps(e.detail)
+                },
+                status=400
+            )
         # Access the validated data
         validated_data = serializer.validated_data
-        uid = self.request.user.id
+        uid = user.id
         validated_data['uid'] = uid
 
         cache.delete(f"uid_{uid}_plaid_link_token_create")
         cache.set(
             f"uid_{uid}_plaid_link_token_create",
-            json.dumps({"message": "pending", "error": None}),
+            json.dumps({
+                "success": None, 
+                "error": None
+            }),
             timeout=120
         )
         plaid_link_token_create.apply_async(kwargs=validated_data)
-        return JsonResponse({"success": "recieved"}, status=201)
+        return JsonResponse(
+            {
+                "success": "recieved", 
+                "error": None
+            }, 
+            status=201
+        )
     
     def get(self, request, *args, **kwargs):
         uid = self.request.user.id
         task_status = cache.get(f"uid_{uid}_plaid_link_token_create")
         if task_status:
-            return JsonResponse(json.loads(task_status), status=201)
+            return JsonResponse(
+                json.loads(task_status),
+                status=cached_task_status(task_status)
+            )
         else:
-            return JsonResponse({"error": "no cache value found"}, status=400)
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": "no cache value found"
+                }, 
+                status=400
+            )
+
+
+
 
 class PlaidUserCreate(APIView):
     permission_classes = [IsAuthenticated]
@@ -321,26 +447,47 @@ class PlaidUserCreate(APIView):
 
         try:
             if PlaidUser.objects.filter(user__id=uid).count() != 0:
-                raise Exception("plaid user already exists for this account")
+                raise Exception("Plaid user already exists for this account")
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+            cache.delete(f"uid_{uid}_plaid_user_create")
+            cache.set(
+                f"uid_{uid}_plaid_user_create",
+                json.dumps({"success": "created", "error": None}),
+                timeout=120
+            )
+            return JsonResponse(
+                {
+                    "success": "already exists",
+                    "error": None
+                }, 
+                status=200
+            )
     
         cache.delete(f"uid_{uid}_plaid_user_create")
         cache.set(
             f"uid_{uid}_plaid_user_create",
-            json.dumps({"message": "pending", "error": None}),
+            json.dumps({"success": None, "error": None}),
             timeout=120
         )
         plaid_user_create.apply_async(kwargs={"uid": uid})
-        return JsonResponse({"success": "recieved"}, status=201)
+        return JsonResponse({"success": "recieved", "error": None}, status=201)
     
     def get(self, request, *args, **kwargs):
         uid = self.request.user.id
         task_status = cache.get(f"uid_{uid}_plaid_user_create")
         if task_status:
-            return JsonResponse(json.loads(task_status), status=201)
+            return JsonResponse(
+                json.loads(task_status),
+                status=cached_task_status(task_status)
+            )
         else:
-            return JsonResponse({"error": "no cache value found"}, status=400)
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": "no cache value found"
+                }, 
+                status=200
+            )
 
 class DeleteAccount(APIView):
     permission_classes = [IsAuthenticated]
@@ -372,7 +519,7 @@ class DeleteAccount(APIView):
         # }
         return JsonResponse({"error": "user not deleted"}, status=400)
 
-class BrokerageInvestment(APIView):
+class SetBrokerageInvestment(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
@@ -385,16 +532,21 @@ class BrokerageInvestment(APIView):
         try:
             serializer.is_valid(raise_exception=True)
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+            return JsonResponse({"success": None, "error": str(e)}, status=400)
         
-        userBrokerageInfo = UserBrokerageInfo(
-            user = User.objects.get(id=uid),
-            brokerage = serializer.validated_data["brokerage"],
-            symbol = serializer.validated_data["symbol"]
-        )
+        try :
+            userBrokerageInfo = UserBrokerageInfo.objects.get(user__id=uid)
+            userBrokerageInfo.brokerage = serializer.validated_data["brokerage"]
+            userBrokerageInfo.symbol = serializer.validated_data["symbol"]
+        except:
+            userBrokerageInfo = UserBrokerageInfo(
+                user = User.objects.get(id=uid),
+                brokerage = serializer.validated_data["brokerage"],
+                symbol = serializer.validated_data["symbol"]
+            )
         userBrokerageInfo.save()
 
-        return JsonResponse({"success": "recieved"}, status=201)
+        return JsonResponse({"success": "recieved", "error": None}, status=201)
     
 class StockGraphData(APIView):
     permission_classes = [IsAuthenticated]

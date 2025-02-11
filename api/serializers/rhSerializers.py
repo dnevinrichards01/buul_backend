@@ -56,7 +56,7 @@ class DepositSerializer(serializers.Serializer):
     url = serializers.CharField()
     cancel = serializers.CharField() 
     amount = serializers.FloatField()
-    direction = serializers.ChoiceField()
+    direction = serializers.CharField()
     status_description = serializers.CharField(allow_null=True) # ''
     state = serializers.CharField() # pending
     rhs_state = serializers.CharField() # requested

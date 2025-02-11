@@ -1,6 +1,7 @@
 # from django.contrib.auth.models import User
 from rest_framework import serializers
-from ..models import WaitlistEmail, User
+from ..models import WaitlistEmail, User, BROKERAGE_CHOICES, SYMBOL_CHOICES
+
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .PlaidSerializers.linkSerializers import e164_phone_number_validator
@@ -8,7 +9,7 @@ from .PlaidSerializers.linkSerializers import e164_phone_number_validator
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'email']
+        fields = ['phone_number', 'full_name', 'password', 'email', 'username']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -66,10 +67,13 @@ class WaitlistEmailSerializer(serializers.ModelSerializer):
         
 class UserBrokerageInfoSerializer(serializers.Serializer):
     BROKERAGE_CHOICES = [
-        ('Robinhood', 'Robinhood')
+        ('robinhood', 'robinhood')
     ]
     SYMBOL_CHOICES = [
-        ('VOO', 'VOO')
+        ('VOO', 'VOO'),
+        ('QQQ', 'QQQ'),
+        ('VOOG', 'VOOG'),
+        ('IBIT', 'IBIT')
     ]
     brokerage = serializers.ChoiceField(choices=BROKERAGE_CHOICES)
     symbol = serializers.ChoiceField(choices=SYMBOL_CHOICES)

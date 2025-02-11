@@ -8,7 +8,7 @@ def get_plaid_client():
     """
     # Configuration for the Plaid API
     configuration = Configuration(
-        host="https://sandbox.plaid.com",  # Change to production or development as needed
+        host="https://production.plaid.com",  # Change to production or development as needed
         api_key={
             "clientId": PLAID_CLIENT_ID,
             "secret": PLAID_SECRET

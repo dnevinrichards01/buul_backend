@@ -18,7 +18,7 @@ def e164_phone_number_validator(value):
         
         return value
     except Exception as e:
-        raise serializers.ValidationError("Invalid phone number")
+        raise serializers.ValidationError("Enter a valid phone number. It should be no longer than 15 digits and contain your country code'")
 
 # /link/create/token request
 

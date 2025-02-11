@@ -59,7 +59,7 @@ def plaid_item_public_token_exchange(**kwargs):
         cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
         cache.set(
             f"uid_{uid}_plaid_item_public_token_exchange",
-            json.dumps({"message": "success", "error": None}), 
+            json.dumps({"success": "recieved", "error": None}), 
             timeout=120
         )
         return "cached plaid public token exchange success"
@@ -68,7 +68,7 @@ def plaid_item_public_token_exchange(**kwargs):
         cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
         cache.set(
             f"uid_{uid}_plaid_item_public_token_exchange",
-            json.dumps({"message": "error", "error": error.get("error_code")}), 
+            json.dumps({"success": None, "error": f"{e.status}: {str(e)}"}), 
             timeout=120
         )
         return f"cached plaid public token exchange error: {error.get("error_code")}"
@@ -76,7 +76,7 @@ def plaid_item_public_token_exchange(**kwargs):
         cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
         cache.set(
             f"uid_{uid}_plaid_item_public_token_exchange",
-            json.dumps({"message": "error", "error": str(e)}), 
+            json.dumps({"success": None, "error": "error: " + str(e)}), 
             timeout=120
         )
         return f"cached plaid public token exchange error: {str(e)}"
@@ -90,11 +90,11 @@ def plaid_link_token_create(**kwargs):
     
     try:
         exchange_request = LinkTokenCreateRequest(
-            client_name="Accumate",
+            client_name=kwargs["client_name"],
             language=kwargs['language'],
-            country_codes=[CountryCode(val) for val in kwargs['country_codes']], # Specify the countries
+            country_codes=[CountryCode(code) for code in kwargs["country_codes"]], # Specify the countries
             user=LinkTokenCreateRequestUser(
-                client_user_id=PlaidUser.objects.get(user__id=uid).client_user_id,  # Replace with a unique identifier for the user
+                client_user_id=PlaidUser.objects.get(user__id=uid).clientUserId,  # Replace with a unique identifier for the user
                 phone_number=kwargs['user']['phone_number'],
                 email_address=kwargs['user']['email_address']
             ),
@@ -113,7 +113,7 @@ def plaid_link_token_create(**kwargs):
         cache.set(
             f"uid_{uid}_plaid_link_token_create",
             json.dumps({
-                "message": serializer.validated_data["link_token"], 
+                "success": serializer.validated_data["link_token"], 
                 "error": None
             }), 
             timeout=120
@@ -124,7 +124,10 @@ def plaid_link_token_create(**kwargs):
         cache.delete(f"uid_{uid}_plaid_link_token_create")
         cache.set(
             f"uid_{uid}_plaid_link_token_create",
-            json.dumps({"message": "error", "error": error.get("error_code")}), 
+            json.dumps({
+                "success": None, 
+                "error": f"{e.status}: {str(e)}"
+            }), 
             timeout=120
         )
         return f"cached plaid link token create error: {error.get("error_code")}"
@@ -132,7 +135,10 @@ def plaid_link_token_create(**kwargs):
         cache.delete(f"uid_{uid}_plaid_link_token_create")
         cache.set(
             f"uid_{uid}_plaid_link_token_create",
-            json.dumps({"message": "error", "error": str(e)}), 
+            json.dumps({
+                "success": None, 
+                "error": "error: " + str(e)
+            }), 
             timeout=120
         )
         return f"cached plaid link token create error: {str(e)}"
@@ -168,8 +174,6 @@ def plaid_user_create(**kwargs):
     uid = kwargs.pop('uid')
     
     try:
-        plaidUser = PlaidUser(user=User.objects.get(id=uid))
-
         duplicate_client_id_count = float('inf')
         while duplicate_client_id_count > 0:
             client_user_id = str(uuid.uuid4())
@@ -186,6 +190,7 @@ def plaid_user_create(**kwargs):
         )
         serializer.is_valid(raise_exception=True)
 
+        plaidUser = PlaidUser(user=User.objects.get(id=uid))
         plaidUser.clientUserId = client_user_id
         plaidUser.userId = serializer.validated_data['user_id']
         plaidUser.userToken = serializer.validated_data['user_token']
@@ -195,7 +200,7 @@ def plaid_user_create(**kwargs):
         cache.set(
             f"uid_{uid}_plaid_user_create",
             json.dumps({
-                "message": "success", 
+                "success": "success", 
                 "error": None
             }), 
             timeout=120
@@ -206,7 +211,7 @@ def plaid_user_create(**kwargs):
         cache.delete(f"uid_{uid}_plaid_user_create")
         cache.set(
             f"uid_{uid}_plaid_user_create",
-            json.dumps({"message": "error", "error": error.get("error_code")}), 
+            json.dumps({"success": None, "error": f"{e.status}: {str(e)}"}), 
             timeout=120
         )
         return f"cached plaid user create error: {error.get("error_code")}"
@@ -214,7 +219,7 @@ def plaid_user_create(**kwargs):
         cache.delete(f"uid_{uid}_plaid_user_create")
         cache.set(
             f"uid_{uid}_plaid_user_create",
-            json.dumps({"message": "error", "error": str(e)}), 
+            json.dumps({"success": None, "error": "error: " + str(e)}), 
             timeout=120
         )
         return f"cached plaid user create error: {str(e)}"

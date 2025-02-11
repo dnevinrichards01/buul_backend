@@ -56,7 +56,7 @@ services:
       context: .
       dockerfile: build_files/Dockerfile.app
     ports:
-      - "127.0.0.1:8000:443"
+      - "0.0.0.0:8000:443"
   celery:
     <<: *app
     depends_on:

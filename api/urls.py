@@ -15,6 +15,7 @@ urlpatterns = [
     path('user/requestpasswordreset/', views.RequestPasswordReset.as_view(), name='request_password_reset'),
     path('user/resetpassword/', views.ResetPassword.as_view(), name='reset_password'),
     path('user/emailphonevalidation/', views.EmailPhoneValidation.as_view(), name='email_phone_validation'),
-    path('user/brokerageinfo/', views.BrokerageInvestment.as_view(), name='brokerage_info'),
-    path('user/getinvestmentdata/', views.StockGraphData.as_view(), name='get_investment_data')
+    path('user/userinfo/', views.GetUserInfo.as_view(), name='user_info'),
+    path('user/getinvestmentdata/', views.StockGraphData.as_view(), name='get_investment_data'),
+    path('user/setbrokerageinvestment/', views.SetBrokerageInvestment.as_view(), name='get_brokerage_etf')
 ]
