@@ -10,12 +10,15 @@ from accumate_backend.settings import TWILIO_PHONE_NUMBER
 from plaid.model.item_public_token_exchange_request import ItemPublicTokenExchangeRequest
 from plaid.model.link_token_create_request import LinkTokenCreateRequest
 from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
+from plaid.model.account_subtypes import AccountSubtypes
+from plaid.model.link_token_account_filters import LinkTokenAccountFilters
 from plaid.model.item_remove_request import ItemRemoveRequest
 from plaid.model.user_create_request import UserCreateRequest
 from plaid.model.user_remove_request import UserRemoveRequest
 from plaid.model.country_code import CountryCode
 from plaid.model.products import Products
 from plaid.exceptions import ApiException
+from rest_framework.exceptions import ValidationError
 
 from ..serializers.PlaidSerializers.itemSerializers import ItemPublicTokenExchangeResponseSerializer, \
     ItemRemoveResponseSerializer
@@ -30,32 +33,36 @@ import uuid
 
 # user creation and deletion
 
-@shared_task(name="plaid_item_public_token_exchange")
-def plaid_item_public_token_exchange(**kwargs):
+@shared_task(name="plaid_item_public_tokens_exchange")
+def plaid_item_public_tokens_exchange(**kwargs):
     # import pdb
     # breakpoint()
     uid = kwargs.pop('uid')
-    public_token = kwargs.pop('public_token')
+    public_tokens = kwargs.pop('public_tokens')
     
     try:
-        exchange_request = ItemPublicTokenExchangeRequest(public_token=public_token)
-
-        exchange_response = plaid_client.item_public_token_exchange(exchange_request)
-        serializer = ItemPublicTokenExchangeResponseSerializer(data={
-            "access_token": exchange_response.access_token, 
-            "item_id": exchange_response.item_id, 
-            "request_id": exchange_response.request_id
-        })
-        serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
-
         plaidUser = PlaidUser.objects.get(user__id=uid) # make sure we have a user
+        for public_token in public_tokens:
+            exchange_request = ItemPublicTokenExchangeRequest(public_token=public_token)
 
-        plaidItem = PlaidItem(user=plaidUser.user)
-        plaidItem.accessToken = validated_data['access_token']
-        plaidItem.itemId = validated_data['item_id']
-        plaidItem.save()
+            exchange_response = plaid_client.item_public_token_exchange(exchange_request)
+            serializer = ItemPublicTokenExchangeResponseSerializer(data={
+                "access_token": exchange_response.access_token, 
+                "item_id": exchange_response.item_id, 
+                "request_id": exchange_response.request_id
+            })
+            serializer.is_valid(raise_exception=True)
+            validated_data = serializer.validated_data
 
+            plaidUser = PlaidUser.objects.get(user__id=uid) # make sure we have a user
+
+            plaidItem = PlaidItem(user=plaidUser.user)
+            plaidItem.accessToken = validated_data['access_token']
+            plaidItem.itemId = validated_data['item_id']
+            plaidItem.save()
+
+        plaidUser.link_token = None
+        plaidUser.save()
         cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
         cache.set(
             f"uid_{uid}_plaid_item_public_token_exchange",
@@ -87,18 +94,24 @@ def plaid_link_token_create(**kwargs):
     # breakpoint()
 
     uid = kwargs.pop('uid')
-    
     try:
+        plaidUser = PlaidUser.objects.get(user__id=uid)
         exchange_request = LinkTokenCreateRequest(
             client_name=kwargs["client_name"],
             language=kwargs['language'],
-            country_codes=[CountryCode(code) for code in kwargs["country_codes"]], # Specify the countries
+            country_codes=[CountryCode(code) for code in kwargs["country_codes"]], 
             user=LinkTokenCreateRequestUser(
-                client_user_id=PlaidUser.objects.get(user__id=uid).clientUserId,  # Replace with a unique identifier for the user
+                client_user_id=plaidUser.clientUserId,  
                 phone_number=kwargs['user']['phone_number'],
                 email_address=kwargs['user']['email_address']
             ),
-            products=[Products(val) for val in kwargs['products']],  # Specify the Plaid products you want to use
+            products=[Products(val) for val in kwargs['products']], 
+            enable_multi_item_link=True,
+            webhook="https://your-ngrok-id.ngrok.io/api/plaid/sessionfinished/",
+            account_filters=LinkTokenAccountFilters(
+                depository=AccountSubtypes(["checking", "savings"]),
+                credit=AccountSubtypes(["credit card"])
+            )
         )
         
         exchange_response = plaid_client.link_token_create(exchange_request)
@@ -108,6 +121,14 @@ def plaid_link_token_create(**kwargs):
             "request_id": exchange_response.request_id
         })
         serializer.is_valid(raise_exception=True)
+
+        link_token = serializer.validated_data["link_token"]
+        cache.delete(f"link_token_{link_token}_user")
+        cache.set(
+            f"link_token_{link_token}_user",
+            json.dumps({"uid":uid}),
+            timeout=3600
+        )
 
         cache.delete(f"uid_{uid}_plaid_link_token_create")
         cache.set(
@@ -225,15 +246,26 @@ def plaid_user_create(**kwargs):
         return f"cached plaid user create error: {str(e)}"
 
 @shared_task(name="plaid_user_remove")
-def plaid_user_remove(uid):
+def plaid_user_remove(uid, code):
     # import pdb
     # breakpoint()
     
     try:
         plaidUser = PlaidUser.objects.get(user__id=uid)
-        exchange_request = UserRemoveRequest(
-            user_token = plaidUser.userToken
+    except Exception as e:
+        cache.delete(f"code_{code}_plaid_user_remove")
+        cache.set(
+            f"code_{code}_plaid_user_remove",
+            json.dumps({"success": "Plaid user did not exist", "error": None}), 
+            timeout=120
         )
+        return f"cached plaid user remove success"
+    
+    exchange_request = UserRemoveRequest(
+        user_token = plaidUser.userToken
+    )
+
+    try:
         exchange_response = plaid_client.user_remove(exchange_request)
         serializer = UserRemoveResponseSerializer(
             data=exchange_response.to_dict()
@@ -241,48 +273,77 @@ def plaid_user_remove(uid):
         serializer.is_valid(raise_exception=True)
 
         plaidUser.delete()
-
-        cache.delete(f"uid_{uid}_plaid_user_remove")
+        cache.delete(f"code_{code}_plaid_user_remove")
         cache.set(
-            f"uid_{uid}_plaid_user_remove", 
+            f"code_{code}_plaid_user_remove", 
             json.dumps({
-                "message": "success", 
+                "success": "plaid user deleted", 
                 "error": None
             }), 
             timeout=120
         )
         return "cached plaid user remove success"
     except ApiException as e:
-        error = json.loads(e.body)
-        cache.delete(f"uid_{uid}_plaid_user_remove")
+        if e.body["error_type"] == "INVALID_INPUT" and e.body["error_code"] == "INVALID_USER_TOKEN":
+            cache.delete(f"code_{code}_plaid_user_remove")
+            cache.set(
+                f"code_{code}_plaid_user_remove",
+                json.dumps({"success": "Plaid user did not exist", "error": None}), 
+                timeout=120
+            )
+            plaidUser.delete()
+            return f"cached plaid user remove success"
+        else:
+            cache.delete(f"code_{code}_plaid_user_remove")
+            cache.set(
+                f"code_{code}_plaid_user_remove",
+                json.dumps({"success": None, "error": f"error: {str(e.body)}"}), 
+                timeout=120
+            )
+            return f"cached plaid user remove error: {str(e.body)}"
+    except ValidationError as e:
+        cache.delete(f"code_{code}_plaid_user_remove")
         cache.set(
-            f"uid_{uid}_plaid_user_remove",
-            json.dumps({"message": "error", "error": error.get("error_code")}), 
+            f"code_{code}_plaid_user_remove",
+            json.dumps({"success": None, "error": f"error: {str(e.detail)}"}), 
             timeout=120
         )
-        return f"cached plaid user remove error: {error.get("error_code")}"
-    except Exception as e:
-        cache.delete(f"uid_{uid}_plaid_user_remove")
-        cache.set(
-            f"uid_{uid}_plaid_user_remove",
-            json.dumps({"message": "error", "error": str(e)}), 
-            timeout=120
-        )
-        return f"cached plaid user remove error: {str(e)}"
+        return f"cached plaid user remove error: {str(e.detail)}"
 
 @shared_task(name="accumate_user_remove")
-def accumate_user_remove(uid):
+def accumate_user_remove(uid, code, ignore_plaid_delete=False):
     # import pdb
     # breakpoint()
+
+    if not ignore_plaid_delete:
+        cached_plaid_user_delete = cache.get(f"code_{code}_plaid_user_remove")
+        if not cached_plaid_user_delete:
+            cache.delete(f"code_{code}_accumate_user_remove")
+            cache.set(
+                f"code_{code}_accumate_user_remove",
+                json.dumps({"success": None, "error": "plaid user not yet deleted"}), 
+                timeout=120
+            )
+            return f"accumate user not deleted because plaid user not yet deleted"
+        
+        plaid_user_delete_dict = json.loads(cached_plaid_user_delete)
+        if not plaid_user_delete_dict["success"]:
+            cache.delete(f"code_{code}_accumate_user_remove")
+            cache.set(
+                f"code_{code}_accumate_user_remove",
+                json.dumps({"success": None, "error": "plaid user not yet deleted"}), 
+                timeout=120
+            )
+            return f"accumate user not deleted because plaid user not yet deleted"
 
     try:
         User.objects.get(id=uid).delete()
 
-        cache.delete(f"uid_{uid}_accumate_user_remove")
+        cache.delete(f"code_{code}_accumate_user_remove")
         cache.set(
-            f"uid_{uid}_accumate_user_remove",
+            f"code_{code}_accumate_user_remove",
             json.dumps({
-                "message": "success",
+                "success": "user deleted",
                 "error": None
             }),
             timeout=120
@@ -290,10 +351,10 @@ def accumate_user_remove(uid):
     except Exception as e:
         # import pdb 
         # breakpoint()
-        cache.delete(f"uid_{uid}_accumate_user_remove")
+        cache.delete(f"code_{code}_accumate_user_remove")
         cache.set(
-            f"uid_{uid}_accumate_user_remove",
-            json.dumps({"message": "error", "error": str(e)}), 
+            f"code_{code}_accumate_user_remove",
+            json.dumps({"success": None, "error": str(e)}), 
             timeout=120
         )
         return f"cached accumate user remove error: {str(e)}"
@@ -303,7 +364,27 @@ def send_verification_code(**kwargs):
     if kwargs["useEmail"]:
         send_mail(
             "Accumate verification code",
-            f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}",
+            f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}.\nIf you didn't request this code, please ignore this email.",
+            "accumate-verify@accumatewealth.com",
+            [kwargs["sendTo"]],
+            fail_silently=False,
+        )
+    else:
+        return
+        # twilio_client.messages.create(
+        #     to = kwargs["sendTo"],
+        #     from_ = TWILIO_PHONE_NUMBER,
+        #     body = f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}"
+        # )
+
+@shared_task(name="send_forgot_email")
+def send_forgot_email(**kwargs):
+    if kwargs["useEmail"]:
+        send_mail(
+            "Accumate Email Verification",
+            f"We were asked to send an email to this address to remind you that " + \
+            "you have an Accumate account registered with this email. \nIf you " + \
+            "didn't request this email, please ignore this.",
             "accumate-verify@accumatewealth.com",
             [kwargs["sendTo"]],
             fail_silently=False,

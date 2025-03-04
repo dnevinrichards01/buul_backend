@@ -1,11 +1,54 @@
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'refresh_robinhood' already exists.
+Skipping task creation for 'refresh_stock_data' due to database readiness issues.
+Skipping task creation for 'refresh_robinhood' due to database readiness issues.
+Skipping task creation for 'refresh_stock_data' due to database readiness issues.
+Skipping task creation for 'refresh_robinhood' due to database readiness issues.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+
+You have 55 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): admin, api, auth, contenttypes, django_celery_beat, django_celery_results, robin_stocks, sessions.
+Run 'python manage.py migrate' to apply them.
+March 04, 2025 - 04:52:24
+Django version 5.1.3, using settings 'accumate_backend.settings'
+Starting development server at http://0.0.0.0:443/
+Quit the server with CONTROL-C.
+
 Periodic task 'refresh_stock_data' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-February 11, 2025 - 08:22:06
+March 04, 2025 - 05:08:32
+Django version 5.1.3, using settings 'accumate_backend.settings'
+Starting development server at http://0.0.0.0:443/
+Quit the server with CONTROL-C.
+
+Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_robinhood' already exists.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+March 04, 2025 - 06:18:06
+Django version 5.1.3, using settings 'accumate_backend.settings'
+Starting development server at http://0.0.0.0:443/
+Quit the server with CONTROL-C.
+
+Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_robinhood' already exists.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+March 04, 2025 - 06:20:02
+Django version 5.1.3, using settings 'accumate_backend.settings'
+Starting development server at http://0.0.0.0:443/
+Quit the server with CONTROL-C.
+
+Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_robinhood' already exists.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+March 04, 2025 - 06:30:39
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.

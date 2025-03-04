@@ -166,3 +166,15 @@ class LinkTokenCreateResponseSerializer(serializers.Serializer):
     request_id = serializers.CharField(
         help_text="A unique identifier for the request, used for troubleshooting."
     )
+
+class PlaidSessionFinishedSerializer(serializers.Serializer):
+    webhook_type = serializers.ChoiceField(required=True, choices=["LINK"])
+    webhook_code = serializers.ChoiceField(required=True, choices=["SESSION_FINISHED"])
+    status = serializers.ChoiceField(required=True, choices=["SUCCESS", "EXITED"])
+    link_session_id = serializers.CharField(required=True)
+    link_token = serializers.CharField(required=True)
+    public_tokens = serializers.ListField(
+        required=True,
+        child=serializers.CharField(required=True),
+    )
+    environment = serializers.ChoiceField(required=True, choices=["sandbox", "production"])

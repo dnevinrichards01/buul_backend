@@ -6,7 +6,36 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .PlaidSerializers.linkSerializers import e164_phone_number_validator
 
+invalid_password_error_message = "The password must contain at least one capital " + \
+    "letter, one digit, 8 characters, and one symbol of the following symbols: " + \
+    "@, $, !, ., %%, *, ?, &."
+
+FIELD_CHOICES = [
+    ('email', 'email'),
+    ('phone_number', 'phone_number'),
+    ('full_name', 'full_name'),
+    ('brokerage', 'brokerage'),
+    ('symbol', 'symbol'),
+    ('password', 'password'),
+    ('delete_account', 'delete_account')
+]
+BROKERAGE_CHOICES = [
+    ('robinhood', 'robinhood')
+]
+SYMBOL_CHOICES = [
+    ('VOO', 'VOO'),
+    ('QQQ', 'QQQ'),
+    ('VOOG', 'VOOG'),
+    ('IBIT', 'IBIT')
+]
+
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.RegexField(
+        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
+        required=False,
+        write_only=True,
+        error_messages={"invalid": invalid_password_error_message}
+    )
     class Meta:
         model = User
         fields = ['phone_number', 'full_name', 'password', 'email', 'username']
@@ -16,38 +45,124 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         return user
 
+class NamePasswordValidationSerializer(serializers.Serializer):
+    full_name = serializers.CharField(required=False)
+    password = serializers.RegexField(
+        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
+        required=False,
+        write_only=True,
+        error_messages={"invalid": invalid_password_error_message}
+    )
 
-class EmailPhoneValidationSerializer(serializers.Serializer):
+    def validate(self, attrs):
+        if ("full_name" in attrs) == ("password" in attrs):
+            raise ValidationError("You can only submit one value at a time")
+        return attrs
+
+class VerificationCodeResponseSerializer(serializers.Serializer):
+    old_email = serializers.EmailField(required=False)
+    old_phone_number = serializers.CharField(required=False, validators=[e164_phone_number_validator])
     email = serializers.EmailField(required=False)
-    sms = serializers.CharField(required=False,validators=[e164_phone_number_validator])
+    phone_number = serializers.CharField(required=False, validators=[e164_phone_number_validator])
+    full_name = serializers.CharField(required=False)
+    brokerage = serializers.ChoiceField(required=False, choices=BROKERAGE_CHOICES)
+    symbol = serializers.ChoiceField(required=False, choices=SYMBOL_CHOICES)
+    password = serializers.RegexField(
+        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
+        required=False,
+        write_only=True,
+        error_messages={"invalid": invalid_password_error_message}
+    )
+    delete_account = serializers.BooleanField(required=False)
+    code = serializers.RegexField(
+        regex=r'^[\d]{6}$',
+        required=True,
+        write_only=True,
+        error_messages={"invalid": "The code must consist of 6 digits"}
+    )
+    field = serializers.ChoiceField(
+        required=True,
+        choices=FIELD_CHOICES
+    )
+
+    # non_field_errors
+    def validate(self, attrs):
+        if ("old_email" in attrs) == ("old_phone_number" in attrs):
+            raise serializers.ValidationError("You must submit either the email or phone number associated with your account.")
+        if len(attrs) > 4:
+            raise serializers.ValidationError("You may only change or verify one thing at a time.")
+        return attrs
     
-class ResetPasswordRequestSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    sms = serializers.CharField(validators=[e164_phone_number_validator])
+class VerificationCodeRequestSerializer(serializers.Serializer):
+    field = serializers.ChoiceField(
+        required=True,
+        choices=FIELD_CHOICES
+    )
+    email = serializers.EmailField(required=False)
+    phone_number = serializers.CharField(required=False, validators=[e164_phone_number_validator])
 
-class VerificationCodeSerializer(serializers.Serializer):
+    def validate(self, attrs):
+        if ("email" in attrs) == ("phone_number" in attrs):
+            raise ValidationError("Must input either email or phone number")
+        return attrs
+    
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=False)
+    phone_number = serializers.CharField(required=False, validators=[e164_phone_number_validator])
+    password = serializers.RegexField(
+        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
+        required=True,
+        write_only=True,
+        error_messages={"invalid": invalid_password_error_message}
+    )
     code = serializers.RegexField(
         regex=r'^[\d]{6}$',
         required=True,
-        write_only=True
+        write_only=True,
+        error_messages={"invalid": "The code must consist of 6 digits"}
     )
 
-class ResetPasswordSerializer(serializers.Serializer):
-    new_password = serializers.RegexField(
-        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
+    # non_field_errors
+    def validate(self, attrs):
+        if ("email" in attrs) != ("phone_number" in attrs):
+            raise serializers.ValidationError("You must submit the email or phone number associated with your account.")
+        return attrs
+
+class EmailPhoneSignUpValidationSerializer(serializers.Serializer):
+    field = serializers.ChoiceField(
         required=True,
-        write_only=True
+        choices=FIELD_CHOICES
     )
-    confirm_password = serializers.RegexField(
-        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
-        required=True,
-        write_only=True
-    )
+    email = serializers.EmailField(required=False)
+    phone_number = serializers.CharField(required=False, validators=[e164_phone_number_validator])
     code = serializers.RegexField(
         regex=r'^[\d]{6}$',
         required=True,
-        write_only=True
+        write_only=True,
+        error_messages={"invalid": "The code must consist of 6 digits"}
     )
+
+    # non_field_errors
+    def validate(self, attrs):
+        if ("email" in attrs) == ("phone_number" in attrs):
+            raise serializers.ValidationError("You must submit the email or phone number associated with your account.")
+        if attrs["field"] not in attrs:
+            raise ValidationError(f"No {attrs['field']} was submitted")
+        return attrs
+        
+class SendEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+class DeleteAccountVerifySerializer(serializers.Serializer):
+    code = serializers.RegexField(
+        regex=r'^[\d]{6}$',
+        required=True,
+        write_only=True,
+        error_messages={"invalid": "The code must consist of 6 digits"}
+    )
+
 
 class WaitlistEmailSerializer(serializers.ModelSerializer):
 
@@ -66,14 +181,5 @@ class WaitlistEmailSerializer(serializers.ModelSerializer):
             raise ValidationError()
         
 class UserBrokerageInfoSerializer(serializers.Serializer):
-    BROKERAGE_CHOICES = [
-        ('robinhood', 'robinhood')
-    ]
-    SYMBOL_CHOICES = [
-        ('VOO', 'VOO'),
-        ('QQQ', 'QQQ'),
-        ('VOOG', 'VOOG'),
-        ('IBIT', 'IBIT')
-    ]
     brokerage = serializers.ChoiceField(choices=BROKERAGE_CHOICES)
     symbol = serializers.ChoiceField(choices=SYMBOL_CHOICES)

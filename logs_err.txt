@@ -3,108 +3,1754 @@
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-[11/Feb/2025 08:24:12] "POST /api/user/register/ HTTP/1.1" 200 45
-[11/Feb/2025 08:24:13] "POST /api/token/ HTTP/1.1" 200 582
-[11/Feb/2025 08:24:21] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
-
-def backend_cleanup():
-    return 1
-
-
-def transactions_sync(uid, item_ids=0, transactions_by_item_id=1, update_cursor=2, page_size=3):
-    return 1
-
-
-def chain(*args, **kwargs):
-    return 1
-
-
-def send_waitlist_email(**kwargs):
-    return 1
-
-
-def refresh_stock_data(symbols=0, start_date=1, end_date=2):
-    return 1
-
-
-def plaid_link_token_create(**kwargs):
-    return 1
-
-
-def accumulate(self, *args, **kwargs):
-    return 1
-
-
-def accumate_user_remove(uid):
-    return 1
-
-
-def plaid_user_create(**kwargs):
-    return 1
-
-
-def chord(self, header, body, partial_args=0, interval=1, countdown=2, max_retries=3, eager=4, **kwargs):
-    return 1
-
-
-def unlock_chord(self, group_id, callback, interval=0, max_retries=1, result=2, Result=3, GroupResult=4, result_from_tuple=5, **kwargs):
-    return 1
-
-
-def transactions_get(uid, start_date_str, end_date_str, item_ids=0, transactions_by_item_id=1, page_size=2):
-    return 1
-
-
-def xmap(task, it):
-    return 1
-
-
-def plaid_item_public_token_exchange(**kwargs):
-    return 1
-
-
-def transactions_categories_sum(transactions_response, transactions_sync=0, personal_finance_categories=1):
-    return 1
-
-
-def refresh_robinhood():
-    return 1
-
-
-def xstarmap(task, it):
-    return 1
-
-
-def send_verification_code(**kwargs):
-    return 1
-
-
-def get_investment_graph_data(uid, symbol):
-    return 1
-
-
-def plaid_user_remove(uid):
-    return 1
-
-
-def plaid_item_remove(uid, item_id):
-    return 1
-
-
-def chunks(task, it, n):
-    return 1
-
-
-def login_robinhood(**kwargs):
-    return 1
-
-
-def group(self, tasks, result, group_id, partial_args, add_to_parent=0):
-    return 1
-
-[11/Feb/2025 08:24:54] "POST /api/plaid/usercreate/ HTTP/1.1" 201 38
-[11/Feb/2025 08:24:56] "GET /api/plaid/usercreate/ HTTP/1.1" 201 37
-[11/Feb/2025 08:24:56] "POST /api/plaid/linktokencreate/ HTTP/1.1" 201 38
-[11/Feb/2025 08:24:58] "GET /api/plaid/linktokencreate/ HTTP/1.1" 201 82
-[11/Feb/2025 08:26:05] "POST /api/plaid/publictokenexchange/ HTTP/1.1" 201 38
-[11/Feb/2025 08:26:07] "GET /api/plaid/publictokenexchange/ HTTP/1.1" 201 38
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+Not Found: /apple-touch-icon-precomposed.png
+Not Found: /apple-touch-icon.png
+[04/Mar/2025 05:25:40] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 179
+Not Found: /favicon.ico
+[04/Mar/2025 05:25:40] "GET /favicon.ico HTTP/1.1" 404 179
+[04/Mar/2025 05:25:40] "GET /apple-touch-icon.png HTTP/1.1" 404 179
+[04/Mar/2025 05:25:40] "GET / HTTP/1.1" 200 22
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 219
+    elif challenge_code is not None or :
+    ^
+IndentationError: expected an indented block after 'elif' statement on line 217
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+ImportError: cannot import name 'check_device_approvals' from 'robin_stocks.robinhood.authentication' (/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 358
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 358)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 358
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 358)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 358
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 358)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 358
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 358)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 358
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 358)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 359
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 359)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 359
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 359)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 358
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 358)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 357
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 357)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 357
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 357)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 357
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 357)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 357
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 357)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 357
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 357)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 357
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 357)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 357
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 357)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 357
+    "error": f"challenge failed with unexpected challenge_type": {challenge_type}",
+                                                                                 ^
+SyntaxError: unterminated string literal (detected at line 357)
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 404
+    "message": "workflow_status_approved"
+             ^
+SyntaxError: invalid syntax
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 407
+    "message": "workflow_status_approved"
+             ^
+SyntaxError: invalid syntax
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 407
+    "message": "workflow_status_approved"
+             ^
+SyntaxError: invalid syntax
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 407
+    "message": "workflow_status_approved"
+             ^
+SyntaxError: invalid syntax
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 407
+    "message": "workflow_status_approved"
+             ^
+SyntaxError: invalid syntax
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 406
+    "message": "workflow_status_approved"
+             ^
+SyntaxError: invalid syntax
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 407
+    "message": "workflow_status_approved"
+             ^
+SyntaxError: invalid syntax
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 406
+    "message": "workflow_status_approved"
+             ^
+SyntaxError: invalid syntax
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 407
+    "message": "workflow_status_approved"
+             ^
+SyntaxError: invalid syntax
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 390
+    "message": "workflow_status_approved"
+             ^
+SyntaxError: invalid syntax
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 28, in <module>
+    from .tasks.transactionsTasks import get_investment_graph_data
+  File "/code/api/tasks/transactionsTasks.py", line 2, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh, check_device_approvals
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 391
+    "message": "workflow_status_approved"
+             ^
+SyntaxError: invalid syntax
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.

@@ -54,9 +54,16 @@ class PlaidUser(models.Model):
     userToken = models.CharField(max_length=255)
     userId = models.CharField(max_length=255)
     clientUserId = models.CharField(max_length=255)
+    link_token = models.CharField(max_length=255, null=True, default=None)
 
 class PlaidItem(models.Model):
     # user and itemID primary key
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4, 
+        editable=True,
+        unique=True
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     itemId = models.CharField(max_length=255, unique=True)
     accessToken = models.CharField(max_length=255)
@@ -64,10 +71,14 @@ class PlaidItem(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['user', 'itemId'], name='unique_plaid_item')
+            models.UniqueConstraint(
+                fields=['user', 'itemId'], 
+                name='unique_plaid_item'
+            )
         ]
 
 class PlaidCashbackTransaction(models.Model):
+    user = models.ForeignKey(PlaidItem, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     account_id = models.CharField(max_length=255)
     transaction_id = models.CharField(max_length=255)
