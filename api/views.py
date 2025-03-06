@@ -2,9 +2,9 @@
 from .models import User, WaitlistEmail, PlaidUser, UserBrokerageInfo
 from rest_framework.views import APIView
 from .serializers.accumateAccountSerializers import WaitlistEmailSerializer, \
-    EmailPhoneSignUpValidationSerializer, UserBrokerageInfoSerializer, NamePasswordValidationSerializer, \
+    UserBrokerageInfoSerializer, NamePasswordValidationSerializer, \
     VerificationCodeResponseSerializer, VerificationCodeRequestSerializer, SendEmailSerializer, \
-    PasswordResetSerializer, DeleteAccountVerifySerializer
+    DeleteAccountVerifySerializer
 from .serializers.accumateAccountSerializers import UserSerializer, WaitlistEmailSerializer
 from .serializers.PlaidSerializers.itemSerializers import ItemPublicTokenExchangeRequestSerializer
 from .serializers.PlaidSerializers.linkSerializers import \
@@ -32,6 +32,9 @@ from django.core.mail import send_mail
 from django.urls import reverse
 import secrets 
 
+import bcrypt 
+
+
 # helper methods
 
 def createVerificationCode():
@@ -46,9 +49,10 @@ def cached_task_status(cached_string):
 
 def healthCheck(request):
     return JsonResponse({"success": "healthy"}, status=200)
-    
+
 
 # sign up flow
+
 class CreateUserView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -146,7 +150,9 @@ class EmailPhoneSignUpValidation(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
 
-    def get(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
+        "Get verification code if the email matches an account"
+
         serializer = VerificationCodeRequestSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
@@ -161,75 +167,95 @@ class EmailPhoneSignUpValidation(APIView):
                         status=400
                     )
             for field in e.detail:
+                error_messages = {}
                 if len(e.detail[field]) >= 1:
-                    return JsonResponse(
-                        {
-                            "success": None,
-                            "error": f"{field}: {e.detail[field][0]}"
-                        }, 
-                        status=200
-                    )
+                    error_messages[field] = e.detail[field][0]
             return JsonResponse(
                 {
-                    "success": None, 
-                    "error": f"error: {str(e)}"
+                    "success": None,
+                    "error": error_messages
                 }, 
-                status=400
+                status=200
             )
         except Exception as e:
             return JsonResponse(
                 {
-                    "success": None, 
+                    "success": None,
                     "error": f"error: {str(e)}"
                 }, 
                 status=400
             )
         
-        # check if a user with this email or phone number already exists
+        if serializer.validated_data["field"] not in ["email", "phone_number"]:
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": "The field parameter must be 'email' or 'phone_number'."
+                }, 
+                status=400
+            )
         user_exists = False
-        if 'email' in serializer.validated_data:
+        field = serializer.validated_data['field']
+        if field == "email":
             email = serializer.validated_data['email']
             phone_number = None
             try: 
-                User.objects.get(email=email)
+                _ = User.objects.get(email=email)
                 user_exists = True
             except Exception as e:
                 user_exists = False
-        elif 'phone_number' in serializer.validated_data:
+        elif field == "phone_number":
             email = None
             phone_number = serializer.validated_data['phone_number']
             try: 
-                User.objects.get(phone_number=phone_number)
+                _ = User.objects.get(phone_number=phone_number)
                 user_exists = True
             except Exception as e:
                 user_exists = False
         if user_exists:
+            error_message = f"This {field.replace("_", " ")} is already in use."
             return JsonResponse(
                 {
                     "success": None,
-                    "error": f"This {'email' if bool(email) else 'number'} is in use by another user"
+                    "error": {
+                        "email": error_message if email else None,
+                        "phone_number": error_message if phone_number else None
+                    }
+                    
                 }, 
                 status=200
             )
         
-        # cache code and the value to be verified, and send verification code
-        code = createVerificationCode()
+        if field == "phone_number":
+            return JsonResponse(
+                {
+                    "success": "recieved",
+                    "error": None
+                }, 
+                status=200
+            )
+
         field = serializer.validated_data['field']
-        cached_value = {field: serializer.validated_data[field]}
-        cache.delete(f"set_{field}_{code}")
+        value = serializer.validated_data[field]
+        code = createVerificationCode()
+        while cache.get(f"validate_{field}_{code}"):
+            code = createVerificationCode()
+        
+        cache.delete(f"validate_{field}_{code}")
         cache.set(
-            f"set_{field}_{code}",
-            json.dumps(cached_value),
-            timeout=300
+            f"validate_{field}_{code}",
+            json.dumps({field: value}),
+            timeout= 1800 if field == "brokerage" else 300 
         )
+
         send_verification_code.apply_async(
             kwargs = {
-                "useEmail": bool(email), 
-                "sendTo": email or phone_number,
+                "useEmail": field == "email", 
+                "sendTo": value,
                 "code": code
             }
         )
-    
+        
         return JsonResponse(
             {
                 "success": "recieved",
@@ -238,8 +264,11 @@ class EmailPhoneSignUpValidation(APIView):
             status=200
         )
 
+
     def post(self, request, *args, **kwargs):
-        serializer = EmailPhoneSignUpValidationSerializer(data=request.data)
+        """Given the correct code, extend its lifespan if no password given, 
+        and if given the password then update password"""
+        serializer = VerificationCodeResponseSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
@@ -248,7 +277,7 @@ class EmailPhoneSignUpValidation(APIView):
                     return JsonResponse(
                         {
                             "success": None,
-                            "error": f"error '{field}': {e.detail[field][0]}"
+                            "error": e.detail[field][0]
                         }, 
                         status=400
                     )
@@ -276,38 +305,21 @@ class EmailPhoneSignUpValidation(APIView):
                 }, 
                 status=400
             )
-
-        # check if a user with this email or phone number already exists
-        user_exists = False
-        field = serializer.validated_data['field']
-        if field == 'email':
-            email = serializer.validated_data['email']
-            phone_number = None
-            try: 
-                _ = User.objects.get(email=email)
-                user_exists = True
-            except Exception as e:
-                user_exists = False
-        elif field == 'phone_number':
-            email = None
-            phone_number = serializer.validated_data['phone_number']
-            try: 
-                _ = User.objects.get(phone_number=phone_number)
-                user_exists = True
-            except Exception as e:
-                user_exists = False
-        if user_exists:
+        
+        if serializer.validated_data["field"] not in ["email", "phone_number"]:
             return JsonResponse(
                 {
                     "success": None,
-                    "error": f"This {'email' if bool(email) else 'number'} is in use by another user"
+                    "error": "The field parameter must be 'email' or 'phone_number'."
                 }, 
-                status=200
+                status=400
             )
         
-        # check if the code and field correspond to a cached value
+        # check if the code has been requested for that field, and if values match
         code = serializer.validated_data['code']
-        cached_value = cache.get(f"set_{field}_{code}")
+        field = serializer.validated_data['field']
+        value = serializer.validated_data[field]
+        cached_value = cache.get(f"validate_{field}_{code}")
         if cached_value is None:
             return JsonResponse(
                 {
@@ -316,31 +328,26 @@ class EmailPhoneSignUpValidation(APIView):
                 },
                 status=200
             )
-        
-        # check if the cached value matches the value submitted for verification
-        value = json.loads(cached_value)
-        if field in value and value[field] == serializer.validated_data[field]:
-            # verified
-            cache.delete(f"set_{field}_{code}")
+        loaded_value = json.loads(cached_value)
+        if loaded_value[field] != value:
             return JsonResponse(
                 {
-                    "success": "validated",
-                    "error": None
+                    "success": None,
+                    "error": "Code is invalid or expired"
                 },
                 status=200
             )
-        else:
-            # not verified
-            return JsonResponse(
+        
+        cache.delete(f"validate_{field}_{code}")
+
+        return JsonResponse(
             {
-                "success": None,
-                "error": "Code is invalid or expired"
+                "success": "verification code valid",
+                "error": None
             },
             status=200
         )
 
-        # if all previous check succeed, return validated
-        
 class SetBrokerageInvestment(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -467,7 +474,6 @@ class PlaidLinkTokenCreate(APIView):
                 status = 400
             )
 
-
         data = {
             "user": {
                 "phone_number": user.phone_number,
@@ -478,10 +484,10 @@ class PlaidLinkTokenCreate(APIView):
             "transactions": {
                 "days_requested": 100
             },
+            "webhook": "https://ee5e-2601-646-8283-4f00-6df4-4ec0-d6ca-d4ac.ngrok-free.app" + "/plaid/itemwebhook/",
             "country_codes": ["US"],
             "language": "en",
             "enable_multi_item_link": True,
-            "webhook": "https://your-ngrok-id.ngrok.io/api/plaid/sessionfinished/",
             "account_filters": {
                 "depository": { "account_subtypes": ["checking", "savings"] },
                 "credit": { "account_subtypes": ["credit card"] }
@@ -636,20 +642,12 @@ class ResetPassword(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
 
-    def get(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         "Get verification code if the email matches an account"
 
         serializer = VerificationCodeRequestSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            if serializer.validated_data["field"] != "password":
-                return JsonResponse(
-                    {
-                        "success": None,
-                        "error": "The field parameter must be 'password'"
-                    }, 
-                    status=400
-                )
         except ValidationError as e:
             for field in ["field", "non_field_errors"]:
                 if field in e.detail and len(e.detail[field]) >= 1:
@@ -660,15 +658,18 @@ class ResetPassword(APIView):
                         }, 
                         status=400
                     )
+            error_messages = {}
             for field in e.detail:
                 if len(e.detail[field]) >= 1:
-                    return JsonResponse(
-                        {
-                            "success": None,
-                            "error": e.detail[field][0]
-                        }, 
-                        status=200
-                    )
+                    error_messages[field] = e.detail[field][0]
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": error_messages or None
+                }, 
+                status=200
+            )
+        except Exception as e:
             return JsonResponse(
                 {
                     "success": None,
@@ -676,11 +677,12 @@ class ResetPassword(APIView):
                 }, 
                 status=400
             )
-        except Exception as e:
+        
+        if serializer.validated_data["field"] != "password":
             return JsonResponse(
                 {
                     "success": None,
-                    "error": f"error: {str(e)}"
+                    "error": "The field parameter must be 'password'."
                 }, 
                 status=400
             )
@@ -688,8 +690,8 @@ class ResetPassword(APIView):
         # check if a user with that password exists
         user_exists = False
         user = None
-        if 'email' in serializer.validated_data:
-            email = serializer.validated_data['email']
+        if 'verification_email' in serializer.validated_data:
+            email = serializer.validated_data['verification_email']
             phone_number = None
             try: 
                 user = User.objects.get(email=email)
@@ -697,250 +699,9 @@ class ResetPassword(APIView):
             except Exception as e:
                 user = None
                 user_exists = False
-        elif 'phone_number' in serializer.validated_data:
+        elif 'verification_phone_number' in serializer.validated_data:
             email = None
-            phone_number = serializer.validated_data['phone_number']
-            try: 
-                user = User.objects.get(phone_number=phone_number)
-                user_exists = True
-            except Exception as e:
-                user = None
-                user_exists = False
-        
-        # if they exist send verification code
-        if user_exists:
-            code = createVerificationCode()
-            uid = user.id
-            field = "password"
-
-            cache.delete(f"uid_{user.id}_set_{field}_{code}")
-            cache.set(
-                f"uid_{user.id}_set_{field}_{code}",
-                json.dumps({field: None}),
-                timeout=300
-            )
-
-            send_verification_code.apply_async(
-                kwargs = {
-                    "useEmail": bool(email), 
-                    "sendTo": email or phone_number,
-                    "code": code
-                }
-            )
-        
-        # send success response either way to not reveal if a user with that password exists
-        return JsonResponse(
-            {
-                "success": "recieved",
-                "error": None
-            }, 
-            status=200
-        )
-
-    def post(self, request, *args, **kwargs):
-        """Given the correct code, extend its lifespan if no password given, 
-        and if given the password then update password"""
-        serializer = VerificationCodeResponseSerializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-            if serializer.validated_data["field"] != "password":
-                return JsonResponse(
-                    {
-                        "success": None,
-                        "error": "The field parameter must be 'password'"
-                    }, 
-                    status=400
-                )
-        except ValidationError as e:
-            for field in ["field", "non_field_errors"]:
-                if field in e.detail and len(e.detail[field]) >= 1:
-                    return JsonResponse(
-                        {
-                            "success": None,
-                            "error": e.detail[field][0]
-                        }, 
-                        status=400
-                    )
-            for field in e.detail:
-                if len(e.detail[field]) >= 1:
-                    return JsonResponse(
-                        {
-                            "success": None,
-                            "error": e.detail[field][0]
-                        }, 
-                        status=200
-                    )
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": f"error: {str(e)}"
-                }, 
-                status=400
-            )
-        except Exception as e:
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": f"error: {str(e)}"
-                }, 
-                status=400
-            )
-        
-        # check if a user with the given account info exists
-        user_exists = False
-        user = None
-        if 'old_email' in serializer.validated_data:
-            email = serializer.validated_data['old_email']
-            phone_number = None
-            try: 
-                user = User.objects.get(email=email)
-                user_exists = True
-            except Exception as e:
-                user = None
-                user_exists = False
-        elif 'old_phone_number' in serializer.validated_data:
-            email = None
-            phone_number = serializer.validated_data['old_phone_number']
-            try: 
-                user = User.objects.get(phone_number=phone_number)
-                user_exists = True
-            except Exception as e:
-                user = None
-                user_exists = False
-        if not user_exists:
-            return JsonResponse(
-                    {
-                        "success": None,
-                        "error": "Code is invalid or expired"
-                    },
-                    status=200
-                )
-        
-        # return JsonResponse({"uh oh": "checked if user exists"}, status=300)
-        # check if the code matches
-        code = serializer.validated_data['code']
-        uid = user.id
-        field = "password"
-        cached_value = cache.get(f"uid_{uid}_set_{field}_{code}")
-        if cached_value is None:
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": "Code is invalid or expired"
-                },
-                status=200
-            )
-        
-        # return JsonResponse({"uh oh": "found cached value"}, status=300)
-        # check if the code given was to reset the password
-        value = json.loads(cached_value)
-        if "password" not in value:
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": "Code is invalid or expired"
-                },
-                status=200
-            )
-        
-        if "password" in serializer.validated_data:
-            cache.delete(f"uid_{user.id}_set_{field}_{code}")
-            user.set_password(serializer.validated_data["password"])
-            user.save()
-            cache.delete(f"uid_{user.id}_set_{field}_{code}")
-            return JsonResponse(
-                {
-                    "success": "password reset",
-                    "error": None
-                },
-                status=200
-            )
-        else:
-            # extend period of time during which the code is valid
-            cache.delete(f"uid_{user.id}_set_{field}_{code}")
-            cache.set(
-                f"uid_{user.id}_set_{field}_{code}",
-                json.dumps({field: None}),
-                timeout=300
-            )
-            return JsonResponse(
-                {
-                    "success": "code valid",
-                    "error": None
-                },
-                status=200
-            )
-
-class RequestVerificationCode(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        "Get verification code if the email matches an account"
-
-        serializer = VerificationCodeRequestSerializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-            if serializer.validated_data["field"] not in ["password", "email", \
-                "phone_number", "full_name", "brokerage", "symbol"]:
-                return JsonResponse(
-                    {
-                        "success": None,
-                        "error": "The field parameter must be one of 'password', " + \
-                            "'email', 'phone_number', 'full_name', 'brokerage', " + \
-                            "or 'symbol'."
-                    }, 
-                    status=400
-                )
-        except ValidationError as e:
-            for field in ["field", "non_field_errors"]:
-                if field in e.detail and len(e.detail[field]) >= 1:
-                    return JsonResponse(
-                        {
-                            "success": None,
-                            "error": f"error '{field}': {e.detail[field][0]}"
-                        }, 
-                        status=400
-                    )
-            for field in e.detail:
-                if len(e.detail[field]) >= 1:
-                    return JsonResponse(
-                        {
-                            "success": None,
-                            "error": e.detail[field][0]
-                        }, 
-                        status=200
-                    )
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": f"error: {str(e)}"
-                }, 
-                status=400
-            )
-        except Exception as e:
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": f"error: {str(e)}"
-                }, 
-                status=400
-            )
-        
-        # check if a user with that password exists
-        user_exists = False
-        user = None
-        if 'email' in serializer.validated_data:
-            email = serializer.validated_data['email']
-            phone_number = None
-            try: 
-                user = User.objects.get(email=email)
-                user_exists = True
-            except Exception as e:
-                user = None
-                user_exists = False
-        elif 'phone_number' in serializer.validated_data:
-            email = None
-            phone_number = serializer.validated_data['phone_number']
+            phone_number = serializer.validated_data['verification_phone_number']
             try: 
                 user = User.objects.get(phone_number=phone_number)
                 user_exists = True
@@ -950,20 +711,24 @@ class RequestVerificationCode(APIView):
         if not user_exists:
             return JsonResponse(
                 {
-                    "success": None,
-                    "error": "No user is associated with the information given"
+                    "success": "recieved",
+                    "error": None
                 }, 
-                status=400
+                status=200
             )
         
-        code = createVerificationCode()
-        uid = user.id
         field = serializer.validated_data['field']
+        salt = bcrypt.gensalt()
+        value = bcrypt.hashpw(serializer.validated_data[field].encode('utf-8'), salt)
+        value = value.decode()
+        code = createVerificationCode()
+        while cache.get(f"signed_out_uid_{user.id}_set_{field}_{code}"):
+            code = createVerificationCode()
 
-        cache.delete(f"uid_{user.id}_set_{field}_{code}")
+        cache.delete(f"signed_out_uid_{user.id}_set_{field}_{code}")
         cache.set(
-            f"uid_{user.id}_set_{field}_{code}",
-            json.dumps({field: None}),
+            f"signed_out_uid_{user.id}_set_{field}_{code}",
+            json.dumps({field: value}),
             timeout= 1800 if field == "brokerage" else 300 
         )
 
@@ -989,17 +754,232 @@ class RequestVerificationCode(APIView):
         serializer = VerificationCodeResponseSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            if serializer.validated_data["field"] not in ["password", "email", \
-                "phone_number", "full_name", "brokerage", "symbol"]:
-                return JsonResponse(
+        except ValidationError as e:
+            for field in ["field", "non_field_errors"]:
+                if field in e.detail and len(e.detail[field]) >= 1:
+                    return JsonResponse(
+                        {
+                            "success": None,
+                            "error": e.detail[field][0]
+                        }, 
+                        status=400
+                    )
+            error_messages = {}
+            for field in e.detail:
+                if len(e.detail[field]) >= 1:
+                    error_messages[field] = e.detail[field][0]
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": error_messages or None
+                }, 
+                status=200
+            )
+        except Exception as e:
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": f"error: {str(e)}"
+                }, 
+                status=400
+            )
+        
+        if serializer.validated_data["field"]!= "password":
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": "The field parameter must be 'password'."
+                }, 
+                status=400
+            )
+        
+        # check if a user with the given account info exists
+        user_exists = False
+        user = None
+        if 'verification_email' in serializer.validated_data:
+            email = serializer.validated_data['verification_email']
+            phone_number = None
+            try: 
+                user = User.objects.get(email=email)
+                user_exists = True
+            except Exception as e:
+                user = None
+                user_exists = False
+        elif 'verification_phone_number' in serializer.validated_data:
+            email = None
+            phone_number = serializer.validated_data['verification_phone_number']
+            try: 
+                user = User.objects.get(phone_number=phone_number)
+                user_exists = True
+            except Exception as e:
+                user = None
+                user_exists = False
+        if not user_exists:
+            return JsonResponse(
                     {
                         "success": None,
-                        "error": "The field parameter must be one of 'password', " + \
-                            "'email', 'phone_number', 'full_name', 'brokerage', " + \
-                            "or 'symbol'."
-                    }, 
-                    status=400
+                        "error": {
+                            "code": "This code is invalid or expired. Request a new one."
+                        }
+                    },
+                    status=200
                 )
+        
+        # check if the code has been requested for that field, and if values match
+        code = serializer.validated_data['code']
+        field = serializer.validated_data['field']
+        value = serializer.validated_data[field]
+        cached_value = cache.get(f"signed_out_uid_{user.id}_set_{field}_{code}")
+        if cached_value is None:
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": {
+                        "code": "This code is invalid or expired. Request a new one."
+                    }
+                },
+                status=200
+            )
+        loaded_value = json.loads(cached_value)
+        curr_val = value.encode('utf-8')
+        cached_val = loaded_value[field].encode('utf-8')
+        if not bcrypt.checkpw(curr_val, cached_val):
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": {
+                        "code": "This code is invalid or expired. Request a new one."
+                    }
+                },
+                status=200
+            )
+
+        user.set_password(serializer.validated_data["password"])
+        user.save()
+
+        cache.delete(f"signed_out_uid_{user.id}_set_{field}_{code}")
+
+        return JsonResponse(
+            {
+                "success": "verification code valid",
+                "error": None
+            },
+            status=200
+        )
+
+class RequestVerificationCode(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, *args, **kwargs):
+        "Get verification code if the email matches an account"
+
+        serializer = VerificationCodeRequestSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            for field in ["field", "non_field_errors"]:
+                if field in e.detail and len(e.detail[field]) >= 1:
+                    return JsonResponse(
+                        {
+                            "success": None,
+                            "error": f"error '{field}': {e.detail[field][0]}"
+                        }, 
+                        status=400
+                    )
+            for field in e.detail:
+                if len(e.detail[field]) >= 1:
+                    return JsonResponse(
+                        {
+                            "success": None,
+                            "error": e.detail[field][0]
+                        }, 
+                        status=200
+                    )
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": f"error: {str(e)}"
+                }, 
+                status=400
+            )
+        except Exception as e:
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": f"error: {str(e)}"
+                }, 
+                status=400
+            )
+        
+        # check if a user with that password exists
+        user_exists = False
+        user = None
+        if 'verification_email' in serializer.validated_data:
+            email = serializer.validated_data['verification_email']
+            phone_number = None
+            try: 
+                user = User.objects.get(email=email)
+                user_exists = True
+            except Exception as e:
+                user = None
+                user_exists = False
+        elif 'verification_phone_number' in serializer.validated_data:
+            email = None
+            phone_number = serializer.validated_data['verification_phone_number']
+            try: 
+                user = User.objects.get(phone_number=phone_number)
+                user_exists = True
+            except Exception as e:
+                user = None
+                user_exists = False
+        if not user_exists:
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": "No user is associated with the information given"
+                }, 
+                status=400
+            )
+        
+        field = serializer.validated_data['field']
+        value = serializer.validated_data[field]
+        if field == "password":
+            salt = bcrypt.gensalt()
+            value = bcrypt.hashpw(value.encode('utf-8'), salt)
+            value = value.decode()
+        code = createVerificationCode()
+        while cache.get(f"uid_{user.id}_set_{field}_{code}"):
+            code = createVerificationCode()
+
+        cache.delete(f"uid_{user.id}_set_{field}_{code}")
+        cache.set(
+            f"uid_{user.id}_set_{field}_{code}",
+            json.dumps({field: value}),
+            timeout= 1800 if field == "brokerage" else 300 
+        )
+
+        send_verification_code.apply_async(
+            kwargs = {
+                "useEmail": bool(email), 
+                "sendTo": email or phone_number,
+                "code": code
+            }
+        )
+        
+        return JsonResponse(
+            {
+                "success": "recieved",
+                "error": None
+            }, 
+            status=200
+        )
+
+    def post(self, request, *args, **kwargs):
+        """Given the correct code, extend its lifespan if no password given, 
+        and if given the password then update password"""
+        serializer = VerificationCodeResponseSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
         except ValidationError as e:
             for field in ["field", "non_field_errors"]:
                 if field in e.detail and len(e.detail[field]) >= 1:
@@ -1035,40 +1015,11 @@ class RequestVerificationCode(APIView):
                 status=400
             )
         
-        # check if a user with the given account info exists
-        user_exists = False
-        user = None
-        if 'old_email' in serializer.validated_data:
-            email = serializer.validated_data['old_email']
-            phone_number = None
-            try: 
-                user = User.objects.get(email=email)
-                user_exists = True
-            except Exception as e:
-                user = None
-                user_exists = False
-        elif 'old_phone_number' in serializer.validated_data:
-            email = None
-            phone_number = serializer.validated_data['old_phone_number']
-            try: 
-                user = User.objects.get(phone_number=phone_number)
-                user_exists = True
-            except Exception as e:
-                user = None
-                user_exists = False
-        if not user_exists:
-            return JsonResponse(
-                    {
-                        "success": None,
-                        "error": "Code is invalid or expired"
-                    },
-                    status=200
-                )
-        
-        # return JsonResponse({"uh oh": "checked if user exists"}, status=300)
-        # check if the code matches
+        # check if the code has been requested for that field, and if values match
         code = serializer.validated_data['code']
         field = serializer.validated_data['field']
+        value = serializer.validated_data[field]
+        user = self.request.user
         cached_value = cache.get(f"uid_{user.id}_set_{field}_{code}")
         if cached_value is None:
             return JsonResponse(
@@ -1078,11 +1029,19 @@ class RequestVerificationCode(APIView):
                 },
                 status=200
             )
-        
-        # return JsonResponse({"uh oh": "found cached value"}, status=300)
-        # check if the code given was to reset the password
-        value = json.loads(cached_value)
-        if field not in value:
+        loaded_value = json.loads(cached_value)
+        if field == "password":
+            curr_val = value.encode('utf-8')
+            cached_val = loaded_value[field].encode('utf-8')
+            if not bcrypt.checkpw(curr_val, cached_val):
+                return JsonResponse(
+                    {
+                        "success": None,
+                        "error": "Code is invalid or expired"
+                    },
+                    status=200
+                )
+        elif loaded_value[field] != value:
             return JsonResponse(
                 {
                     "success": None,
@@ -1090,15 +1049,6 @@ class RequestVerificationCode(APIView):
                 },
                 status=200
             )
-        
-        if not field in serializer.validated_data:
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": f"No {field} was submitted."
-                },
-                status=400
-            ) 
         
         cache.delete(f"uid_{user.id}_set_{field}_{code}")
 
@@ -1140,7 +1090,7 @@ class RequestVerificationCode(APIView):
                 return JsonResponse(
                     {
                         "success": None,
-                        "error": "This user does has not yet chosen their brokerage and investment"
+                        "error": "We could not find your brokerage and investment choice. Please contact Accumate."
                     },
                     status=200
                 )
@@ -1153,13 +1103,24 @@ class RequestVerificationCode(APIView):
                 return JsonResponse(
                     {
                         "success": None,
-                        "error": "This user does has not yet chosen their brokerage and investment"
+                        "error": "We could not find your brokerage and investment choice. Please contact Accumate."
                     },
                     status=200
                 )
         elif field == "password":
             user.set_password(serializer.validated_data["password"])
             user.save()
+        elif field == "delete_account":
+            cache.delete(f"code_{code}_accumate_user_remove")
+            cache.set(
+                f"code_{code}_accumate_user_remove",
+                json.dumps({"success": None, "error": None}),
+                timeout=120
+            )
+            chain(
+                plaid_user_remove.s(user.id, code),
+                accumate_user_remove.si(user.id, code)
+            ).apply_async()
         else:
             return JsonResponse(
                 {
@@ -1226,234 +1187,6 @@ class SendEmail(APIView):
                 status=400
             )
 
-class DeleteAccount(APIView):
-    permission_classes = [IsAuthenticated]
-    
-    def get(self, request, *args, **kwargs):
-        "Get verification code if the email matches an account"
-        
-        serializer = VerificationCodeRequestSerializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-            if serializer.validated_data["field"] != "delete_account":
-                return JsonResponse(
-                    {
-                        "success": None,
-                        "error": "The field parameter must be 'delete_account'"
-                    }, 
-                    status=400
-                )
-        except ValidationError as e:
-            for field in ["field", "non_field_errors"]:
-                if field in e.detail and len(e.detail[field]) >= 1:
-                    return JsonResponse(
-                        {
-                            "success": None,
-                            "error": f"error '{field}': {e.detail[field][0]}"
-                        }, 
-                        status=400
-                    )
-            for field in e.detail:
-                if len(e.detail[field]) >= 1:
-                    return JsonResponse(
-                        {
-                            "success": None,
-                            "error": e.detail[field][0]
-                        }, 
-                        status=200
-                    )
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": f"error: {str(e)}"
-                }, 
-                status=400
-            )
-        except Exception as e:
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": f"error: {str(e)}"
-                }, 
-                status=400
-            )
-        
-        # check if a user with that password exists
-        user_exists = False
-        user = None
-        if 'email' in serializer.validated_data:
-            email = serializer.validated_data['email']
-            phone_number = None
-            try: 
-                user = User.objects.get(email=email)
-                user_exists = True
-            except Exception as e:
-                user = None
-                user_exists = False
-        elif 'phone_number' in serializer.validated_data:
-            email = None
-            phone_number = serializer.validated_data['phone_number']
-            try: 
-                user = User.objects.get(phone_number=phone_number)
-                user_exists = True
-            except Exception as e:
-                user = None
-                user_exists = False
-        
-        # if they exist send verification code
-        if user_exists:
-            code = createVerificationCode()
-            uid = user.id
-            field = "delete_account"
-
-            cache.delete(f"uid_{user.id}_set_{field}_{code}")
-            cache.set(
-                f"uid_{user.id}_set_{field}_{code}",
-                json.dumps({field: True}),
-                timeout=300
-            )
-
-            send_verification_code.apply_async(
-                kwargs = {
-                    "useEmail": bool(email), 
-                    "sendTo": email or phone_number,
-                    "code": code
-                }
-            )
-        
-        # send success response either way to not reveal if a user with that password exists
-        return JsonResponse(
-            {
-                "success": "recieved",
-                "error": None
-            }, 
-            status=200
-        )
-    
-    def post(self, request, *args, **kwargs):
-        "given correct code, the account deletion is triggered"
-        # import pdb
-        # breakpoint()
-
-
-        serializer = VerificationCodeResponseSerializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-            if serializer.validated_data["field"] != "delete_account":
-                return JsonResponse(
-                    {
-                        "success": None,
-                        "error": "The field parameter must be 'delete_account'"
-                    }, 
-                    status=400
-                )
-        except ValidationError as e:
-            for field in ["field", "non_field_errors"]:
-                if field in e.detail and len(e.detail[field]) >= 1:
-                    return JsonResponse(
-                        {
-                            "success": None,
-                            "error": e.detail[field][0]
-                        }, 
-                        status=400
-                    )
-            for field in e.detail:
-                if len(e.detail[field]) >= 1:
-                    return JsonResponse(
-                        {
-                            "success": None,
-                            "error": e.detail[field][0]
-                        }, 
-                        status=200
-                    )
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": f"error: {str(e)}"
-                }, 
-                status=400
-            )
-        except Exception as e:
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": f"error: {str(e)}"
-                }, 
-                status=400
-            )
-        
-        # check if a user with the given account info exists
-        user_exists = False
-        user = None
-        if 'old_email' in serializer.validated_data:
-            email = serializer.validated_data['old_email']
-            phone_number = None
-            try: 
-                user = User.objects.get(email=email)
-                user_exists = True
-            except Exception as e:
-                user = None
-                user_exists = False
-        elif 'old_phone_number' in serializer.validated_data:
-            email = None
-            phone_number = serializer.validated_data['old_phone_number']
-            try: 
-                user = User.objects.get(phone_number=phone_number)
-                user_exists = True
-            except Exception as e:
-                user = None
-                user_exists = False
-        if not user_exists:
-            return JsonResponse(
-                    {
-                        "success": None,
-                        "error": "Code is invalid or expired"
-                    },
-                    status=200
-                )
-        
-        # return JsonResponse({"uh oh": "checked if user exists"}, status=300)
-        # check if the code matches
-        code = serializer.validated_data['code']
-        uid = user.id
-        field = "delete_account"
-        cached_value = cache.get(f"uid_{uid}_set_{field}_{code}")
-        if cached_value is None:
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": "Code is invalid or expired"
-                },
-                status=200
-            )
-        
-        # return JsonResponse({"uh oh": "found cached value"}, status=300)
-        # check if the code given was to reset the password
-        value = json.loads(cached_value)
-        if "delete_account" not in value:
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": "Code is invalid or expired"
-                },
-                status=200
-            )
-        
-        #verified so delete verification code and begin deletion
-        cache.delete(f"uid_{user.id}_set_{field}_{code}")
-        cache.delete(f"code_{code}_accumate_user_remove")
-        cache.set(
-            f"code_{code}_accumate_user_remove",
-            json.dumps({"success": None, "error": None}),
-            timeout=120
-        )
-        chain(
-            plaid_user_remove.s(uid, code),
-            accumate_user_remove.si(uid, code)
-        ).apply_async()
-        # accumate_user_remove.apply_async(kwargs={"uid": uid})
-        return JsonResponse({"success": code, "error": None}, status=201)
-
 class DeleteAccountVerify(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -1469,6 +1202,14 @@ class DeleteAccountVerify(APIView):
                     json.loads(cached_result),
                     status=200
                 )
+            else:
+                return JsonResponse(
+                    {
+                        "success": None,
+                        "error": "no cached value found for that code"
+                    },
+                    status=400
+                )
         except Exception as e:
             return JsonResponse(
                 {
@@ -1477,6 +1218,7 @@ class DeleteAccountVerify(APIView):
                 },
                 status=400
             )
+
 
 # etc
 

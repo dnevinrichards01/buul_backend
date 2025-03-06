@@ -10,8 +10,13 @@ from accumate_backend.settings import TWILIO_PHONE_NUMBER
 from plaid.model.item_public_token_exchange_request import ItemPublicTokenExchangeRequest
 from plaid.model.link_token_create_request import LinkTokenCreateRequest
 from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
-from plaid.model.account_subtypes import AccountSubtypes
+from plaid.model.depository_filter import DepositoryFilter
+from plaid.model.credit_filter import CreditFilter
 from plaid.model.link_token_account_filters import LinkTokenAccountFilters
+from plaid.model.depository_account_subtypes import DepositoryAccountSubtypes
+from plaid.model.depository_account_subtype import DepositoryAccountSubtype
+from plaid.model.credit_account_subtypes import CreditAccountSubtypes
+from plaid.model.credit_account_subtype import CreditAccountSubtype
 from plaid.model.item_remove_request import ItemRemoveRequest
 from plaid.model.user_create_request import UserCreateRequest
 from plaid.model.user_remove_request import UserRemoveRequest
@@ -105,12 +110,27 @@ def plaid_link_token_create(**kwargs):
                 phone_number=kwargs['user']['phone_number'],
                 email_address=kwargs['user']['email_address']
             ),
+            user_token=plaidUser.userToken,
             products=[Products(val) for val in kwargs['products']], 
+            transactions={"days_requested": 100},
             enable_multi_item_link=True,
-            webhook="https://your-ngrok-id.ngrok.io/api/plaid/sessionfinished/",
+            webhook=kwargs["webhook"],
             account_filters=LinkTokenAccountFilters(
-                depository=AccountSubtypes(["checking", "savings"]),
-                credit=AccountSubtypes(["credit card"])
+                depository=DepositoryFilter(
+                    account_subtypes=DepositoryAccountSubtypes(
+                        [
+                            DepositoryAccountSubtype("checking"), 
+                            DepositoryAccountSubtype("savings")
+                        ]
+                    )
+                ),
+                credit=CreditFilter(
+                    account_subtypes=CreditAccountSubtypes(
+                        [
+                            CreditAccountSubtype("credit card")
+                        ]
+                    )
+                )
             )
         )
         
@@ -126,7 +146,7 @@ def plaid_link_token_create(**kwargs):
         cache.delete(f"link_token_{link_token}_user")
         cache.set(
             f"link_token_{link_token}_user",
-            json.dumps({"uid":uid}),
+            json.dumps({"uid":str(uid)}),
             timeout=3600
         )
 
