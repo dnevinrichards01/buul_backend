@@ -38,8 +38,8 @@ class WaitlistEmail(models.Model):
 
 class UserBrokerageInfo(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
-    brokerage = models.CharField(choices=BROKERAGE_CHOICES, max_length=255)
-    symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255)
+    brokerage = models.CharField(choices=BROKERAGE_CHOICES, max_length=255, null=True, default=None)
+    symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True, default=None)
 
 class StockData(models.Model):
     symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255)

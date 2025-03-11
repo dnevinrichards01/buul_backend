@@ -50,8 +50,12 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(seconds=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ROTATE_REFRESH_TOKENS": True,
+    # true if you want to test refreshing in front end, false otherwise
+    "BLACKLIST_AFTER_ROTATION": True,
+    "TOKEN_BLACKLIST_ENABLED": True
 }
 
 # Application definition
@@ -64,6 +68,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_celery_beat',
+    
+    'rest_framework_simplejwt.token_blacklist',
+    'rest_framework_simplejwt',
 
     'api',
     'rest_framework',

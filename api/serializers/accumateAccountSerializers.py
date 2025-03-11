@@ -164,5 +164,5 @@ class WaitlistEmailSerializer(serializers.ModelSerializer):
             raise ValidationError()
         
 class UserBrokerageInfoSerializer(serializers.Serializer):
-    brokerage = serializers.ChoiceField(choices=BROKERAGE_CHOICES)
-    symbol = serializers.ChoiceField(choices=SYMBOL_CHOICES)
+    brokerage = serializers.ChoiceField(choices=BROKERAGE_CHOICES, required=False)
+    symbol = serializers.ChoiceField(choices=SYMBOL_CHOICES, required=False)
