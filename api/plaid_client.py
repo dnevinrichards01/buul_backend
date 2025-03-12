@@ -1,5 +1,6 @@
 from plaid import ApiClient, Configuration
 from plaid.api import plaid_api
+from accumate_backend.settings import PLAID_CLIENT_ID, PLAID_SECRET, PLAID_HOST
 
 def get_plaid_client():
     """
@@ -7,10 +8,10 @@ def get_plaid_client():
     """
     # Configuration for the Plaid API
     configuration = Configuration(
-        host="https://sandbox.plaid.com",  # Change to production or development as needed
+        host=PLAID_HOST,  # Change to production or development as needed
         api_key={
-            "clientId": "671605190a8131001a389fcd",
-            "secret": "273215c2e8fa64c8399bbb1e197a45"
+            "clientId": PLAID_CLIENT_ID,
+            "secret": PLAID_SECRET
         },
     )
     # Initialize the API client

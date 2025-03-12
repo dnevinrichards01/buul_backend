@@ -31,7 +31,6 @@ def login_robinhood(**kwargs):
         else: 
             return res
     except Exception as e:
-        r.cache_error(kwargs['uid'])
         try:
             return e.args[0]
         except Exception as e2:

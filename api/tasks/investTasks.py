@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.utils import timezone
 
 from ..plaid_client import plaid_client
-from ..twilio_client import twilio_client
+# from ..twilio_client import twilio_client
 from ..jsonUtils import filter_jsons
 
 from datetime import datetime, timedelta
@@ -203,8 +203,19 @@ def rh_cancel_stock_order(uid, order_id):
     except Exception as e:
         return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
 
-    result = r.cancel_stock_order_info(session, order_id)
-    return result
+    result = r.cancel_stock_order(session, order_id)
+    if result:
+        return {"error": f"{result}"}
+    
+    check_if_canceled = r.get_stock_order_info(session, order_id)
+    
+    try:
+        serializer = StockOrderSerializer(data=check_if_canceled)
+        serializer.is_valid(raise_exception=True)
+    except Exception as e:
+        return {"error": f"{str(e)}"}
+    return serializer.validated_data
+
     
     # try:
     #     serializer = StockOrderSerializer(data=result)

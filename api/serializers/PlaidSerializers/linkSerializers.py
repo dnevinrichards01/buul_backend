@@ -18,7 +18,7 @@ def e164_phone_number_validator(value):
         
         return value
     except Exception as e:
-        raise serializers.ValidationError("Invalid phone number")
+        raise serializers.ValidationError("Enter a valid phone number. It should be no longer than 15 digits and contain your country code'")
 
 # /link/create/token request
 
@@ -166,3 +166,20 @@ class LinkTokenCreateResponseSerializer(serializers.Serializer):
     request_id = serializers.CharField(
         help_text="A unique identifier for the request, used for troubleshooting."
     )
+
+class PlaidSessionFinishedSerializer(serializers.Serializer):
+    webhook_type = serializers.ChoiceField(required=True, choices=["LINK"])
+    webhook_code = serializers.ChoiceField(required=True, choices=["SESSION_FINISHED"])
+    status = serializers.ChoiceField(required=True, choices=["success", "exited"])
+    link_session_id = serializers.CharField(required=True)
+    link_token = serializers.CharField(required=True)
+    public_tokens = serializers.ListField(
+        required=True,
+        child=serializers.CharField(required=True),
+    )
+    environment = serializers.ChoiceField(required=True, choices=["sandbox", "production"])
+
+    def validate(self, attrs):
+        if attrs['status'] not in ["SUCCESS", "success"]:
+            raise serializers.ValidationError("status must be 'SUCCESS' or 'success'")
+        return attrs

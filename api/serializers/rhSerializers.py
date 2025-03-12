@@ -50,13 +50,14 @@ class StockOrderSerializer(serializers.Serializer):
             raise ValidationError("instrument_url")
         return url
     
-class DepositFundsToRobinhoodResponseSerializer(serializers.Serializer):
+class DepositSerializer(serializers.Serializer):
     ach_relationship = serializers.CharField() # the account
     id = serializers.CharField()
     url = serializers.CharField()
     cancel = serializers.CharField() 
     amount = serializers.FloatField()
-    status_description = serializers.CharField() # ''
+    direction = serializers.CharField()
+    status_description = serializers.CharField(allow_null=True) # ''
     state = serializers.CharField() # pending
     rhs_state = serializers.CharField() # requested
     created_at = serializers.DateTimeField() 

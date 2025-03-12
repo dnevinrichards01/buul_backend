@@ -13,6 +13,8 @@ from django.core.cache import cache
 import json
 
 
+# helper methods
+
 def generate_device_token():
     """This function will generate a token used when loggin on.
 
@@ -39,21 +41,7 @@ def generate_device_token():
     return(id)
 
 
-def respond_to_challenge(challenge_id, sms_code, session):
-    """This function will post to the challenge url.
-
-    :param challenge_id: The challenge id.
-    :type challenge_id: str
-    :param sms_code: The sms code.
-    :type sms_code: str
-    :returns:  The response from requests.
-
-    """
-    url = challenge_url(challenge_id)
-    payload = {
-        'response': sms_code
-    }
-    return(request_post(url, session, payload=payload))
+# log in and refresh
 
 def refresh(session, uid, expiresIn=86400, scope='internal'):
     url = login_url()
@@ -94,6 +82,12 @@ def save_cred(data, payload, uid, session):
         UserRobinhoodInfo = apps.get_model("robin_stocks", "UserRobinhoodInfo")
         try:
             brokerageInfo = UserRobinhoodInfo.objects.get(user__id=uid)
+            brokerageInfo.token_type = data['token_type']
+            brokerageInfo.access_token = data['access_token']
+            brokerageInfo.refresh_token = data['refresh_token']
+            brokerageInfo.device_token = payload['device_token']
+            brokerageInfo.expiration_time = now() + timedelta(seconds=data['expires_in'])
+            brokerageInfo.save()
         except Exception as e:
             User = apps.get_model("api", "User")
             user = User.objects.get(id=uid)
@@ -107,13 +101,6 @@ def save_cred(data, payload, uid, session):
             )
             brokerageInfo.save()
             return
-        
-        brokerageInfo.token_type = data['token_type']
-        brokerageInfo.access_token = data['access_token']
-        brokerageInfo.refresh_token = data['refresh_token']
-        brokerageInfo.device_token = payload['device_token']
-        brokerageInfo.expiration_time = now() + timedelta(seconds=data['expires_in'])
-        brokerageInfo.save()
     else:
         if 'detail' in data:
             raise Exception(f"{uid}: {data['detail']}")
@@ -121,7 +108,7 @@ def save_cred(data, payload, uid, session):
 
 def login(session=None, uid=None, username=None, password=None, expiresIn=86400, 
           scope='internal', by_sms=True, mfa_code=None, challenge_code=None,
-          device_token=None):
+          device_approval=False):
     """This function will effectively log the user into robinhood by getting an
     authentication token and saving it to the session header. By default, it
     will store the authentication token in a pickle file and load that value
@@ -153,14 +140,39 @@ def login(session=None, uid=None, username=None, password=None, expiresIn=86400,
 
     """
 
-    device_token = device_token or generate_device_token()
+    # load or generate device token
+    if challenge_code is not None or mfa_code is not None or device_approval:
+        challenge_cached_values = cache.get(f"uid_{uid}_rh_challenge")
+        if challenge_cached_values is None:
+            save_error_to_cache(
+                uid,
+                "An internal error occurred. Please log in again."
+            )
+            return {
+                "error": "no cache", 
+                "message": "(No cached mfa info) An internal error occured. Please log in again."
+            }
+        cache_error = True
+        challenge_values = json.loads(challenge_cached_values)
+        for key in challenge_values:
+            if key != "error" and challenge_values[key]:
+                cache_error = False
+                break
+        if cache_error:
+            return {
+                "error": "no cache", 
+                "message": "(No cached mfa info, only error) No cached values associated with this uid. Log in again."
+            }
+        device_token = challenge_values["device_token"]
+    else:
+        challenge_cached_values = cache.delete(f"uid_{uid}_rh_challenge")
+        device_token = generate_device_token()
     
-    # Challenge type is used if not logging in with two-factor authentication.
+    # create payload for login endpoint
     if by_sms:
         challenge_type = "sms"
     else:
         challenge_type = "email"
-
     payload = {
         'client_id': 'c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS',
         'expires_in': expiresIn,
@@ -175,255 +187,363 @@ def login(session=None, uid=None, username=None, password=None, expiresIn=86400,
         'create_read_only_secondary_token':True,
         'request_id': '848bd19e-02bc-45d9-99b5-01bce5a79ea7'
     } 
-
     if mfa_code:
         payload['mfa_code'] = mfa_code
 
-    url = login_url()
+    # make login request unless we are submitting an sms challenge code 
+    if challenge_code is not None or mfa_code is not None or device_approval:
+        data = None
+    else:
+        data = request_post(login_url(), session, payload=payload)
+            
+    # if request_post errors or has non-success status, returs None
+    if data is None and (challenge_code is None and mfa_code is None and not device_approval):
+        save_error_to_cache(uid, "An internal error occurred. Please log in again.")
+        return f"(initial login request returned None) An internal error occurred. Please log in again."
+    # if need mfa app code, retry once user enters it
+    if data and 'mfa_required' in data: 
+        save_mfa_challenge_to_cache(uid, None, None, device_token,
+            "Please enter an MFA code from your OTP authenticator app linked with " + \
+                "Robinhood"
+        )
+        return "(Outside of verification workflow) Please enter an MFA code from your OTP authenticator app linked with " + \
+                "Robinhood"
     
-    try:
-        if challenge_code is not None:
-            data = None
-        else:
-            data = request_post(url, session, payload=payload)
-    except Exception as e:
-        return f"could not make log in request: {e}"
-
-    # Handle case where mfa or challenge is required.
-    if data and 'mfa_required' in data:
-        save_mfa_challenge_to_cache(uid, device_token, "That MFA code was not correct. Please type in another MFA code")
-        return "mfa incorrect or missing, response cached"
-    elif challenge_code is not None or data and 'verification_workflow' in data:
-        # import pdb
-        # breakpoint()
-        validation_output = _validate_sherrif_id(
-            session, uid, device_token=device_token, mfa_code=mfa_code, 
-            challenge_code=challenge_code, login_attempt_data=data
+    # if need submit challenge code or do mfa before logging in
+    elif data and 'verification_workflow' in data:
+        validation_output = initial_verification_flow(
+            session, uid, device_token=device_token, mfa_code=mfa_code,
+            workflow_id=data['verification_workflow']['id']
         )
         if validation_output['error']:
-            return validation_output['message']
-        if validation_output['device_token']:
-            payload['device_token'] = validation_output['device_token']
-            data = request_post(url, session, payload=payload)
-
-        # Update Session data with authorization or raise exception with the information present in data.
+            return f"error: {validation_output['message']}"
+        if validation_output['success']:
+            data = request_post(login_url(), session, payload=payload)
+    elif challenge_code is not None or device_approval:
+        validation_output = response_verification_flow(
+            session, uid, device_token=device_token, mfa_code=mfa_code, 
+            challenge_code=challenge_code
+        )
+        if validation_output['error']:
+            return f"error: {validation_output['message']}"
+        if validation_output['success']:
+            data = request_post(login_url(), session, payload=payload)
+    
+    # if logged in successfully, save credentials
     if data and 'access_token' in data:
         save_cred(data, payload, uid, session)
         save_login_success_to_cache(uid)
+        return "success: logged in, creds saved"
+    # edge case error if login endpoint returned nothing
     elif not data:
-        raise Exception('Error: Trouble connecting to robinhood API. Check internet connection.')
-    return(data)
+        save_error_to_cache(uid, "An internal error occurred. Please log in again.")
+        return "(second login request returned None) An internal error occurred. Please log in again."
+    
+    save_error_to_cache(uid, "An internal error occurred. Please log in again.")
+    return "(unhandled case) An internal error occurred. Please log in again."
+
+def initial_verification_flow(session, uid, device_token:str, mfa_code:str, 
+                              workflow_id:str):
+
+    # takes verification workflow id, returns user machine id
+    url = "https://api.robinhood.com/pathfinder/user_machine/"
+    payload = {
+        'device_id': device_token,
+        'flow': 'suv',
+        'input':{'workflow_id': workflow_id}
+    }
+    user_machine_response = request_post(url, session, payload=payload,json=True)
+    # check if response valid
+    if "id" not in user_machine_response:
+        save_error_to_cache(
+            uid, 
+            "An internal error occurred. Please log in again."
+        )
+        return {
+            "error": "error", 
+            "success": None,
+            "message": f"(no id in user_machine) An internal error occurred. Please log in again."
+        }
+    
+    # takes user machine id, returns challenge id and challenge type
+    inquiries_url = f"https://api.robinhood.com/pathfinder/inquiries/{user_machine_response['id']}/user_view/"
+    inquiries_response = request_get(inquiries_url, session)
+    challenge_id = inquiries_response['type_context']["context"]["sheriff_challenge"]["id"]
+    challenge_type = inquiries_response['type_context']["context"]["sheriff_challenge"]["type"]
+    # if challenge type is sms, exit now so user can give us the sms code
+    if challenge_type == 'sms':
+        save_sms_challenge_to_cache(
+            uid, challenge_type, inquiries_url, challenge_id, device_token,
+            "Please enter the code sent to your phone by Robinhood."
+        )
+        return {
+            "error": "sms", 
+            "success": None,
+            "message": "Please enter the code sent to your phone by Robinhood."
+        }
+    # if challenge type is device approvals, exit now so user can give complete prompt
+    elif challenge_type == 'prompt':
+        save_device_approvals_challenge_to_cache(
+            uid, inquiries_url, challenge_id, device_token, "Please respond to the prompt in the Robinhood app then return here to click Continue."
+        )
+        return {
+            "error": "device approval needed", 
+            "success": None,
+            "message": "Wait for device approval"
+        }
+    # if challenge_type is mfa app code, prepare challenge payload
+    elif challenge_type == 'app':
+        save_mfa_challenge_to_cache(uid, inquiries_url, challenge_id, device_token,
+            "Please enter an MFA code from your OTP authenticator app linked with Robinhood"
+        )
+        return "enter mfa app code"
+        # challenge_payload = {'response': mfa_code}
+    # handle unkown challenge type
+    else:
+        save_error_to_cache(
+            uid, 
+            "An internal error occurred. Please log in again."
+        )
+        return {
+            "error": "error", 
+            "success": None,
+            "message": f"Unkown response format from pathfinder/inquiries"
+        }
+    
+    # respond to challenge
+    challenge_url = f"https://api.robinhood.com/challenge/{challenge_id}/respond/"
+    challenge_response = request_post(challenge_url, session, payload=challenge_payload, json=True)
+
+    # check if challenge response was successful
+    sms_or_app_validated = 'status' in challenge_response and challenge_response["status"] == "validated"
+    if sms_or_app_validated:
+        inquiries_payload = {"sequence":0,"user_input":{"status":"continue"}}
+        inquiries_response = request_post(inquiries_url, session, payload=inquiries_payload, json=True)
+        if inquiries_response["type_context"]["result"] == "workflow_status_approved":
+            return {
+                "error": None,
+                "success": "workflow_status_approved",
+                "message": "workflow_status_approved"
+            }
+        else:
+            save_error_to_cache(
+                uid,
+                "An internal error occurred. Please log in again."
+            )
+            return {
+                "error": "workflow status not approved", 
+                "success": None,
+                "message": "workflow status not approved despite challenge response status validated"
+            }   
+    else:
+        if challenge_type == 'app':
+            save_mfa_challenge_to_cache(
+                uid, 
+                "That MFA code was not correct or expired. Please enter another one."
+            )
+            return {
+                "error": "mfa", 
+                "success": None,
+                "message": "mfa incorrect or missing, response cached"
+            }
+        else:
+            save_error_to_cache(
+                uid,
+                "challenge failed with unexpected challenge_type"
+            )
+            return {
+                "error": f"challenge failed with unexpected challenge_type: {challenge_type}",
+                "success": None,
+                "message": f"challenge failed with unexpected challenge_type: {challenge_type}"
+            }   
+
+def response_verification_flow(session, uid, device_token:str, mfa_code:str, 
+                               challenge_code:str):
+
+    # retrieve challenge id and challenge type
+    challenge_cached_values = cache.get(f"uid_{uid}_rh_challenge")
+    if challenge_cached_values is None:
+        save_error_to_cache(
+            uid,
+            "An internal error occurred. Please log in again."
+        )
+        return {
+            "error": "no sms cache", 
+            "success": None,
+            "message": "No cached values associated with a challenge code. Log in again."
+        }
+    challenge_values = json.loads(challenge_cached_values)
+    challenge_type = challenge_values["challenge_type"]
+    inquiries_url = challenge_values["inquiries_url"]
+    challenge_id = challenge_values["challenge_id"]
+    device_token = challenge_values["device_token"]
+    
+    # respond to the challenge 
+    challenge_validated = False
+    prompt_validated = False
+    if challenge_type == 'app':
+        challenge_payload = {'response': mfa_code}
+    elif challenge_type == 'sms':
+        challenge_payload = {'response': challenge_code}
+    if challenge_type != 'prompt':
+        challenge_url = f"https://api.robinhood.com/challenge/{challenge_id}/respond/"
+        challenge_response = request_post(challenge_url, session, payload=challenge_payload, json=True)
+        challenge_validated = 'status' in challenge_response and challenge_response["status"] == "validated"
+    else:
+        prompt_url = f"https://api.robinhood.com/push/{challenge_id}/get_prompts_status/"
+        prompt_response = request_get(prompt_url, session)
+        prompt_validated = 'challenge_status' in prompt_response and prompt_response["challenge_status"] == "validated"
+
+    # check if challenge response was successful
+    if challenge_validated or prompt_validated:
+        inquiries_payload = {"sequence":0,"user_input":{"status":"continue"}}
+        inquiries_response = request_post(inquiries_url, session, payload=inquiries_payload, json=True)
+        if inquiries_response and "type_context" in inquiries_response and \
+            "result" in inquiries_response["type_context"] and \
+            inquiries_response["type_context"]["result"] == "workflow_status_approved":
+            return {
+                "error": None,
+                "success": "workflow_status_approved",
+                "message": "workflow_status_approved"
+            }
+        else:
+            save_error_to_cache(
+                uid,
+                "An internal error occurred. Please log in again."
+            )
+            return {
+                "error": "workflow status not approved", 
+                "success": None,
+                "message": "workflow status not approved despite challenge response status validated"
+            }   
+    else:
+            if challenge_type == 'app':
+                save_mfa_challenge_to_cache(
+                    uid, 
+                    "That MFA code was not correct or expired. Please enter another one."
+                )
+                return {
+                    "error": "mfa", 
+                    "success": None,
+                    "message": "mfa incorrect or missing, response cached"
+                }
+            elif challenge_type == 'sms':
+                save_sms_challenge_to_cache(
+                    uid, challenge_type, inquiries_url, challenge_id, device_token,
+                    "That code was not correct. Please type in the new code sent to your phone"
+                )
+                return {
+                    "error": "sms", 
+                    "success": None,
+                    "message": "sms incorrect or missing, response cached"
+                }
+            elif challenge_type == 'prompt':
+                save_device_approvals_challenge_to_cache(uid, inquiries_url, challenge_id, device_token,
+                                                         "Please try responding the new prompt in the Robinhood app again and then click continue.")
+                return {
+                    "error": "prompt", 
+                    "success": None,
+                    "message": "prompt not yet completed"
+                }
+            else:
+                save_error_to_cache(
+                    uid,
+                    "An internal error occurred. Please log in again."
+                )
+                return {
+                    "error": f"challenge failed with unknown challenge_type: {challenge_type}",
+                    "success": None,
+                    "message": f"challenge failed with unknown challenge_type: {challenge_type}"
+                }   
 
 
-# make sure to delete these three's cache entries upon response
+# save log in information to cache
+
 def save_sms_challenge_to_cache(uid, challenge_type, inquiries_url, challenge_id, 
                                 device_token, message):
-    cache.delete(f"uid_{uid}_challenge",)
+    cache.delete(f"uid_{uid}_rh_challenge",)
     cache.set(
-        f"uid_{uid}_challenge",
+        f"uid_{uid}_rh_challenge",
         json.dumps({
             "challenge_type": challenge_type,
             "inquiries_url": inquiries_url,
             "challenge_id": challenge_id,
             "device_token": device_token, 
-            "message": message}), 
-        timeout=120
+            "success": None,
+            "error": "enter otp sent to your phone"
+        }), 
+        timeout=1800
     )
-
-
 
 def save_device_approvals_challenge_to_cache(uid, inquiries_url, challenge_id,
                                              device_token, message):
-    cache.delete(f"uid_{uid}_challenge")
+    cache.delete(f"uid_{uid}_rh_challenge")
     cache.set(
-        f"uid_{uid}_challenge",
+        f"uid_{uid}_rh_challenge",
         json.dumps({
-            "challenge_type": "device_approvals",
+            "challenge_type": "prompt",
             "inquiries_url": inquiries_url,
             "challenge_id": challenge_id,
             "device_token": device_token, 
-            "message": message
+            "success": None,
+            "error": message
         }), 
-        timeout=None
+        timeout=1800
     )
 
-def save_mfa_challenge_to_cache(uid, message):
-    cache.delete(f"uid_{uid}_challenge",)
+def save_mfa_challenge_to_cache(uid, inquiries_url, challenge_id, device_token,
+                                error_message):
+    cache.delete(f"uid_{uid}_rh_challenge",)
     cache.set(
-        f"uid_{uid}_challenge",
+        f"uid_{uid}_rh_challenge",
         json.dumps({
-            "challenge_type": "mfa",
-            "inquiries_url": None,
-            "challenge_id": None,
-            "device_token": None, 
-            "message": message
+            "challenge_type": "app",
+            "inquiries_url": inquiries_url,
+            "challenge_id": challenge_id,
+            "device_token": device_token, 
+            "success": None,
+            "error": error_message
         }),
-        timeout=120
+        timeout=1800
     )
 
 def save_login_success_to_cache(uid):
-    cache.delete(f"uid_{uid}_challenge",)
+    cache.delete(f"uid_{uid}_rh_challenge",)
     cache.set(
-        f"uid_{uid}_challenge",
+        f"uid_{uid}_rh_challenge",
         json.dumps({
             "challenge_type": None,
             "inquiries_url": None,
             "challenge_id": None,
             "device_token": None, 
-            "message": "success"
+            "success": "logged in",
+            "error": None
         }),
-        timeout=120
+        timeout=1800
     )
 
-def cache_error(uid):
-    cache.delete(f"uid_{uid}_challenge",)
-    cache.set(
-        f"uid_{uid}_challenge",
-        json.dumps({
-            "challenge_type": None,
-            "inquiries_url": None,
-            "challenge_id": None,
-            "device_token": None, 
-            "message": "error"
-        }),
-        timeout=120
-    )
-
-
-def _validate_sherrif_id(session, uid, device_token:str, mfa_code:str, 
-                         challenge_code:str, login_attempt_data=None):
-
-    # pathfinder to use verification workflow / id to get inquiries id
-    # (inquiries id will be used to get info on how to verify self)
-    if challenge_code is None:
-        url = "https://api.robinhood.com/pathfinder/user_machine/"
-        workflow_id = login_attempt_data['verification_workflow']['id']
-        payload = {
-            'device_id': device_token,
-            'flow': 'suv',
-            'input':{'workflow_id': workflow_id}
-        }
-        data = request_post(url, session, payload=payload,json=True)
-
-    # use inquiries id get info on challenge id and challenge type
-    if challenge_code is not None or "id" in data:
-        # if user gave an challenge (sms) code then we already have this info cached
-        if challenge_code is not None:
-            challenge_cached_values = cache.get(f"uid_{uid}_challenge")
-            if challenge_cached_values is None:
-                raise Exception("challenge values not found in cache")
-            else:
-                challenge_values = json.loads(challenge_cached_values)
-                challenge_type = challenge_values["challenge_type"]
-                inquiries_url = challenge_values["inquiries_url"]
-                challenge_id = challenge_values["challenge_id"]
-                device_token = challenge_values["device_token"]
-        # use the inquiries id
-        else:
-            inquiries_url = f"https://api.robinhood.com/pathfinder/inquiries/{data['id']}/user_view/"
-            res = request_get(inquiries_url, session)
-            challenge_id = res['type_context']["context"]["sheriff_challenge"]["id"]
-            challenge_type = res['type_context']["context"]["sheriff_challenge"]["type"]
-            # if challenge type is sms, exit now so user can give us the sms code
-            if challenge_type == 'sms':
-                save_sms_challenge_to_cache(
-                    uid, challenge_type, inquiries_url, challenge_id, device_token,
-                    "That sms code was not correct. Please type in the new code"
-                )
-                return {"error": "sms", "message": "sms incorrect or missing, response cached"}
-        
-        # respond to the challenge 
-        if challenge_type == 'app': 
-            # confused bc mfa should get handled in login() when 
-            # /token request returns 'mfa required'??
-            challenge_payload = {'response': mfa_code}
-        elif challenge_type == 'sms':
-            challenge_payload = {'response': challenge_code or "111111"}
-        elif challenge_type == 'prompt':
-            # if device approvals, then exit so that
-            save_device_approvals_challenge_to_cache(
-                uid, 
-                f"https://api.robinhood.com/push/{challenge_id}/get_prompts_status/",
-                challenge_id,
-                device_token,
-                "pending"
-            )
-            return {"error": "device approval needed", "message": "Wait for device approval"}
-        
-        # import pdb
-        # breakpoint()
-
-        challenge_url = f"https://api.robinhood.com/challenge/{challenge_id}/respond/"
-        challenge_response = request_post(challenge_url, session, payload=challenge_payload, json=True)
-        
-        # check if challenge response was successful
-        if 'status' in challenge_response and challenge_response["status"] == "validated":
-            inquiries_payload = {"sequence":0,"user_input":{"status":"continue"}}
-            inquiries_response = request_post(inquiries_url, session, payload=inquiries_payload, json=True)
-            if inquiries_response["type_context"]["result"] == "workflow_status_approved":
-                return {"error": None, "message": "success", "device_token": device_token if challenge_code else None}
-            else:
-                raise Exception("workflow status not approved")    
-        else:
-            if challenge_type == 'app':
-                save_mfa_challenge_to_cache(uid, f"That MFA code was not correct. Please type in another MFA code")
-                return {"error": "mfa", "message": "mfa incorrect or missing, response cached"}
-            elif challenge_type == 'sms':
-                save_sms_challenge_to_cache(
-                    uid, challenge_type, inquiries_url, challenge_id, device_token,
-                    "That sms code was not correct. Please type in the new code"
-                )
-                return {"error": "sms", "message": "sms incorrect or missing, response cached"}
-    raise Exception("Id not returned in user-machine call")
-
-
-
-def check_device_approvals(uid):
-    import pdb
-    breakpoint()
-    
-    # 
-    device_approval_status = cache.get(f"uid_{uid}_challenge")
-    if device_approval_status:
-        cached_data = json.loads(device_approval_status)
-        if cached_data['challenge_type'] != 'device_approvals':
-            raise Exception("challenge type is not device approvals")
-        
-        try:
-            response = request_get(cached_data["inquiries_url"], create_session())
-        except Exception as e: 
-            raise Exception("no response")
-        
-        if "challenge_status" in response:
-            if response["challenge_status"] == "issued":
-                return {"message": "device approval issued"}
-            elif response["challenge_status"] == "validated":
-                cache.delete(f"uid_{uid}_challenge")
-                cache.set(
-                    f"uid_{uid}_challenge",
-                    json.dumps({
-                        "challenge_type": "device_approvals",
-                        "inquiries_url": cached_data["inquiries_url"],
-                        "device_token": cached_data["device_token"], 
-                        "message": "device approval validated"
-                    }), 
-                    timeout=None
-                )
-                return {"message": "device approval validated"}
-            elif response['challenge_status'] in ['failed', 'expired']:
-                cache.delete(f"uid_{uid}_challenge")
-                raise Exception("device approval failed or expired")
-
-        raise Exception("invalid response")
-    else: 
-        raise Exception("no cached value")
-
-@login_required
-def logout():
-    """Removes authorization from the session header.
-
-    :returns: None
-
-    """
-    # set_login_state(False)
-    update_session('Authorization', None)
+def save_error_to_cache(uid, error_message):
+    cached_val = cache.get(f"uid_{uid}_rh_challenge",)
+    if cached_val:
+        val = json.loads(cached_val)
+        val["error"] = error_message
+        cache.delete(f"uid_{uid}_rh_challenge",)
+        cache.set(
+            f"uid_{uid}_rh_challenge",
+            json.dumps(val),
+            timeout=1800
+        )
+    else:
+        cache.delete(f"uid_{uid}_rh_challenge",)
+        cache.set(
+            f"uid_{uid}_rh_challenge",
+            json.dumps({
+                "challenge_type": None,
+                "inquiries_url": None,
+                "challenge_id": None,
+                "device_token": None, 
+                "success": None,
+                "error": error_message
+            }),
+            timeout=1800
+        )

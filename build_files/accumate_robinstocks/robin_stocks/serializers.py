@@ -2,10 +2,34 @@ from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
 class ConnectRobinhoodLoginSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=255, allow_null=True)
-    password = serializers.CharField(max_length=255, allow_null=True)
-    challenge_code = serializers.CharField(max_length=255, allow_null=True, default=None)
-    mfa_code = serializers.CharField(max_length=255, allow_null=True, default=None)
-    by_sms = serializers.BooleanField(allow_null=True, default=True)
-    device_token = serializers.CharField(max_length=255, allow_null=True, default=None)
+    username = serializers.EmailField(
+        max_length=255, 
+        required=False,
+    )
+    password = serializers.CharField(
+        max_length=255, 
+        required=False,
+    )
+    sms = serializers.CharField(
+        max_length=255, 
+        required=False,
+    )
+    prompt = serializers.BooleanField( 
+        required=False,
+    )
+    app = serializers.CharField(
+        max_length=255, 
+        required=False,
+    )
+    by_sms = serializers.BooleanField(
+        required=False,
+        default=True
+    )
 
+    def validate(self, attrs):
+        if sum([mfa in attrs for mfa in ['app', 'sms', 'prompt']]) > 1:
+            raise ValidationError("You may only choose one mfa method.")
+        if ('username' not in attrs) or ('password' not in attrs):
+            raise ValidationError("You must submit both username and password")
+        return attrs
+        
