@@ -1,5 +1,0 @@
-requests==2.31.0
-pyotp==2.3.0
-python-dotenv==0.15.0
-cryptography==41.0.3
-Django>=5.1.3
