@@ -1,0 +1,327 @@
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+[13/Mar/2025 13:49:14] "PUT /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 38
+
+def backend_cleanup():
+    return 1
+
+
+def send_waitlist_email(**kwargs):
+    return 1
+
+
+def send_verification_code(**kwargs):
+    return 1
+
+
+def chain(*args, **kwargs):
+    return 1
+
+
+def plaid_user_remove(uid, code):
+    return 1
+
+
+def accumulate(self, *args, **kwargs):
+    return 1
+
+
+def plaid_item_remove(uid, item_id):
+    return 1
+
+
+def refresh_robinhood():
+    return 1
+
+
+def plaid_item_public_tokens_exchange(**kwargs):
+    return 1
+
+
+def chord(self, header, body, partial_args=0, interval=1, countdown=2, max_retries=3, eager=4, **kwargs):
+    return 1
+
+
+def transactions_sync(uid, item_ids=0, transactions_by_item_id=1, update_cursor=2, page_size=3):
+    return 1
+
+
+def unlock_chord(self, group_id, callback, interval=0, max_retries=1, result=2, Result=3, GroupResult=4, result_from_tuple=5, **kwargs):
+    return 1
+
+
+def refresh_stock_data(symbols=0, start_date=1, end_date=2):
+    return 1
+
+
+def xmap(task, it):
+    return 1
+
+
+def send_forgot_email(**kwargs):
+    return 1
+
+
+def plaid_link_token_create(**kwargs):
+    return 1
+
+
+def accumate_user_remove(uid, code, ignore_plaid_delete=0):
+    return 1
+
+
+def xstarmap(task, it):
+    return 1
+
+
+def plaid_user_create(**kwargs):
+    return 1
+
+
+def transactions_get(uid, start_date_str, end_date_str, item_ids=0, transactions_by_item_id=1, page_size=2):
+    return 1
+
+
+def login_robinhood(**kwargs):
+    return 1
+
+
+def transactions_categories_sum(transactions_response, transactions_sync=0, personal_finance_categories=1):
+    return 1
+
+
+def chunks(task, it, n):
+    return 1
+
+
+def get_investment_graph_data(uid, symbol):
+    return 1
+
+
+def group(self, tasks, result, group_id, partial_args, add_to_parent=0):
+    return 1
+
+[13/Mar/2025 13:49:23] "PUT /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 38
+[13/Mar/2025 13:49:38] "POST /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 53
+[13/Mar/2025 13:49:40] "POST /api/user/namepasswordvalidation/ HTTP/1.1" 200 39
+[13/Mar/2025 13:49:51] "POST /api/user/createuser/ HTTP/1.1" 200 45
+[13/Mar/2025 13:49:52] "POST /api/token/ HTTP/1.1" 200 582
+[13/Mar/2025 13:49:55] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+[13/Mar/2025 13:50:01] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+[13/Mar/2025 13:54:01] "POST /api/plaid/usercreate/ HTTP/1.1" 201 38
+[13/Mar/2025 13:54:02] "GET /api/plaid/usercreate/ HTTP/1.1" 201 37
+[13/Mar/2025 13:54:02] "POST /api/plaid/linktokencreate/ HTTP/1.1" 201 38
+[13/Mar/2025 13:54:04] "GET /api/plaid/linktokencreate/ HTTP/1.1" 201 79
+[13/Mar/2025 13:56:53] "POST /api/plaid/usercreate/ HTTP/1.1" 200 44
+[13/Mar/2025 13:56:55] "GET /api/plaid/usercreate/ HTTP/1.1" 201 37
+[13/Mar/2025 13:56:55] "POST /api/plaid/linktokencreate/ HTTP/1.1" 201 38
+[13/Mar/2025 13:56:57] "GET /api/plaid/linktokencreate/ HTTP/1.1" 201 79
+/code/api/views.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 655
+    if 
+       ^
+SyntaxError: invalid syntax
+/code/api/views.py changed, reloading.
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/api/apps.py", line 9, in ready
+    from api import views, models
+  File "/code/api/views.py", line 655
+    if 
+       ^
+SyntaxError: invalid syntax
+/code/api/views.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+[13/Mar/2025 14:02:17] "POST /api/token/ HTTP/1.1" 200 582
+[13/Mar/2025 14:02:17] "GET /api/user/getuserinfo/ HTTP/1.1" 200 191
+[13/Mar/2025 14:10:09] "POST /rh/login/ HTTP/1.1" 200 68
+[13/Mar/2025 14:11:48] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+[13/Mar/2025 14:12:13] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+[13/Mar/2025 14:12:59] "POST /api/token/ HTTP/1.1" 200 582
+[13/Mar/2025 14:12:59] "GET /api/user/getuserinfo/ HTTP/1.1" 200 191
+[13/Mar/2025 14:18:54] "POST /api/token/ HTTP/1.1" 200 582
+[13/Mar/2025 14:18:55] "GET /api/user/getuserinfo/ HTTP/1.1" 200 191
+[13/Mar/2025 14:18:57] "POST /api/plaid/usercreate/ HTTP/1.1" 200 44
+[13/Mar/2025 14:18:59] "GET /api/plaid/usercreate/ HTTP/1.1" 201 37
+
+def backend_cleanup():
+    return 1
+
+
+def send_waitlist_email(**kwargs):
+    return 1
+
+
+def send_verification_code(**kwargs):
+    return 1
+
+
+def chain(*args, **kwargs):
+    return 1
+
+
+def refresh_robinhood():
+    return 1
+
+
+def plaid_user_remove(uid, code):
+    return 1
+
+
+def accumulate(self, *args, **kwargs):
+    return 1
+
+
+def plaid_item_remove(uid, item_id):
+    return 1
+
+
+def plaid_item_public_tokens_exchange(**kwargs):
+    return 1
+
+
+def chord(self, header, body, partial_args=0, interval=1, countdown=2, max_retries=3, eager=4, **kwargs):
+    return 1
+
+
+def transactions_sync(uid, item_ids=0, transactions_by_item_id=1, update_cursor=2, page_size=3):
+    return 1
+
+
+def unlock_chord(self, group_id, callback, interval=0, max_retries=1, result=2, Result=3, GroupResult=4, result_from_tuple=5, **kwargs):
+    return 1
+
+
+def refresh_stock_data(symbols=0, start_date=1, end_date=2):
+    return 1
+
+
+def xmap(task, it):
+    return 1
+
+
+def send_forgot_email(**kwargs):
+    return 1
+
+
+def plaid_link_token_create(**kwargs):
+    return 1
+
+
+def login_robinhood(**kwargs):
+    return 1
+
+
+def accumate_user_remove(uid, code, ignore_plaid_delete=0):
+    return 1
+
+
+def xstarmap(task, it):
+    return 1
+
+
+def plaid_user_create(**kwargs):
+    return 1
+
+
+def transactions_get(uid, start_date_str, end_date_str, item_ids=0, transactions_by_item_id=1, page_size=2):
+    return 1
+
+
+def transactions_categories_sum(transactions_response, transactions_sync=0, personal_finance_categories=1):
+    return 1
+
+
+def chunks(task, it, n):
+    return 1
+
+
+def get_investment_graph_data(uid, symbol):
+    return 1
+
+
+def group(self, tasks, result, group_id, partial_args, add_to_parent=0):
+    return 1
+
+[13/Mar/2025 14:18:59] "POST /api/plaid/linktokencreate/ HTTP/1.1" 201 38
+[13/Mar/2025 14:19:00] "GET /api/plaid/linktokencreate/ HTTP/1.1" 201 79
+[13/Mar/2025 14:19:35] "POST /api/plaid/usercreate/ HTTP/1.1" 200 44
+[13/Mar/2025 14:19:37] "GET /api/plaid/usercreate/ HTTP/1.1" 201 37
+[13/Mar/2025 14:19:37] "POST /api/plaid/linktokencreate/ HTTP/1.1" 201 38
+[13/Mar/2025 14:19:38] "GET /api/plaid/linktokencreate/ HTTP/1.1" 201 79
+[13/Mar/2025 14:20:17] "PUT /api/user/requestverificationcode/ HTTP/1.1" 200 38
+[13/Mar/2025 14:23:00] "PUT /api/user/requestverificationcode/ HTTP/1.1" 200 38
+[13/Mar/2025 14:23:23] "PUT /api/user/requestverificationcode/ HTTP/1.1" 200 38
+[13/Mar/2025 14:23:31] "PUT /api/user/requestverificationcode/ HTTP/1.1" 200 38
+[13/Mar/2025 14:25:55] "PUT /api/user/requestverificationcode/ HTTP/1.1" 200 38
+[13/Mar/2025 14:31:55] "PUT /api/user/requestverificationcode/ HTTP/1.1" 200 38
+[13/Mar/2025 14:32:13] "POST /api/user/requestverificationcode/ HTTP/1.1" 200 53
+[13/Mar/2025 14:32:34] "PUT /api/user/requestverificationcode/ HTTP/1.1" 200 38
+[13/Mar/2025 14:32:49] "POST /api/user/requestverificationcode/ HTTP/1.1" 200 53
+[13/Mar/2025 14:34:15] "PUT /api/user/requestverificationcode/ HTTP/1.1" 200 38
+[13/Mar/2025 14:34:35] "POST /api/user/requestverificationcode/ HTTP/1.1" 200 53
+[13/Mar/2025 14:53:29] "PUT /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 144
+[13/Mar/2025 14:53:36] "PUT /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 38
+[13/Mar/2025 14:53:44] "PUT /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 38
+[13/Mar/2025 14:54:02] "POST /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 53
+[13/Mar/2025 14:54:05] "POST /api/user/namepasswordvalidation/ HTTP/1.1" 200 39
+[13/Mar/2025 14:54:13] "POST /api/user/createuser/ HTTP/1.1" 200 45
+[13/Mar/2025 14:54:14] "POST /api/token/ HTTP/1.1" 200 582
+[13/Mar/2025 14:54:16] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+[13/Mar/2025 14:56:25] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+[13/Mar/2025 14:56:36] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+Unauthorized: /rh/login/
+[13/Mar/2025 15:10:25] "POST /rh/login/ HTTP/1.1" 401 58
+Bad Request: /api/token/refresh/
+[13/Mar/2025 15:10:25] "POST /api/token/refresh/ HTTP/1.1" 400 43
+Bad Request: /api/token/refresh/
+[13/Mar/2025 15:10:25] "POST /api/token/refresh/ HTTP/1.1" 400 43
+Bad Request: /api/token/refresh/
+[13/Mar/2025 15:10:25] "POST /api/token/refresh/ HTTP/1.1" 400 43

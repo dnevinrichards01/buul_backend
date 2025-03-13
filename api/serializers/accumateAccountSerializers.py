@@ -19,15 +19,6 @@ FIELD_CHOICES = [
     ('password', 'password'),
     ('delete_account', 'delete_account')
 ]
-BROKERAGE_CHOICES = [
-    ('robinhood', 'robinhood')
-]
-SYMBOL_CHOICES = [
-    ('VOO', 'VOO'),
-    ('QQQ', 'QQQ'),
-    ('VOOG', 'VOOG'),
-    ('IBIT', 'IBIT')
-]
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.RegexField(

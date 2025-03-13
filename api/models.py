@@ -14,8 +14,12 @@ SYMBOL_CHOICES = [
 ]
 
 BROKERAGE_CHOICES = [
-    ('robinhood', 'robinhood')
+    ('robinhood', 'robinhood'),
+    ('webull', 'webull'),
+    ('charles_schwab', 'charles_schwab'),
+    ('fidelity', 'fidelity')
 ]
+
 class User(AbstractUser):
     id = models.UUIDField(
         primary_key=True,  # Redefine id as primary key
