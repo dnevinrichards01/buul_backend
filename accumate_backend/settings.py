@@ -15,8 +15,9 @@ import environ
 import os
 from datetime import timedelta
 import ssl
+import json
 
-env = environ.Env()  
+env = environ.Env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent  
 # Take environment variables from .env file
@@ -31,8 +32,8 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_HOST_USER = "accumate-verify@accumatewealth.com"
-email_cred_dict = dict([pair.split(":") for pair in env("EMAIL_CREDENTIALS").replace('"',"").strip("{").strip("}").split(",")])
-EMAIL_HOST_PASSWORD = email_cred_dict.get("EMAIL_HOST_PASSWORD")
+email_cred_dict = json.loads(env("EMAIL_CREDENTIALS"))
+EMAIL_HOST_PASSWORD = email_cred_dict["EMAIL_HOST_PASSWORD"]
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -112,13 +113,13 @@ WSGI_APPLICATION = 'accumate_backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-db_cred_dict = dict([pair.split(":") for pair in env("DB_CREDENTIALS").replace('"',"").strip("{").strip("}").split(",")])
+db_cred_dict = json.loads(env("DB_CREDENTIALS"))
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': env.str("DB_NAME"),
-        'USER': db_cred_dict.get("username"),
-        'PASSWORD': db_cred_dict.get("password"),
+        'USER': db_cred_dict["username"],
+        'PASSWORD': db_cred_dict["password"],
         'HOST': env.str("DB_HOST"),
         'PORT': env.str("DB_PORT"),
         'OPTIONS': {
@@ -218,8 +219,8 @@ TWILIO_PHONE_NUMBER = env("TWILIO_PHONE_NUMBER", default="")
 TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID", default="")
 TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN", default="")
 
-plaid_cred_dict = dict([pair.split(":") for pair in env("PLAID_CREDENTIALS").replace('"',"").strip("{").strip("}").split(",")])
-PLAID_CLIENT_ID = plaid_cred_dict.get("PLAID_CLIENT_ID")
-PLAID_SECRET = plaid_cred_dict.get("PLAID_SECRET")
-PLAID_HOST = plaid_cred_dict.get("PLAID_HOST")
+plaid_cred_dict = json.loads(env("PLAID_CREDENTIALS"))
+PLAID_CLIENT_ID = plaid_cred_dict["PLAID_CLIENT_ID"]
+PLAID_SECRET = plaid_cred_dict["PLAID_SECRET"]
+PLAID_HOST = plaid_cred_dict["PLAID_HOST"]
 
