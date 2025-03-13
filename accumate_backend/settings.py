@@ -50,7 +50,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(day=7),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
     "ROTATE_REFRESH_TOKENS": True,
     # true if you want to test refreshing in front end, false otherwise
@@ -213,10 +213,10 @@ CORS_ALLOWS_CREDENTIALS = True
 DJANGO_CELERY_RESULTS_TASK_ID_MAX_LENGTH = 255
 
 
-# TWILIO_PHONE_NUMBER = env("TWILIO_PHONE_NUMBER", default="")
-# TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID", default="")
-# TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN", default="")
+TWILIO_PHONE_NUMBER = env("TWILIO_PHONE_NUMBER", default="")
+TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID", default="")
+TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN", default="")
 
-PLAID_CLIENT_ID = env("PLAID_CLIENT_ID", default="")
-PLAID_SECRET = env("PLAID_SECRET", default="")
-PLAID_HOST = env("PLAID_HOST", default="")
+PLAID_CLIENT_ID = env.str("PLAID_CLIENT_ID")
+PLAID_SECRET = env.str("PLAID_SECRET")
+PLAID_HOST = env.str("PLAID_HOST")
