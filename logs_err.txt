@@ -1,0 +1,205 @@
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+[13/Mar/2025 04:20:02] "GET / HTTP/1.1" 200 22
+Not Found: /favicon.ico
+[13/Mar/2025 04:20:02] "GET /favicon.ico HTTP/1.1" 404 179
+[13/Mar/2025 04:20:08] "GET / HTTP/1.1" 200 22
+[13/Mar/2025 04:20:13] "PUT /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 38
+
+def backend_cleanup():
+    return 1
+
+
+def send_waitlist_email(**kwargs):
+    return 1
+
+
+def send_verification_code(**kwargs):
+    return 1
+
+
+def chain(*args, **kwargs):
+    return 1
+
+
+def plaid_user_remove(uid, code):
+    return 1
+
+
+def accumulate(self, *args, **kwargs):
+    return 1
+
+
+def plaid_item_remove(uid, item_id):
+    return 1
+
+
+def refresh_robinhood():
+    return 1
+
+
+def plaid_item_public_tokens_exchange(**kwargs):
+    return 1
+
+
+def chord(self, header, body, partial_args=0, interval=1, countdown=2, max_retries=3, eager=4, **kwargs):
+    return 1
+
+
+def transactions_sync(uid, item_ids=0, transactions_by_item_id=1, update_cursor=2, page_size=3):
+    return 1
+
+
+def unlock_chord(self, group_id, callback, interval=0, max_retries=1, result=2, Result=3, GroupResult=4, result_from_tuple=5, **kwargs):
+    return 1
+
+
+def refresh_stock_data(symbols=0, start_date=1, end_date=2):
+    return 1
+
+
+def xmap(task, it):
+    return 1
+
+
+def send_forgot_email(**kwargs):
+    return 1
+
+
+def plaid_link_token_create(**kwargs):
+    return 1
+
+
+def accumate_user_remove(uid, code, ignore_plaid_delete=0):
+    return 1
+
+
+def xstarmap(task, it):
+    return 1
+
+
+def plaid_user_create(**kwargs):
+    return 1
+
+
+def transactions_get(uid, start_date_str, end_date_str, item_ids=0, transactions_by_item_id=1, page_size=2):
+    return 1
+
+
+def login_robinhood(**kwargs):
+    return 1
+
+
+def transactions_categories_sum(transactions_response, transactions_sync=0, personal_finance_categories=1):
+    return 1
+
+
+def chunks(task, it, n):
+    return 1
+
+
+def get_investment_graph_data(uid, symbol):
+    return 1
+
+
+def group(self, tasks, result, group_id, partial_args, add_to_parent=0):
+    return 1
+
+[13/Mar/2025 04:20:25] "PUT /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 38
+[13/Mar/2025 04:20:40] "POST /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 53
+[13/Mar/2025 04:20:46] "POST /api/user/namepasswordvalidation/ HTTP/1.1" 200 39
+[13/Mar/2025 04:21:02] "POST /api/user/namepasswordvalidation/ HTTP/1.1" 200 39
+[13/Mar/2025 04:21:15] "POST /api/user/createuser/ HTTP/1.1" 200 45
+[13/Mar/2025 04:21:16] "POST /api/token/ HTTP/1.1" 200 582
+Unauthorized: /api/user/setbrokerageinvestment/
+[13/Mar/2025 04:21:29] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 401 183
+[13/Mar/2025 04:21:29] "POST /api/token/refresh/ HTTP/1.1" 200 582
+[13/Mar/2025 04:21:29] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+[13/Mar/2025 04:21:33] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+Unauthorized: /rh/login/
+[13/Mar/2025 04:22:09] "POST /rh/login/ HTTP/1.1" 401 183
+[13/Mar/2025 04:22:09] "POST /api/token/refresh/ HTTP/1.1" 200 582
+[13/Mar/2025 04:22:09] "POST /rh/login/ HTTP/1.1" 201 38
+[13/Mar/2025 04:22:11] "GET /rh/login/ HTTP/1.1" 201 32
+[13/Mar/2025 04:22:12] "GET /rh/login/ HTTP/1.1" 200 162
+Unauthorized: /rh/login/
+[13/Mar/2025 04:22:32] "POST /rh/login/ HTTP/1.1" 401 183
+[13/Mar/2025 04:22:32] "POST /api/token/refresh/ HTTP/1.1" 200 582
+[13/Mar/2025 04:22:33] "POST /rh/login/ HTTP/1.1" 201 38
+[13/Mar/2025 04:22:35] "GET /rh/login/ HTTP/1.1" 201 39
+Unauthorized: /api/plaid/usercreate/
+[13/Mar/2025 04:22:43] "POST /api/plaid/usercreate/ HTTP/1.1" 401 183
+[13/Mar/2025 04:22:43] "POST /api/token/refresh/ HTTP/1.1" 200 582
+[13/Mar/2025 04:22:43] "POST /api/plaid/usercreate/ HTTP/1.1" 201 38
+[13/Mar/2025 04:22:45] "GET /api/plaid/usercreate/ HTTP/1.1" 201 37
+[13/Mar/2025 04:22:45] "POST /api/plaid/linktokencreate/ HTTP/1.1" 201 38
+[13/Mar/2025 04:22:46] "GET /api/plaid/linktokencreate/ HTTP/1.1" 201 79
+Unauthorized: /api/user/requestverificationcode/
+[13/Mar/2025 04:25:47] "PUT /api/user/requestverificationcode/ HTTP/1.1" 401 183
+[13/Mar/2025 04:25:47] "POST /api/token/refresh/ HTTP/1.1" 200 582
+[13/Mar/2025 04:25:47] "PUT /api/user/requestverificationcode/ HTTP/1.1" 200 78
+Unauthorized: /api/user/requestverificationcode/
+[13/Mar/2025 04:25:53] "PUT /api/user/requestverificationcode/ HTTP/1.1" 401 183
+[13/Mar/2025 04:25:53] "POST /api/token/refresh/ HTTP/1.1" 200 582
+[13/Mar/2025 04:25:53] "PUT /api/user/requestverificationcode/ HTTP/1.1" 200 38
+Unauthorized: /api/user/requestverificationcode/
+[13/Mar/2025 04:26:28] "POST /api/user/requestverificationcode/ HTTP/1.1" 401 183
+[13/Mar/2025 04:26:28] "POST /api/token/refresh/ HTTP/1.1" 200 582
+[13/Mar/2025 04:26:28] "POST /api/user/requestverificationcode/ HTTP/1.1" 200 53
+[13/Mar/2025 04:34:14] "PUT /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 38
+[13/Mar/2025 04:35:57] "PUT /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 38
+[13/Mar/2025 04:36:12] "POST /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 53
+[13/Mar/2025 04:36:15] "POST /api/user/namepasswordvalidation/ HTTP/1.1" 200 39
+[13/Mar/2025 04:36:24] "POST /api/user/createuser/ HTTP/1.1" 200 45
+[13/Mar/2025 04:36:24] "POST /api/token/ HTTP/1.1" 200 582
+Unauthorized: /api/user/setbrokerageinvestment/
+[13/Mar/2025 04:36:30] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 401 183
+[13/Mar/2025 04:36:30] "POST /api/token/refresh/ HTTP/1.1" 200 582
+[13/Mar/2025 04:36:30] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+[13/Mar/2025 04:36:31] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+Unauthorized: /rh/login/
+[13/Mar/2025 04:37:40] "POST /rh/login/ HTTP/1.1" 401 183
+[13/Mar/2025 04:37:40] "POST /api/token/refresh/ HTTP/1.1" 200 582
+[13/Mar/2025 04:37:41] "POST /rh/login/ HTTP/1.1" 201 38
+[13/Mar/2025 04:37:43] "GET /rh/login/ HTTP/1.1" 201 32
+[13/Mar/2025 04:37:44] "GET /rh/login/ HTTP/1.1" 200 162
+[13/Mar/2025 04:40:10] "PUT /api/user/resetpassword/ HTTP/1.1" 200 81
+[13/Mar/2025 04:40:19] "PUT /api/user/resetpassword/ HTTP/1.1" 200 81
+[13/Mar/2025 04:42:42] "PUT /api/user/resetpassword/ HTTP/1.1" 200 81
+[13/Mar/2025 04:47:15] "PUT /api/user/resetpassword/ HTTP/1.1" 200 81
+[13/Mar/2025 04:49:31] "PUT /api/user/resetpassword/ HTTP/1.1" 200 38
+[13/Mar/2025 04:49:48] "POST /api/user/resetpassword/ HTTP/1.1" 200 53
+[13/Mar/2025 04:53:52] "PUT /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 38
+[13/Mar/2025 04:54:10] "PUT /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 92
+[13/Mar/2025 04:54:49] "PUT /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 38
+[13/Mar/2025 04:55:09] "POST /api/user/emailphonesignupvalidation/ HTTP/1.1" 200 53
+[13/Mar/2025 04:55:12] "POST /api/user/namepasswordvalidation/ HTTP/1.1" 200 39
+[13/Mar/2025 04:55:20] "POST /api/user/createuser/ HTTP/1.1" 200 45
+[13/Mar/2025 04:55:20] "POST /api/token/ HTTP/1.1" 200 582
+[13/Mar/2025 04:55:22] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+[13/Mar/2025 04:55:23] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+Unauthorized: /rh/login/
+[13/Mar/2025 04:55:50] "POST /rh/login/ HTTP/1.1" 401 183
+[13/Mar/2025 04:55:50] "POST /api/token/refresh/ HTTP/1.1" 200 582
+[13/Mar/2025 04:55:50] "POST /rh/login/ HTTP/1.1" 201 38
+[13/Mar/2025 04:55:52] "GET /rh/login/ HTTP/1.1" 200 162
+Unauthorized: /api/plaid/usercreate/
+[13/Mar/2025 05:05:31] "POST /api/plaid/usercreate/ HTTP/1.1" 401 183
+Unauthorized: /api/token/refresh/
+[13/Mar/2025 05:05:31] "POST /api/token/refresh/ HTTP/1.1" 401 58
+Unauthorized: /api/token/refresh/
+[13/Mar/2025 05:05:31] "POST /api/token/refresh/ HTTP/1.1" 401 58
+Unauthorized: /api/token/refresh/
+[13/Mar/2025 05:05:31] "POST /api/token/refresh/ HTTP/1.1" 401 58
+[13/Mar/2025 05:06:05] "POST /api/token/ HTTP/1.1" 200 582
+[13/Mar/2025 05:06:05] "GET /api/user/getuserinfo/ HTTP/1.1" 200 185
+[13/Mar/2025 05:06:06] "POST /api/plaid/usercreate/ HTTP/1.1" 200 44
+[13/Mar/2025 05:06:08] "GET /api/plaid/usercreate/ HTTP/1.1" 201 37
+[13/Mar/2025 05:06:08] "POST /api/plaid/linktokencreate/ HTTP/1.1" 201 38
+Unauthorized: /api/plaid/linktokencreate/
+[13/Mar/2025 05:06:10] "GET /api/plaid/linktokencreate/ HTTP/1.1" 401 183
+[13/Mar/2025 05:06:10] "POST /api/token/refresh/ HTTP/1.1" 200 582
+[13/Mar/2025 05:06:10] "GET /api/plaid/linktokencreate/ HTTP/1.1" 201 79

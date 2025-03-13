@@ -1,0 +1,15 @@
+Skipping task creation for 'refresh_stock_data' due to database readiness issues.
+Skipping task creation for 'refresh_robinhood' due to database readiness issues.
+Skipping task creation for 'refresh_stock_data' due to database readiness issues.
+Skipping task creation for 'refresh_robinhood' due to database readiness issues.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+
+You have 67 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): admin, api, auth, contenttypes, django_celery_beat, django_celery_results, robin_stocks, sessions, token_blacklist.
+Run 'python manage.py migrate' to apply them.
+March 13, 2025 - 04:19:49
+Django version 5.1.3, using settings 'accumate_backend.settings'
+Starting development server at http://0.0.0.0:443/
+Quit the server with CONTROL-C.
+
