@@ -19,7 +19,7 @@ import ssl
 env = environ.Env()  
 
 BASE_DIR = Path(__file__).resolve().parent.parent  
-# Take environment variables from .env file  
+# Take environment variables from .env file
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))  
 
 SECRET_KEY = env("SECRET_KEY", default="change_me")  
@@ -31,7 +31,8 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_HOST_USER = "accumate-verify@accumatewealth.com"
-EMAIL_HOST_PASSWORD = "tjeyouapnqagnvso"
+email_cred_dict = dict([pair.split(":") for pair in env("EMAIL_CREDENTIALS").replace('"',"").strip("{").strip("}").split(",")])
+EMAIL_HOST_PASSWORD = email_cred_dict.get("EMAIL_HOST_PASSWORD")
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -217,6 +218,8 @@ TWILIO_PHONE_NUMBER = env("TWILIO_PHONE_NUMBER", default="")
 TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID", default="")
 TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN", default="")
 
-PLAID_CLIENT_ID = env.str("PLAID_CLIENT_ID")
-PLAID_SECRET = env.str("PLAID_SECRET")
-PLAID_HOST = env.str("PLAID_HOST")
+plaid_cred_dict = dict([pair.split(":") for pair in env("PLAID_CREDENTIALS").replace('"',"").strip("{").strip("}").split(",")])
+PLAID_CLIENT_ID = plaid_cred_dict.get("PLAID_CLIENT_ID")
+PLAID_SECRET = plaid_cred_dict.get("PLAID_SECRET")
+PLAID_HOST = plaid_cred_dict.get("PLAID_HOST")
+
