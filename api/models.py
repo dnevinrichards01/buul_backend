@@ -14,8 +14,12 @@ SYMBOL_CHOICES = [
 ]
 
 BROKERAGE_CHOICES = [
-    ('robinhood', 'robinhood')
+    ('robinhood', 'robinhood'),
+    ('webull', 'webull'),
+    ('charles_schwab', 'charles_schwab'),
+    ('fidelity', 'fidelity')
 ]
+
 class User(AbstractUser):
     id = models.UUIDField(
         primary_key=True,  # Redefine id as primary key
@@ -42,9 +46,6 @@ class UserBrokerageInfo(models.Model):
     symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True, default=None)
 
 class StockData(models.Model):
-    SYMBOL_CHOICES = [
-        ('VOO', 'VOO')
-    ]
     symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255)
     dailyPrice = ArrayField(models.FloatField(), default=list)
     cursor = models.DateTimeField(auto_now=True)

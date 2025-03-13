@@ -107,7 +107,6 @@ class NamePasswordValidation(APIView):
         serializer = NamePasswordValidationSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            email = serializer.validated_data['email']
             return JsonResponse(
                 {
                     "success": "validated", 
@@ -646,9 +645,13 @@ class GetUserInfo(APIView):
         try:
             userBrokerageInfo = UserBrokerageInfo.objects.get(user__id=user.id)
             brokerage, etf = userBrokerageInfo.brokerage, userBrokerageInfo.symbol
+            if brokerage == "robinhood":
+                brokerage_completed = UserRobinhoodInfo.objects.filter(user=user).exists()
+            else:
+                brokerage_completed = True
         except Exception as e:
-            brokerage, etf = None, None
-
+            brokerage, etf, brokerage_completed = None, None, False
+        
         return JsonResponse(
             {
                 "full_name": user.full_name,
@@ -656,7 +659,7 @@ class GetUserInfo(APIView):
                 "phone_number": user.phone_number,
                 "brokerage": brokerage,
                 "etf": etf,
-                "brokerage_completed": UserRobinhoodInfo.objects.filter(user=user).exists(),
+                "brokerage_completed": brokerage_completed,
                 "link_completed": PlaidItem.objects.filter(user=user).exists()
             }, 
             status=200

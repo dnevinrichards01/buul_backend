@@ -1,6 +1,7 @@
 # from django.contrib.auth.models import User
 from rest_framework import serializers
-from ..models import WaitlistEmail, User
+from ..models import WaitlistEmail, User, BROKERAGE_CHOICES, SYMBOL_CHOICES
+
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .PlaidSerializers.linkSerializers import e164_phone_number_validator
@@ -17,15 +18,6 @@ FIELD_CHOICES = [
     ('symbol', 'symbol'),
     ('password', 'password'),
     ('delete_account', 'delete_account')
-]
-BROKERAGE_CHOICES = [
-    ('robinhood', 'robinhood')
-]
-SYMBOL_CHOICES = [
-    ('VOO', 'VOO'),
-    ('QQQ', 'QQQ'),
-    ('VOOG', 'VOOG'),
-    ('IBIT', 'IBIT')
 ]
 
 class UserSerializer(serializers.ModelSerializer):
