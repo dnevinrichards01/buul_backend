@@ -4,6 +4,12 @@ from ..plaid_client import plaid_client
 # from ..twilio_client import twilio_client
 from django.core.cache import cache 
 from django.core.mail import send_mail
+import re
+
+
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+from django_celery_results.models import TaskResult
 
 from accumate_backend.settings import TWILIO_PHONE_NUMBER
 
@@ -429,4 +435,56 @@ def send_waitlist_email(**kwargs):
         [kwargs["sendTo"]],
         fail_silently=False,
     )
+
+
+def format_task_result_kwargs(text):
+    # Regular expression to match `'uid': UUID('<uuid>')`
+
+    formatted_text = text.strip().strip('\'').strip('"')\
+        .replace('\'', '"')\
+        .replace('True', '"true"').replace('False', '"false"')\
+        .replace('None', '"null"')
+    
+    uuid_pattern = re.compile(r'"uid": UUID\("([a-f0-9\-]+)"\)(, )?')
+    match = uuid_pattern.search(formatted_text)
+    if match:
+        extracted_uuid = match.group(1)
+        cleaned_text = uuid_pattern.sub("", formatted_text)
+    else:
+        extracted_uuid = None
+        cleaned_text = text
+
+    return extracted_uuid, cleaned_text
+
+
+@receiver(pre_save, sender=TaskResult)
+def modify_task_result(sender, instance, **kwargs):
+    """ Nullify task_args and task_kwargs before saving """
+
+    if instance.task_name != "login_robinhood":
+        return
+
+    sensitive_keys = ["password", "username"]
+
+    try:
+        uuid, formatted_task_kwargs_str = format_task_result_kwargs(instance.task_kwargs)
+        task_kwargs = json.loads(formatted_task_kwargs_str)
+        for key in sensitive_keys:
+            if key in task_kwargs:
+                task_kwargs[key] = "****"
+        instance.task_kwargs = f'{{"uid": UUID(\'{uuid}\'), ' + json.dumps(task_kwargs)[1:]
+    except:
+        instance.task_kwargs = instance.task_kwargs
+
+    try:
+        uuid, formatted_task_args_str = format_task_result_kwargs(instance.task_args)
+        task_args = json.loads(formatted_task_args_str)
+        for key in sensitive_keys:
+            if key in task_args:
+                task_args[key] = "****"
+        instance.task_args = f'{{"uid": UUID({uuid}), ' + json.dumps(task_args)[1:]
+    except:
+        instance.task_args = instance.task_args
+
+
 

@@ -4,6 +4,8 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from .serializers.PlaidSerializers.linkSerializers import e164_phone_number_validator
 import uuid
+import json
+from django_celery_results.models import TaskResult
 # Create your models here.
 
 SYMBOL_CHOICES = [
