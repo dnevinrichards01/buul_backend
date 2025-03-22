@@ -20,6 +20,7 @@ app.conf.imports = [
     "api.tasks.investTasks",
     "api.tasks.depositTasks",
     "api.tasks.transactionsTasks",
+    "api.tasks.graphTasks",
     "robin_stocks.tasks",
 ]
 

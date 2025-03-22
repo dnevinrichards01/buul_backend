@@ -1,0 +1,57 @@
+from django.utils import timezone
+from api.models import Investments, User, StockData, UserInvestmentGraph
+from dateutil.relativedelta import relativedelta
+from api.tasks.graphTasks import refresh_stock_data, get_graph_data
+
+
+user = User(username="dnevinrichards@gmail.com")
+user.save()
+
+for i in range(10):
+    investment = Investments(
+        user = user,
+        investment_id = "temp",
+        symbol = "VOO",
+        brokerage = "robinhood",
+        quantity = 1,
+        cumulative_quantities = {"VOO": i+1},
+        date = timezone.now() - relativedelta(days=10-i)
+    )
+    investment.save()
+
+for investment in Investments.objects.all():
+    print(investment.symbol, investment.cumulative_quantities, investment.date)
+
+
+refresh_stock_data(timezone.now() - relativedelta(day=10), interval="1d")
+for stockData in StockData.objects.all():
+    print(stockData.date, stockData.VOO)
+
+get_graph_data(user.id, timezone.now() - relativedelta(day=10))
+
+
+
+_______________
+
+from django.utils import timezone
+from api.models import Investments, User, StockData, UserInvestmentGraph
+from dateutil.relativedelta import relativedelta
+from api.tasks.graphTasks import refresh_stock_data, get_graph_data
+
+client = APIClient()
+nevin = User.objects.all().first()
+if User.objects.all().exists():
+    user = User.objects.first()
+else:
+    user = User(username="dnevinrichards@gmail.com")
+    user.save()
+client.force_authenticate(user=user)
+
+response = client.post("/api/plaid/linktokencreate/", json.dumps({
+    "start_date": 
+}), content_type="application/json")
+
+
+
+
+

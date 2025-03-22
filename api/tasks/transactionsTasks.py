@@ -23,11 +23,14 @@ from plaid.exceptions import ApiException
 
 from..serializers.PlaidSerializers.transactionSerializers import TransactionsSyncResponseSerializer, \
     TransactionsGetResponseSerializer
-from ..models import PlaidItem, User, RobinhoodStockOrder, StockData, \
+from ..models import PlaidItem, User, RobinhoodStockOrder, \
+    StockDataByDay, StockDataByMinute, StockDataByHour, StockDataByMonth, \
     PlaidCashbackTransaction
 
+from django.utils import timezone
+from zoneinfo import ZoneInfo
 
-
+from django.apps import apps
 
 # plaid transactions 
 
@@ -238,6 +241,17 @@ def find_cashback(uid):
     return all_cashback
         
 
+
+
+
+
+
+
+
+
+
+
+
 # stock graph data
 @shared_task(name="get_investment_graph_data")
 def get_investment_graph_data(uid, symbol):
@@ -337,45 +351,3 @@ def get_investment_graph_data(uid, symbol):
     )
 
 
-@shared_task(name="refresh_stock_data")
-def refresh_stock_data(symbols=["VOO"], start_date=None, end_date=None):
-    # for symbol in symbols:
-    #     stockData, created = StockData.objects.get_or_create(symbol=symbol)
-         
-    #     data = yf.download(
-    #         symbol, 
-    #         start = start_date or stockData.cursor.strftime("%Y-%m-%d"),
-    #         end = end_date or timezone.now().strftime("%Y-%m-%d"),
-    #         interval="1d"
-    #     )
-        
-    #     stockData.dailyPrice += list(data[("Close", symbol)])
-
-    #     stockData.cursor = timezone.now()
-    #     stockData.save()
-    return 
-
-def get_stock_data_24h(symbols=["VOO"], start_date=None, end_date=None):
-    # for symbol in symbols:
-    #     data = yf.download(
-    #         symbol, 
-    #         start = start_date or stockData.cursor.strftime("%Y-%m-%d"),
-    #         end = end_date or timezone.now().strftime("%Y-%m-%d"),
-    #         interval="1d"
-    #     )
-
-    #     # Determine 'yesterday' (previous calendar day)
-    #     yesterday = datetime.date.today() - datetime.timedelta(days=1)
-
-    #     # Filter the DataFrame for rows corresponding to yesterday
-    #     previous_day_data = data_two_days[data_two_days['date'] == yesterday]
-    #     print("\nIntraday Data for the Previous Day:")
-    #     print(previous_day_data)
-         
-    #     data = yf.download(
-    #         symbol, 
-    #         start = start_date or stockData.cursor.strftime("%Y-%m-%d"),
-    #         end = end_date or timezone.now().strftime("%Y-%m-%d"),
-    #         interval="1m"
-    #     )
-    return

@@ -13,7 +13,6 @@ from datetime import datetime, timedelta
 import json
 
 from ..models import RobinhoodStockOrder, UserBrokerageInfo, User
-
 from ..serializers.rhSerializers import StockOrderSerializer
 
 
