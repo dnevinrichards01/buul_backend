@@ -87,60 +87,71 @@ def delete_non_closing_times():
 
 @shared_task(name="get_graph_data")
 def get_graph_data(uid, start_date, symbols=["VOO", "VOOG", "QQQ", "IBIT"]):
-    import pdb 
-    breakpoint()
-    
-    user = User.objects.get(id=uid)
+    try:
+        import pdb 
+        breakpoint()
+        
+        user = User.objects.get(id=uid)
 
-    cumulative_quantity_subquery = (
-        Investments.objects.filter(
-            user=user,
-            date__lte=OuterRef("date")
-        )
-        .order_by("-date")
-        .values("cumulative_quantities")[:1]
-    )
-
-    # Annotate Investments with the JSON-aggregated cumulative quantities
-    queryset = StockData.objects \
-        .filter(date__gte=start_date) \
-        .annotate(
-            cumulative_quantities=Subquery(cumulative_quantity_subquery)
+        cumulative_quantity_subquery = (
+            Investments.objects.filter(
+                user=user,
+                date__lte=OuterRef("date")
+            )
+            .order_by("-date")
+            .values("cumulative_quantities")[:1]
         )
 
-    data = []
-    quantities = {}
-    for stockData in queryset:
-        quantities = stockData.cumulative_quantities or {}
-        price = 0
-        for symbol in quantities:
-            price += stockData[symbol] * quantities[symbol]
-        data.append({
-            "date": stockData.date.strftime("%Y-%m-%d %H:%M:%S"),
-            "price": price
-        })
-    
-    breakpoint()
+        # Annotate Investments with the JSON-aggregated cumulative quantities
+        queryset = StockData.objects \
+            .filter(date__gte=start_date) \
+            .annotate(
+                cumulative_quantities=Subquery(cumulative_quantity_subquery)
+            )
 
-    if data:
-        userInvestmentGraph, created = UserInvestmentGraph.objects.get_or_create(
-            user = user
-        )
-        if created:
+        data = []
+        quantities = {}
+        for stockData in queryset:
+            quantities = stockData.cumulative_quantities or {}
+            price = 0
+            for symbol in quantities:
+                price += stockData[symbol] * quantities[symbol]
+            data.append({
+                "date": stockData.date.strftime("%Y-%m-%d %H:%M:%S"),
+                "price": price
+            })
+        
+        breakpoint()
+
+        if data:
+            userInvestmentGraph, created = UserInvestmentGraph.objects.get_or_create(
+                user = user
+            )
             userInvestmentGraph.data = data
-        else:
-            new_data_index = 0 
-            for i, investment in enumerate(userInvestmentGraph.data):
-                investment_date = FPMUtils.no_timezone_to_with_timezone(investment["date"], "1m")
-                if investment_date > start_date:
-                    userInvestmentGraph.data[i] = data[new_data_index]
-                    new_data_index += 1
-        userInvestmentGraph.save()  
-    
-    cache.delete(f"uid_{uid}_get_investment_graph_data")
-    cache.set(
-        f"uid_{uid}_get_investment_graph_data",
-        json.dumps({"success": True, "error": None}),
-        timeout=120
-    )
+            userInvestmentGraph.save()
+            # if created:
+            #     userInvestmentGraph.data = data
+            # else:
+            #     # we need to delete excess old data just as we do.. mb always reset ?
+            #     new_data_index = 0 
+            #     for i, investment in enumerate(userInvestmentGraph.data):
+            #         investment_date = FPMUtils.no_timezone_to_with_timezone(investment["date"], "1m")
+            #         if investment_date > start_date:
+            #             userInvestmentGraph.data[i] = data[new_data_index]
+            #             new_data_index += 1
+            # userInvestmentGraph.save()  
+        
+        cache.delete(f"uid_{uid}_get_investment_graph_data")
+        cache.set(
+            f"uid_{uid}_get_investment_graph_data",
+            json.dumps({"success": "calculated and saved", "error": None}),
+            timeout=120
+        )
+    except Exception as e:
+        cache.delete(f"uid_{uid}_get_investment_graph_data")
+        cache.set(
+            f"uid_{uid}_get_investment_graph_data",
+            json.dumps({"success": None, "error": f"error {str(e)}"}),
+            timeout=120
+        )
             

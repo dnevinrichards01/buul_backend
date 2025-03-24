@@ -670,7 +670,6 @@ class GetUserInfo(APIView):
 class StockGraphData(APIView):
     permission_classes = [IsAuthenticated]
 
-
     def put(self, request, *args, **kwargs):
         uid = self.request.user.id
 
@@ -764,7 +763,7 @@ class StockGraphData(APIView):
             data = UserInvestmentGraph.objects.get(user__id=uid).data
             return JsonResponse(data, status=cached_task_status(task_status))
         else:
-            return JsonResponse({"success": None, "error": "no cache value found"}, status=400)
+            return JsonResponse({"success": None, "error": "no cache value found"}, status=200)
 
 
 
