@@ -55,3 +55,45 @@ response = client.post("/api/plaid/linktokencreate/", json.dumps({
 
 
 
+
+_______
+
+from dateutil.relativedelta import relativedelta
+from django.utils import timezone
+from api.models import User, Investments, UserInvestmentGraph, StockData
+from api.tasks.graphTasks import *
+
+user = User.objects.all().first()
+
+#user = User(username="dnevinrichards@gmail.com")
+#user.save()
+
+for i in range(10): 
+    investment = Investments(
+        user=user, 
+        investment_id=str(i), 
+        symbol="VOO", 
+        brokerage="robinhood", 
+        quantity=1, 
+        cumulative_quantities={"VOO": i+1, "VOOG": 0, "QQQ": 0, "IBIT": 0}, 
+        date=timezone.now() - relativedelta(days=10-i)
+    )
+    investment.save()
+
+get_graph_data(user.id)
+
+
+from rest_framework.test import APIClient
+import json
+
+client = APIClient()
+user = User.objects.all().first()
+client.force_authenticate(user=user)
+
+response = client.post(
+    "/api/user/getstockgraphdata/", 
+    {
+        "start_date": "2025-03-24T14:44:41.730775+00:00"
+    }
+)
+

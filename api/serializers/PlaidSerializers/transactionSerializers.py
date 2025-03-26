@@ -221,7 +221,7 @@ class TransactionSerializer(serializers.Serializer):
         max_length=3,
         help_text="The unofficial currency code associated with the transaction."
     )
-    date = serializers.DateField(
+    date = serializers.DateTimeField(
         help_text="The date the transaction was posted."
     )
     authorized_date = serializers.DateField(
@@ -229,7 +229,7 @@ class TransactionSerializer(serializers.Serializer):
         required=False,
         help_text="The date the transaction was authorized."
     )
-    authorized_datetime = serializers.DateField(
+    authorized_datetime = serializers.DateTimeField(
         allow_null=True,
         required=False,
         help_text="The date the transaction was authorized."

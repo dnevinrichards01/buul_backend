@@ -11,41 +11,45 @@ class ApiConfig(AppConfig):
         PeriodicTask = apps.get_model("django_celery_beat", "PeriodicTask")
         CrontabSchedule = apps.get_model("django_celery_beat", "CrontabSchedule")
 
-        crontab_minutely, _ = CrontabSchedule.objects.get_or_create(
-            minute="*",
-            hour="*",
-            day_of_week="*",
-            day_of_month="*",
-            month_of_year="*"
-        )
-        crontab_daily, _ = CrontabSchedule.objects.get_or_create(
-            minute=0,
-            hour=0,
-            day_of_week="*",
-            day_of_month="*",
-            month_of_year="*"
-        )
+        try:
+            curr_task_name = "first task"
 
-        tasks = {
-            "refresh_stock_data_by_interval": {
-                "kwargs": json.dumps({"interval": "1m"}),
-                "crontab": crontab_minutely,
-                "task_type": "graphTasks"
-            },
-            "delete_non_closing_times": {
-                "kwargs": json.dumps({}),
-                "crontab": crontab_daily,
-                "task_type": "investTasks"
+            crontab_minutely, _ = CrontabSchedule.objects.get_or_create(
+                minute="*",
+                hour="*",
+                day_of_week="*",
+                day_of_month="*",
+                month_of_year="*"
+            )
+            crontab_daily, _ = CrontabSchedule.objects.get_or_create(
+                minute=0,
+                hour=0,
+                day_of_week="*",
+                day_of_month="*",
+                month_of_year="*"
+            )
+
+            tasks = {
+                "refresh_stock_data_by_interval": {
+                    "kwargs": json.dumps({"interval": "1m"}),
+                    "crontab": crontab_minutely,
+                    "task_type": "graphTasks"
+                },
+                "delete_non_closing_times": {
+                    "kwargs": json.dumps({}),
+                    "crontab": crontab_daily,
+                    "task_type": "graphTasks"
+                }
             }
-        }
-        for task_name in tasks:
-            try:
+
+            for task_name in tasks:
+                curr_task_name = task_name
                 # Check if the task already exists, and create it if it doesn't
                 task, created = PeriodicTask.objects.get_or_create(
                     crontab = tasks[task_name]["crontab"],
                     name = task_name,
                     defaults={
-                        "task": f"api.tasks.{tasks[task_name]["task_type"]}.{task_name}",
+                        "task": task_name,#f"api.tasks.{tasks[task_name]["task_type"]}.{task_name}",
                         "kwargs": tasks[task_name]["kwargs"]
                     },
                 )
@@ -53,7 +57,7 @@ class ApiConfig(AppConfig):
                     print(f"Periodic task '{task_name}' created.")
                 else:
                     print(f"Periodic task '{task_name}' already exists.")
-            except (ProgrammingError, OperationalError):
-                # These errors occur during migrations or if the database is not ready
-                print(f"Skipping task creation for '{task_name}' due to database readiness issues.")
+        except (ProgrammingError, OperationalError):
+            # These errors occur during migrations or if the database is not ready
+            print(f"Skipping task creation for '{curr_task_name}' due to database readiness issues.")
 

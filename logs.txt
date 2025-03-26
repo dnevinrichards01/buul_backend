@@ -1,412 +1,289 @@
-Skipping task creation for 'refresh_stock_data' due to database readiness issues.
-Skipping task creation for 'delete_non_closing_times' due to database readiness issues.
+Skipping task creation for 'first task' due to database readiness issues.
 Skipping task creation for 'refresh_robinhood' due to database readiness issues.
-Skipping task creation for 'refresh_stock_data' due to database readiness issues.
-Skipping task creation for 'delete_non_closing_times' due to database readiness issues.
+Skipping task creation for 'first task' due to database readiness issues.
 Skipping task creation for 'refresh_robinhood' due to database readiness issues.
 Performing system checks...
 
+System check identified no issues (0 silenced).
 
-You have 71 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): admin, api, auth, contenttypes, django_celery_beat, django_celery_results, robin_stocks, sessions, token_blacklist.
+You have 69 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): admin, api, auth, contenttypes, django_celery_beat, django_celery_results, robin_stocks, sessions, token_blacklist.
 Run 'python manage.py migrate' to apply them.
-March 22, 2025 - 01:10:45
+March 26, 2025 - 11:27:26
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:17:28
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:20:00
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:20:59
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:21:56
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:30:34
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:30:46
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:32:19
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:32:30
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:34:29
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:35:05
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:35:30
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:36:36
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:39:16
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:40:01
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:42:09
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:51:21
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-March 22, 2025 - 01:51:27
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-
-You have 1 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): api.
-Run 'python manage.py migrate' to apply them.
-March 22, 2025 - 01:52:09
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
-Periodic task 'delete_non_closing_times' already exists.
-Periodic task 'refresh_robinhood' already exists.
-Performing system checks...
-
-
-You have 1 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): api.
-Run 'python manage.py migrate' to apply them.
-March 22, 2025 - 01:52:13
-Django version 5.1.3, using settings 'accumate_backend.settings'
-Starting development server at http://0.0.0.0:443/
-Quit the server with CONTROL-C.
-
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-
-You have 2 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): api.
-Run 'python manage.py migrate' to apply them.
-March 22, 2025 - 01:52:39
+March 26, 2025 - 11:33:08
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 01:55:23
+March 26, 2025 - 11:33:57
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 01:55:29
+March 26, 2025 - 11:35:31
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 01:57:07
+March 26, 2025 - 11:37:21
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:02:39
+March 26, 2025 - 11:37:37
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:28:33
+March 26, 2025 - 11:37:59
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:29:23
+March 26, 2025 - 11:44:13
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:29:32
+March 26, 2025 - 11:46:37
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:36:56
+March 26, 2025 - 11:47:27
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:37:06
+March 26, 2025 - 11:49:20
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:37:16
+March 26, 2025 - 11:53:18
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:40:24
+March 26, 2025 - 11:54:23
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:41:13
+March 26, 2025 - 11:56:13
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:41:18
+March 26, 2025 - 12:12:40
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:45:32
+March 26, 2025 - 12:14:50
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:46:01
+March 26, 2025 - 12:15:39
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:50:33
+March 26, 2025 - 12:15:44
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.
 
-Periodic task 'refresh_stock_data' already exists.
+Periodic task 'refresh_stock_data_by_interval' already exists.
 Periodic task 'delete_non_closing_times' already exists.
 Periodic task 'refresh_robinhood' already exists.
 Performing system checks...
 
 System check identified no issues (0 silenced).
-March 22, 2025 - 02:59:51
+March 26, 2025 - 12:21:07
+Django version 5.1.3, using settings 'accumate_backend.settings'
+Starting development server at http://0.0.0.0:443/
+Quit the server with CONTROL-C.
+
+Periodic task 'refresh_stock_data_by_interval' already exists.
+Periodic task 'delete_non_closing_times' already exists.
+Periodic task 'refresh_robinhood' already exists.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+March 26, 2025 - 12:23:53
+Django version 5.1.3, using settings 'accumate_backend.settings'
+Starting development server at http://0.0.0.0:443/
+Quit the server with CONTROL-C.
+
+Periodic task 'refresh_stock_data_by_interval' already exists.
+Periodic task 'delete_non_closing_times' already exists.
+Periodic task 'refresh_robinhood' already exists.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+March 26, 2025 - 12:36:22
+Django version 5.1.3, using settings 'accumate_backend.settings'
+Starting development server at http://0.0.0.0:443/
+Quit the server with CONTROL-C.
+
+Periodic task 'refresh_stock_data_by_interval' already exists.
+Periodic task 'delete_non_closing_times' already exists.
+Periodic task 'refresh_robinhood' already exists.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+March 26, 2025 - 12:37:01
+Django version 5.1.3, using settings 'accumate_backend.settings'
+Starting development server at http://0.0.0.0:443/
+Quit the server with CONTROL-C.
+
+Periodic task 'refresh_stock_data_by_interval' already exists.
+Periodic task 'delete_non_closing_times' already exists.
+Periodic task 'refresh_robinhood' already exists.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+March 26, 2025 - 15:21:52
+Django version 5.1.3, using settings 'accumate_backend.settings'
+Starting development server at http://0.0.0.0:443/
+Quit the server with CONTROL-C.
+
+Periodic task 'refresh_stock_data_by_interval' already exists.
+Periodic task 'delete_non_closing_times' already exists.
+Periodic task 'refresh_robinhood' already exists.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+March 26, 2025 - 15:21:59
+Django version 5.1.3, using settings 'accumate_backend.settings'
+Starting development server at http://0.0.0.0:443/
+Quit the server with CONTROL-C.
+
+Periodic task 'refresh_stock_data_by_interval' already exists.
+Periodic task 'delete_non_closing_times' already exists.
+Periodic task 'refresh_robinhood' already exists.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+March 26, 2025 - 15:22:04
+Django version 5.1.3, using settings 'accumate_backend.settings'
+Starting development server at http://0.0.0.0:443/
+Quit the server with CONTROL-C.
+
+Periodic task 'refresh_stock_data_by_interval' already exists.
+Periodic task 'delete_non_closing_times' already exists.
+Periodic task 'refresh_robinhood' already exists.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+March 26, 2025 - 15:22:12
 Django version 5.1.3, using settings 'accumate_backend.settings'
 Starting development server at http://0.0.0.0:443/
 Quit the server with CONTROL-C.

@@ -21,9 +21,7 @@ FIELD_CHOICES = [
 ]
 
 class GraphDataRequestSerializer(serializers.Serializer):
-    start_date = serializers.DateField(
-        input_formats=["%Y-%m-%d %H:%M:%S"]
-    )
+    start_date = serializers.DateTimeField()
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.RegexField(

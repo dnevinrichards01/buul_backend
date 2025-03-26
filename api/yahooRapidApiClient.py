@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from zoneinfo import ZoneInfo
-from api.models import StockData
+from api.models import StockData, UserInvestmentGraph
 import json
 from django.db.models import OuterRef, Subquery, Max, F
 
@@ -76,13 +76,17 @@ class FPMUtils:
         unit = delta_str[1]
         
         if unit == "m":
-            return relativedelta(minutes=60*24)
+            return relativedelta(days=1)
         elif unit == "h":
-            return relativedelta(hours=24*31*3)
-        elif unit == "d" or unit == "w":
-            return relativedelta(days=31*365*5)
+            return relativedelta(months=3)
+        elif unit == "d":
+            return relativedelta(years=1)
+        elif unit == "w":
+            return relativedelta(years=5)
+        elif unit == "M":
+            return relativedelta(years=100)
         else:
-            raise ValueError("unit must be from ['m', 'h', 'd', 'w']")
+            raise ValueError("unit must be from ['m', 'h', 'd', 'w', 'M']")
     
     @classmethod
     def no_timezone_to_with_timezone(cls, date_str, interval):
@@ -98,26 +102,25 @@ class FPMUtils:
     def delete_non_closing_times(cls, current_date_rounded, interval):
         if interval[1] == "m":
             return
-        
         if interval[1] == "h":
-            delta = relativedelta(day=1)
+            delta = relativedelta(months=3)
             kwargs = {
                 "date__hour": OuterRef("date__hour"),
                 "date__date": OuterRef("date__date")
             }
         elif interval[1] == "d":
-            delta = relativedelta(month=3)
+            delta = relativedelta(years=1)
             kwargs = {
                 "date__date": OuterRef("date__date")
             }
         elif interval[1] == "w":
-            delta = relativedelta(year=1)
+            delta = relativedelta(years=1)
             kwargs = {
                 "date__week": OuterRef("date__week"),
                 "date__year": OuterRef("date__year")
             }
         elif interval[1] == "M":
-            delta = relativedelta(year=5)
+            delta = relativedelta(years=5)
             kwargs = {
                 "date__month": OuterRef("date__month"),
                 "date__year": OuterRef("date__year")
@@ -125,8 +128,14 @@ class FPMUtils:
 
         latest_date_subquery = StockData.objects.filter(**kwargs) \
             .order_by("-date").values("date")[:1]
-        
         StockData.objects \
+            .filter(date__lte = current_date_rounded - delta) \
+            .exclude(date=Subquery(latest_date_subquery)) \
+            .delete()
+        
+        latest_date_subquery = UserInvestmentGraph.objects.filter(**kwargs) \
+            .order_by("-date").values("date")[:1]
+        UserInvestmentGraph.objects \
             .filter(date__lte = current_date_rounded - delta) \
             .exclude(date=Subquery(latest_date_subquery)) \
             .delete()
@@ -173,7 +182,7 @@ class FPMClient:
             }
         )
         if response.status_code < 200 or response.status_code > 299:
-            raise ConnectionError(f"fpm response has status code {response.status_code}")
+            raise ConnectionError(f"fpm response has status code {response.status_code}: {response.content}")
         return json.loads(response.content.decode("utf-8"))
 
     def get_eod(self, symbol, start, end):
@@ -187,7 +196,7 @@ class FPMClient:
             }
         )
         if response.status_code < 200 or response.status_code > 299:
-            raise ConnectionError(f"fpm response has status code {response.status_code}")
+            raise ConnectionError(f"fpm response has status code {response.status_code}: {response.content}")
         return json.loads(response.content.decode("utf-8"))
 
    

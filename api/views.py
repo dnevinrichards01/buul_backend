@@ -20,14 +20,15 @@ from rest_framework.exceptions import ValidationError
 from django.core.cache import cache
 import json
 import phonenumbers
-
+from api.yahooRapidApiClient import FPMUtils
+from datetime import datetime
 from celery import current_app, chain, chord
 from functools import partial
 from django.db import transaction
 from .tasks.userTasks import plaid_item_public_tokens_exchange, \
     plaid_link_token_create, plaid_user_create, accumate_user_remove, \
     plaid_user_remove, send_verification_code, send_waitlist_email, send_forgot_email
-from .tasks.graphTasks import refresh_stock_data, get_graph_data
+from .tasks.graphTasks import refresh_stock_data_by_interval, get_graph_data
 from robin_stocks.models import UserRobinhoodInfo
 
 import time
@@ -397,10 +398,13 @@ class SetBrokerageInvestment(APIView):
         except:
             if "brokerage" in serializer.validated_data:
                 brokerage = serializer.validated_data["brokerage"]
-                symbol = None
-            if "symbol" in serializer.validated_data:
+            else:
                 brokerage = None
+            if "symbol" in serializer.validated_data:
                 symbol = serializer.validated_data["symbol"]
+            else: 
+                symbol = None
+
             userBrokerageInfo = UserBrokerageInfo(
                 user = User.objects.get(id=uid),
                 brokerage = brokerage,
@@ -415,7 +419,6 @@ class SetBrokerageInvestment(APIView):
             }, 
             status=201
         )
-
 
 
 # Plaid
@@ -672,57 +675,18 @@ class StockGraphData(APIView):
 
     def put(self, request, *args, **kwargs):
         uid = self.request.user.id
-
-        serializer = GraphDataRequestSerializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-        except ValidationError as e:
-            for field in ["non_field_errors"]:
-                if field in e.detail and len(e.detail[field]) >= 1:
-                    return JsonResponse(
-                        {
-                            "success": None,
-                            "error": f"error '{field}': {e.detail[field][0]}"
-                        }, 
-                        status=400
-                    )
-            error_messages = {}
-            for field in e.detail:
-                if len(e.detail[field]) >= 1:
-                    error_messages[field] = e.detail[field][0]
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": error_messages or None
-                }, 
-                status=400
-            )
-        except Exception as e:
-            return JsonResponse(
-                {
-                    "success": None,
-                    "error": f"error: {str(e)}"
-                }, 
-                status=400
-            )
-
-        start_date = serializer.validated_data["start_date"]
-        get_graph_data.apply_async(
-            kwargs = {
-                "uid": uid, 
-                "start_date": start_date
-            }
-        )
-
+        get_graph_data.apply_async(args = [uid])
         cache.delete(f"uid_{uid}_get_investment_graph_data")
         cache.set(
             f"uid_{uid}_get_investment_graph_data",
             json.dumps({"success": None, "error": None}),
             timeout=120
         )
-        return JsonResponse({"success": "recieved"}, status=201)
+        return JsonResponse({"success": "recieved", "error": None}, status=201)
     
     def post(self, request, *args, **kwargs):
+        # import pdb
+        # breakpoint()
         uid = self.request.user.id
         serializer = GraphDataRequestSerializer(data=request.data)
         try:
@@ -760,10 +724,34 @@ class StockGraphData(APIView):
         start_date = serializer.validated_data["start_date"]
         task_status = cache.get(f"uid_{uid}_get_investment_graph_data")
         if task_status:
-            data = UserInvestmentGraph.objects.get(user__id=uid).data
-            return JsonResponse(data, status=cached_task_status(task_status))
+            status_code = cached_task_status(task_status)
+            if status_code == 400:
+                return JsonResponse(
+                    json.loads(task_status), 
+                    status=status_code
+                )
+            else:
+                query = UserInvestmentGraph.objects.filter(
+                    user__id=uid,
+                    date__gte=FPMUtils.round_date_down(start_date, granularity="1min")
+                ).order_by("date")
+                data = []
+                for item in query:
+                    data.append({
+                        "date": item.date.isoformat(),
+                        "price": item.value
+                    })
+                # breakpoint()
+                return JsonResponse({"data": data}, status=200)
         else:
-            return JsonResponse({"success": None, "error": "no cache value found"}, status=200)
+            return JsonResponse(
+                {
+                    "success": None, 
+                    "error": "no cache value found"
+                }, 
+                status=200,
+                safe=False
+            )
 
 
 

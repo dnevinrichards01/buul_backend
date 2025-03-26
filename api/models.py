@@ -5,6 +5,7 @@ from django.core.validators import RegexValidator
 from .serializers.PlaidSerializers.linkSerializers import e164_phone_number_validator
 import uuid
 import json
+from django.utils import timezone
 from django_celery_results.models import TaskResult
 # Create your models here.
 
@@ -40,7 +41,7 @@ class User(AbstractUser):
 
 class WaitlistEmail(models.Model):
     email = models.EmailField(primary_key=True)
-    date_enrolled = models.DateField(auto_now=True)
+    date_enrolled = models.DateTimeField(auto_now=True)
 
 class UserBrokerageInfo(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
@@ -49,8 +50,22 @@ class UserBrokerageInfo(models.Model):
 
 # need to create this sometime
 class UserInvestmentGraph(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
-    data = models.JSONField(default=list)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateTimeField()
+    value = models.FloatField()
+
+    # in the future we can partition on date as well in psql
+    class Meta:
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['user', 'date']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'date'], 
+                name='user_portfolio_value_by_date'
+            )
+        ]
 
 # need to create this sometime
 class StockData(models.Model):

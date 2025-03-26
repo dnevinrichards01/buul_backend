@@ -3,533 +3,39 @@
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
 /code/api/yahooRapidApiClient.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
 /code/api/yahooRapidApiClient.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
 /code/api/yahooRapidApiClient.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/tasks/graphTasks.py changed, reloading.
+/code/api/yahooRapidApiClient.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/tasks/graphTasks.py changed, reloading.
+/code/api/yahooRapidApiClient.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/tasks/graphTasks.py changed, reloading.
+/code/api/yahooRapidApiClient.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/tasks/graphTasks.py changed, reloading.
+/code/api/yahooRapidApiClient.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/tasks/graphTasks.py changed, reloading.
+/code/api/yahooRapidApiClient.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/tasks/graphTasks.py changed, reloading.
-Watching for file changes with StatReloader
-Exception in thread django-main-thread:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
-    self.run()
-  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
-    self._target(*self._args, **self._kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
-    autoreload.raise_last_exception()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
-    raise _exception[1]
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
-    autoreload.check_errors(django.setup)()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
-    apps.populate(settings.INSTALLED_APPS)
-  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
-    app_config.ready()
-  File "/code/api/apps.py", line 9, in ready
-    from api import views, models
-  File "/code/api/views.py", line 30, in <module>
-    from .tasks.graphTasks import refresh_stock_data, get_graph_data
-  File "/code/api/tasks/graphTasks.py", line 69
-    cumulative_quantity_subquery = (
-                                   ^
-SyntaxError: '(' was never closed
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/tasks/graphTasks.py changed, reloading.
-Watching for file changes with StatReloader
-Exception in thread django-main-thread:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
-    self.run()
-  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
-    self._target(*self._args, **self._kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
-    autoreload.raise_last_exception()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
-    raise _exception[1]
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
-    autoreload.check_errors(django.setup)()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
-    apps.populate(settings.INSTALLED_APPS)
-  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
-    app_config.ready()
-  File "/code/api/apps.py", line 9, in ready
-    from api import views, models
-  File "/code/api/views.py", line 30, in <module>
-    from .tasks.graphTasks import refresh_stock_data, get_graph_data
-  File "/code/api/tasks/graphTasks.py", line 98
-    user = user
-           ^^^^
-SyntaxError: invalid syntax. Perhaps you forgot a comma?
-/code/api/tasks/graphTasks.py changed, reloading.
-Watching for file changes with StatReloader
-Exception in thread django-main-thread:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
-    self.run()
-  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
-    self._target(*self._args, **self._kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
-    autoreload.raise_last_exception()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
-    raise _exception[1]
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
-    autoreload.check_errors(django.setup)()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
-    apps.populate(settings.INSTALLED_APPS)
-  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
-    app_config.ready()
-  File "/code/api/apps.py", line 9, in ready
-    from api import views, models
-  File "/code/api/views.py", line 30, in <module>
-    from .tasks.graphTasks import refresh_stock_data, get_graph_data
-  File "/code/api/tasks/graphTasks.py", line 99
-    user = user
-           ^^^^
-SyntaxError: invalid syntax. Perhaps you forgot a comma?
-/code/api/tasks/graphTasks.py changed, reloading.
-Watching for file changes with StatReloader
-Exception in thread django-main-thread:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
-    self.run()
-  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
-    self._target(*self._args, **self._kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
-    autoreload.raise_last_exception()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
-    raise _exception[1]
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
-    autoreload.check_errors(django.setup)()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
-    apps.populate(settings.INSTALLED_APPS)
-  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
-    app_config.ready()
-  File "/code/api/apps.py", line 9, in ready
-    from api import views, models
-  File "/code/api/views.py", line 30, in <module>
-    from .tasks.graphTasks import refresh_stock_data, get_graph_data
-  File "/code/api/tasks/graphTasks.py", line 98
-    user = user
-           ^^^^
-SyntaxError: invalid syntax. Perhaps you forgot a comma?
-/code/api/tasks/graphTasks.py changed, reloading.
-Watching for file changes with StatReloader
-Exception in thread django-main-thread:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
-    self.run()
-  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
-    self._target(*self._args, **self._kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
-    autoreload.raise_last_exception()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
-    raise _exception[1]
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
-    autoreload.check_errors(django.setup)()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
-    apps.populate(settings.INSTALLED_APPS)
-  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
-    app_config.ready()
-  File "/code/api/apps.py", line 9, in ready
-    from api import views, models
-  File "/code/api/views.py", line 30, in <module>
-    from .tasks.graphTasks import refresh_stock_data, get_graph_data
-  File "/code/api/tasks/graphTasks.py", line 98
-    user = user
-           ^^^^
-SyntaxError: invalid syntax. Perhaps you forgot a comma?
-/code/api/tasks/graphTasks.py changed, reloading.
-Watching for file changes with StatReloader
-Exception in thread django-main-thread:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
-    self.run()
-  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
-    self._target(*self._args, **self._kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
-    autoreload.raise_last_exception()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
-    raise _exception[1]
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
-    autoreload.check_errors(django.setup)()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
-    apps.populate(settings.INSTALLED_APPS)
-  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
-    app_config.ready()
-  File "/code/api/apps.py", line 9, in ready
-    from api import views, models
-  File "/code/api/views.py", line 30, in <module>
-    from .tasks.graphTasks import refresh_stock_data, get_graph_data
-  File "/code/api/tasks/graphTasks.py", line 98
-    user = user
-           ^^^^
-SyntaxError: invalid syntax. Perhaps you forgot a comma?
-/code/api/tasks/graphTasks.py changed, reloading.
-Watching for file changes with StatReloader
-Exception in thread django-main-thread:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
-    self.run()
-  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
-    self._target(*self._args, **self._kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
-    autoreload.raise_last_exception()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
-    raise _exception[1]
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
-    autoreload.check_errors(django.setup)()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
-    apps.populate(settings.INSTALLED_APPS)
-  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
-    app_config.ready()
-  File "/code/api/apps.py", line 9, in ready
-    from api import views, models
-  File "/code/api/views.py", line 30, in <module>
-    from .tasks.graphTasks import refresh_stock_data, get_graph_data
-  File "/code/api/tasks/graphTasks.py", line 99
-    user = user
-           ^^^^
-SyntaxError: invalid syntax. Perhaps you forgot a comma?
-/code/api/tasks/graphTasks.py changed, reloading.
-Watching for file changes with StatReloader
-Exception in thread django-main-thread:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
-    self.run()
-  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
-    self._target(*self._args, **self._kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
-    autoreload.raise_last_exception()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
-    raise _exception[1]
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
-    autoreload.check_errors(django.setup)()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
-    apps.populate(settings.INSTALLED_APPS)
-  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
-    app_config.ready()
-  File "/code/api/apps.py", line 9, in ready
-    from api import views, models
-  File "/code/api/views.py", line 30, in <module>
-    from .tasks.graphTasks import refresh_stock_data, get_graph_data
-  File "/code/api/tasks/graphTasks.py", line 99
-    user = user
-           ^^^^
-SyntaxError: invalid syntax. Perhaps you forgot a comma?
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.cumulative_amount: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 3 issues (0 silenced).
-/code/api/models.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-api.UserInvestmentGraph.data: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 2 issues (0 silenced).
-/code/api/models.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 1 issue (0 silenced).
-/code/api/models.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-System check identified some issues:
-
-WARNINGS:
-api.Investments.cumulative_quantities: (fields.E010) JSONField default should be a callable instead of an instance so that it's not shared between all field instances.
-	HINT: Use a callable instead, e.g., use `dict` instead of `{}`.
-
-System check identified 1 issue (0 silenced).
-/code/api/models.py changed, reloading.
+/code/api/yahooRapidApiClient.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
@@ -537,7 +43,15 @@ Watching for file changes with StatReloader
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-/code/api/tasks/graphTasks.py changed, reloading.
+/code/api/yahooRapidApiClient.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+/code/api/yahooRapidApiClient.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+/code/api/yahooRapidApiClient.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
@@ -545,67 +59,19 @@ Watching for file changes with StatReloader
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-/code/api/tasks/graphTasks.py changed, reloading.
+/code/api/yahooRapidApiClient.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-Exception in thread django-main-thread:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
-    self.run()
-  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
-    self._target(*self._args, **self._kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
-    autoreload.raise_last_exception()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
-    raise _exception[1]
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
-    autoreload.check_errors(django.setup)()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
-    apps.populate(settings.INSTALLED_APPS)
-  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
-    app_config.ready()
-  File "/code/api/apps.py", line 9, in ready
-    from api import views, models
-  File "/code/api/views.py", line 30, in <module>
-    from .tasks.graphTasks import refresh_stock_data, get_graph_data
-  File "/code/api/tasks/graphTasks.py", line 99
-    s         user = user
-    ^^^^^^^^^^^^^^
-SyntaxError: invalid syntax. Perhaps you forgot a comma?
-/code/api/tasks/graphTasks.py changed, reloading.
+/code/api/yahooRapidApiClient.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-Exception in thread django-main-thread:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
-    self.run()
-  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
-    self._target(*self._args, **self._kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
-    autoreload.raise_last_exception()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
-    raise _exception[1]
-  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
-    autoreload.check_errors(django.setup)()
-  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
-    apps.populate(settings.INSTALLED_APPS)
-  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
-    app_config.ready()
-  File "/code/api/apps.py", line 9, in ready
-    from api import views, models
-  File "/code/api/views.py", line 30, in <module>
-    from .tasks.graphTasks import refresh_stock_data, get_graph_data
-  File "/code/api/tasks/graphTasks.py", line 99
-    sc         user = user
-    ^^^^^^^^^^^^^^^
-SyntaxError: invalid syntax. Perhaps you forgot a comma?
-/code/api/tasks/graphTasks.py changed, reloading.
+/code/api/yahooRapidApiClient.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+/code/api/yahooRapidApiClient.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
@@ -613,51 +79,192 @@ Watching for file changes with StatReloader
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-/code/api/tasks/graphTasks.py changed, reloading.
+[26/Mar/2025 12:25:52] "POST /api/user/createuser/ HTTP/1.1" 200 45
+Unauthorized: /api/user/setbrokerageinvestment/
+[26/Mar/2025 12:27:11] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 401 51
+[26/Mar/2025 12:27:17] "POST /api/token/ HTTP/1.1" 200 582
+[26/Mar/2025 12:27:19] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+[26/Mar/2025 12:29:37] "GET / HTTP/1.1" 200 22
+[26/Mar/2025 12:29:38] "GET / HTTP/1.1" 200 22
+[26/Mar/2025 12:32:19] "POST /api/token/ HTTP/1.1" 200 582
+[26/Mar/2025 12:32:19] "GET /api/user/getuserinfo/ HTTP/1.1" 200 187
+/code/api/views.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-/code/api/tasks/graphTasks.py changed, reloading.
+/code/api/views.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-/code/api/tasks/graphTasks.py changed, reloading.
+[26/Mar/2025 12:37:05] "POST /api/user/setbrokerageinvestment/ HTTP/1.1" 201 38
+Unauthorized: /api/token/
+[26/Mar/2025 12:40:39] "POST /api/token/ HTTP/1.1" 401 63
+[26/Mar/2025 12:40:42] "POST /api/token/ HTTP/1.1" 200 582
+[26/Mar/2025 12:40:42] "GET /api/user/getuserinfo/ HTTP/1.1" 200 191
+
+def backend_cleanup():
+    return 1
+
+
+def plaid_item_remove(uid, item_id):
+    return 1
+
+
+def plaid_item_public_tokens_exchange(**kwargs):
+    return 1
+
+
+def chain(*args, **kwargs):
+    return 1
+
+
+def accumulate(self, *args, **kwargs):
+    return 1
+
+
+def get_graph_data(uid, symbols=0):
+    return 1
+
+
+def chord(self, header, body, partial_args=0, interval=1, countdown=2, max_retries=3, eager=4, **kwargs):
+    return 1
+
+
+def plaid_user_remove(uid, code):
+    return 1
+
+
+def unlock_chord(self, group_id, callback, interval=0, max_retries=1, result=2, Result=3, GroupResult=4, result_from_tuple=5, **kwargs):
+    return 1
+
+
+def send_forgot_email(**kwargs):
+    return 1
+
+
+def plaid_link_token_create(**kwargs):
+    return 1
+
+
+def accumate_user_remove(uid, code, ignore_plaid_delete=0):
+    return 1
+
+
+def xmap(task, it):
+    return 1
+
+
+def plaid_user_create(**kwargs):
+    return 1
+
+
+def delete_non_closing_times():
+    return 1
+
+
+def xstarmap(task, it):
+    return 1
+
+
+def refresh_robinhood():
+    return 1
+
+
+def login_robinhood(**kwargs):
+    return 1
+
+
+def chunks(task, it, n):
+    return 1
+
+
+def refresh_stock_data_by_interval(symbols=0, interval=1, refresh_all=2):
+    return 1
+
+
+def send_waitlist_email(**kwargs):
+    return 1
+
+
+def send_verification_code(**kwargs):
+    return 1
+
+
+def group(self, tasks, result, group_id, partial_args, add_to_parent=0):
+    return 1
+
+[26/Mar/2025 12:40:46] "POST /api/plaid/usercreate/ HTTP/1.1" 201 38
+[26/Mar/2025 12:40:48] "GET /api/plaid/usercreate/ HTTP/1.1" 201 37
+[26/Mar/2025 12:40:48] "POST /api/plaid/linktokencreate/ HTTP/1.1" 201 38
+[26/Mar/2025 12:40:49] "GET /api/plaid/linktokencreate/ HTTP/1.1" 201 79
+[26/Mar/2025 12:46:31] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 12:46:37] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 67161
+[26/Mar/2025 12:49:34] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 12:49:39] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 67161
+[26/Mar/2025 12:54:41] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 12:54:46] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 67161
+[26/Mar/2025 12:56:32] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 12:56:37] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 67161
+[26/Mar/2025 12:57:45] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 12:57:51] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 67161
+[26/Mar/2025 12:59:59] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:00:04] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 67161
+[26/Mar/2025 13:10:39] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:10:44] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 67161
+[26/Mar/2025 13:11:50] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:11:55] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 67161
+[26/Mar/2025 13:17:11] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:18:23] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:18:28] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 67161
+[26/Mar/2025 13:21:35] "POST /api/token/ HTTP/1.1" 200 582
+[26/Mar/2025 13:21:35] "GET /api/user/getuserinfo/ HTTP/1.1" 200 191
+[26/Mar/2025 13:21:36] "POST /api/plaid/usercreate/ HTTP/1.1" 200 44
+[26/Mar/2025 13:21:38] "GET /api/plaid/usercreate/ HTTP/1.1" 201 37
+[26/Mar/2025 13:21:38] "POST /api/plaid/linktokencreate/ HTTP/1.1" 201 38
+[26/Mar/2025 13:21:40] "GET /api/plaid/linktokencreate/ HTTP/1.1" 201 79
+[26/Mar/2025 13:22:32] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:34:13] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:34:18] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 67373
+[26/Mar/2025 13:38:11] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:38:18] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:38:23] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 67532
+[26/Mar/2025 13:40:51] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:40:56] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 67691
+[26/Mar/2025 13:44:46] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:44:52] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 67850
+[26/Mar/2025 13:48:08] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:48:13] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 68185
+[26/Mar/2025 13:51:39] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:51:44] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 71330
+[26/Mar/2025 13:55:28] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:55:33] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 71598
+[26/Mar/2025 13:57:42] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 13:57:47] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 71732
+[26/Mar/2025 14:05:18] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 14:05:24] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 72224
+[26/Mar/2025 14:13:03] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 14:13:08] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 72672
+[26/Mar/2025 14:14:12] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 14:14:17] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 72728
+[26/Mar/2025 14:19:36] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 14:19:41] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 73008
+[26/Mar/2025 14:20:09] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 14:20:15] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 73064
+[26/Mar/2025 14:27:38] "PUT /api/user/getstockgraphdata/ HTTP/1.1" 201 38
+[26/Mar/2025 14:27:43] "POST /api/user/getstockgraphdata/ HTTP/1.1" 200 73456
+/code/api/views.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-/code/api/tasks/graphTasks.py changed, reloading.
+/code/api/apps.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-/code/api/tasks/graphTasks.py changed, reloading.
+/code/api/views.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-/code/api/tasks/graphTasks.py changed, reloading.
-/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
-  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
-Watching for file changes with StatReloader
-/code/api/serializers/accumateAccountSerializers.py changed, reloading.
+/code/api/urls.py changed, reloading.
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
