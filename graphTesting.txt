@@ -97,3 +97,14 @@ response = client.post(
     }
 )
 
+
+
+___
+
+{'transaction_id': '8emQqEoL1PcNEARB9do0cw4dEQX8JaSY0q30Q', 'account_id': 'xbjgzAyD9XIjKJgYQeVLI3vdgdmy0Lsm7orrv', 'amount': -25.0, 'iso_currency_code': 'USD', 'unofficial_currency_code': None, 'date': datetime.date(2025, 3, 18), 'authorized_date': datetime.date(2025, 3, 18), 'authorized_datetime': datetime.datetime(2025, 3, 18, 12, 0, tzinfo=zoneinfo.ZoneInfo(key='UTC')), 'pending': False, 'pending_transaction_id': None, 'account_owner': None, 'merchant_name': None, 'name': 'CASH REWARDS STATEMENT CREDIT', 'payment_channel': 'other', 'payment_meta': {'by_order_of': None, 'payee': None, 'payer': None, 'payment_method': None, 'payment_processor': None, 'ppd_id': None, 'reason': None, 'reference_number': None}, 'location': {'address': None, 'city': None, 'region': None, 'postal_code': None, 'country': None, 'lat': None, 'lon': None, 'store_number': None}, 'category': ['Transfer', 'Credit'], 'category_id': '21005000', 'transaction_type': 'special', 'personal_finance_category': {'primary': 'TRANSFER_IN', 'detailed': 'TRANSFER_IN_ACCOUNT_TRANSFER'}, 'transaction_code': None}
+25
+
+{'account_id': 'xbjgzAyD9XIjKJgYQeVLI3vdgdmy0Lsm7orrv', 'balances': {'available': 7704.85, 'current': 2295.15, 'limit': 10000.0, 'iso_currency_code': 'USD', 'unofficial_currency_code': None}, 'mask': '2852', 'name': 'savings', 'official_name': 'Customized Cash Rewards World Mastercard Card', 'subtype': 'credit card', 'type': 'credit'}, 
+{'account_id': '4X8wL9OxE6C7MJra95ROs71DRDXZBASDaqNNr', 'balances': {'available': 5324.32, 'current': 2782.8, 'limit': None, 'iso_currency_code': 'USD', 'unofficial_currency_code': None}, 'mask': '8512', 'name': 'Adv Plus Banking', 'official_name': 'Adv Plus Banking', 'subtype': 'checking', 'type': 'depository'},
+{'account_id': 'aOVAeMK6bRfdz7bPo1mXCrMyAyYdxRIK04YYp', 'balances': {'available': 115.69, 'current': 116.69, 'limit': None, 'iso_currency_code': 'USD', 'unofficial_currency_code': None}, 'mask': '8554', 'name': 'Advantage Savings', 'official_name': 'Advantage Savings', 'subtype': 'savings', 'type': 'depository'}
+

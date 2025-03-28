@@ -186,6 +186,7 @@ def process_plaid_balance(plaid_balance_responses, eq={}, gt={}, lt={}, lte={},
         for account in balance_response['accounts']:
             balances.append(account)
     
+    # no verification status - maybe thats for the accounts and not balance endpoint?
     eq["verification_status"] = ["manually_verified", "automatically_verified"]
     eq["subtype"] = ["checking", "savings"]
     return filter_jsons(balances, eq=eq, gt=gt, lt=lt, lte=lte, gte=gte, 

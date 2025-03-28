@@ -13,10 +13,12 @@ class BalanceGetRequestOptionsSerializer(serializers.Serializer):
     account_ids = serializers.ListField(
         child=serializers.CharField(),
         required=False,
+        allow_null=True,
         help_text="List of account IDs to retrieve balances for."
     )
     min_last_updated_datetime = serializers.DateTimeField(
         required=False,
+        allow_null=True,
         help_text="Filter to accounts updated after this datetime."
     )
 
@@ -29,6 +31,7 @@ class BalanceGetRequestSerializer(serializers.Serializer):
     )
     options = BalanceGetRequestOptionsSerializer(
         required=False,
+        allow_null=True,
         help_text="Additional options to filter the balance request."
     )
 
@@ -51,7 +54,7 @@ class AccountBalancesSerializer(serializers.Serializer):
     limit = serializers.FloatField(
         allow_null=True,
         help_text="For credit-type accounts, the credit limit.",
-        required=False
+        required=False,
     )
     iso_currency_code = serializers.CharField(
         allow_null=True,

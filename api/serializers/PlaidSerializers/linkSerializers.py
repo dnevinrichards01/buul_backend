@@ -28,6 +28,7 @@ class LinkTokenCreateRequestUserSerializer(serializers.Serializer):
     """
     client_user_id = serializers.CharField(
         required=False,
+        allow_null=True,
         help_text="A unique ID representing the end user. Used for logging and analytics."
     )
     legal_name = serializers.CharField(
@@ -67,6 +68,7 @@ class LinkTokenCreateRequestAccountFiltersSerializer(serializers.Serializer):
             child=serializers.CharField()
         ),
         required=False,
+        allow_null=True,
         help_text="Filters for depository accounts."
     )
     credit = serializers.DictField(
@@ -74,6 +76,7 @@ class LinkTokenCreateRequestAccountFiltersSerializer(serializers.Serializer):
             child=serializers.CharField()
         ),
         required=False,
+        allow_null=True,
         help_text="Filters for credit accounts."
     )
     # Add other account types if needed.
@@ -95,6 +98,7 @@ class LinkTokenCreateRequestSerializer(serializers.Serializer):
     """
     client_name = serializers.CharField(
         required=False,
+        allow_null=True,
         help_text="The name of your application."
     )
     language = serializers.ChoiceField(

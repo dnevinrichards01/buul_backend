@@ -13,10 +13,12 @@ class TransactionsSyncRequestOptionsSerializer(serializers.Serializer):
     """
     include_personal_finance_category = serializers.BooleanField(
         required=False,
+        allow_null=True,
         help_text="Include personal finance category data."
     )
     include_original_description = serializers.BooleanField(
         required=False,
+        allow_null=True,
         help_text="Include original description data."
     )
 
@@ -34,10 +36,12 @@ class TransactionsSyncRequestSerializer(serializers.Serializer):
     )
     count = serializers.IntegerField(
         required=False,
+        allow_null=True,
         help_text="The number of transactions to fetch."
     )
     options = TransactionsSyncRequestOptionsSerializer(
         required=False,
+        allow_null=True,
         help_text="Additional options to filter the transactions sync request."
     )
 
@@ -188,6 +192,7 @@ class SubtransactionSerializer(serializers.Serializer):
     category = serializers.ListField(
         child=serializers.CharField(),
         required=False,
+        allow_null=True,
         help_text="List of categories for the subtransaction."
     )
     category_id = serializers.CharField(
@@ -221,7 +226,7 @@ class TransactionSerializer(serializers.Serializer):
         max_length=3,
         help_text="The unofficial currency code associated with the transaction."
     )
-    date = serializers.DateTimeField(
+    date = serializers.DateField(
         help_text="The date the transaction was posted."
     )
     authorized_date = serializers.DateField(
@@ -276,6 +281,7 @@ class TransactionSerializer(serializers.Serializer):
     )
     category = serializers.ListField(
         child=serializers.CharField(),
+        allow_null=True,
         required=False,
         help_text="A hierarchical array of categories."
     )
@@ -306,6 +312,7 @@ class TransactionSerializer(serializers.Serializer):
     subtransactions = SubtransactionSerializer(
         many=True,
         required=False,
+        allow_null=True,
         help_text="An array of subtransactions associated with this transaction."
     )
 
