@@ -12,9 +12,10 @@ import json
 
 from plaid.model.accounts_get_request import AccountsGetRequest
 from plaid.model.accounts_balance_get_request import AccountsBalanceGetRequest
+from plaid.exceptions import ApiException
 
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \
-    RobinhoodCashbackDeposit
+    RobinhoodCashbackDeposit, Investments, SYMBOL_CHOICES
 from ..serializers.rhSerializers import GetLinkedBankAccountsResponseSerializer, \
     DepositSerializer
 from ..serializers.PlaidSerializers.balanceSerializers import \

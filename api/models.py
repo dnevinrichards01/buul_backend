@@ -23,6 +23,21 @@ BROKERAGE_CHOICES = [
     ('fidelity', 'fidelity')
 ]
 
+class Log(models.Model):
+    name = models.CharField()
+    user = models.DateTimeField(default=None, null=True)
+    date = models.DateTimeField(auto_now=True)
+    args = models.JSONField()
+    response = models.JSONField()
+    status = models.IntegerField()
+    success = models.BooleanField()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['date', 'success', 'status']),
+            models.Index(fields=['user', 'date', 'success', 'status'])
+        ]
+
 class User(AbstractUser):
     id = models.UUIDField(
         primary_key=True,  # Redefine id as primary key
@@ -156,11 +171,26 @@ class Investments(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     # one to one?
     investment_id = models.CharField(max_length=255)
+    deposit = models.ForeignKey(RobinhoodCashbackDeposit, on_delete=models.SET_NULL, null=True)
     symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True, default=None)
     brokerage = models.CharField(choices=BROKERAGE_CHOICES, max_length=255, null=True, default=None)
     quantity = models.FloatField()
     cumulative_quantities = models.JSONField(default=dict)
     date = models.DateTimeField()
+    buy = models.BooleanField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'investment_id', 'brokerage', 'buy'], 
+                name='unique_investment'
+            )
+        ]
+        ordering = ['user', 'date']
+        indexes = [
+            models.Index(fields=['investment_id']),
+            models.Index(fields=['user', 'date'])
+        ]
 
 class RobinhoodStockOrder(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -183,7 +213,11 @@ class RobinhoodStockOrder(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['user', 'order_id'], name='unique_rh_order')
         ]
-        ordering = ['updated_at', 'symbol']
+        ordering = ['user', 'updated_at']
+        indexes = [
+            models.Index(fields=['order_id']),
+            models.Index(fields=['user', 'updated_at'])
+        ]
 
 
 
