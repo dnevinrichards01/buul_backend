@@ -30,7 +30,7 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True,
         error_messages={"invalid": invalid_password_error_message}
     )
-    pre_account_id = serializers.PositiveIntegerField(required=True)
+    pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=True)
     class Meta:
         model = User
         fields = ['phone_number', 'full_name', 'password', 'email', 'username', 'pre_account_id']
@@ -45,7 +45,7 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class NamePasswordValidationSerializer(serializers.Serializer):
-    pre_account_id = serializers.PositiveIntegerField(required=True)
+    pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=True)
     full_name = serializers.CharField(required=False)
     password = serializers.RegexField(
         regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
@@ -60,7 +60,7 @@ class NamePasswordValidationSerializer(serializers.Serializer):
         return attrs
 
 class VerificationCodeResponseSerializer(serializers.Serializer):
-    pre_account_id = serializers.PositiveIntegerField(required=False)
+    pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=True)
     verification_email = serializers.EmailField(required=False)
     verification_phone_number = serializers.CharField(required=False, validators=[e164_phone_number_validator])
     email = serializers.EmailField(required=False)
@@ -97,7 +97,7 @@ class VerificationCodeResponseSerializer(serializers.Serializer):
         return attrs
     
 class VerificationCodeRequestSerializer(serializers.Serializer):
-    pre_account_id = serializers.PositiveIntegerField(required=False)
+    pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=True)
     verification_email = serializers.EmailField(required=False)
     verification_phone_number = serializers.CharField(required=False, validators=[e164_phone_number_validator])
     email = serializers.EmailField(required=False)
