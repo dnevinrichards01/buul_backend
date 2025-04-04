@@ -225,4 +225,4 @@ PLAID_SECRET = plaid_cred_dict["PLAID_SECRET"]
 PLAID_HOST = plaid_cred_dict["PLAID_HOST"]
 
 fmp_cred_dict = json.loads(env("FMP_CREDENTIALS"))
-FMP_KEY = plaid_cred_dict["FMP_KEY"]
+FMP_KEY = fmp_cred_dict["FMP_KEY"]
