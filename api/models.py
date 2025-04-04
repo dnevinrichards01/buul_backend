@@ -31,6 +31,7 @@ class Log(models.Model):
     response = models.JSONField()
     status = models.IntegerField()
     success = models.BooleanField()
+    pre_account_id = models.PositiveIntegerField(default=None, null=True)
 
     class Meta:
         indexes = [
