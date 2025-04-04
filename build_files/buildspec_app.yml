@@ -1,19 +1,38 @@
 version: 0.2
 
+env:
+  variables:
+    ENV_NAME: "abprod" # can make ENV_NAME, REGION_LIST env vars with tf
+    REGION_LIST: "us-west-1"
+    IMAGE: "app"
+    INITIAL_TAG: "temp_tag"
+
 phases:
   pre_build:
     commands:
       - echo Logging / auth in to Amazon ECR
-      - aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin 528757822565.dkr.ecr.us-west-1.amazonaws.com
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - echo ${ACCOUNT_ID} > account_id.txt
 
   build:
     commands:
       - echo Build started
-      - echo Building the django-app docker image
-      - docker build -t 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-django-app-ecr:latest -f build_files/Dockerfile.app .
+      - echo Building the ${IMAGE} docker image
+      - ACCOUNT_ID=$(cat account_id.txt)
+      - docker build -t ${INITIAL_TAG} -f build_files/Dockerfile.${IMAGE} .
 
   post_build:
     commands:
       - echo build completed
-      - echo pushing django app image in to docker ECR...
-      - docker push 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-django-app-ecr:latest
+      - echo pushing ${IMAGE} image in to docker ECR...
+      - ACCOUNT_ID=$(cat account_id.txt)
+      - |
+        PREV_TAG=${INITIAL_TAG}
+        for REGION in ${REGION_LIST}; do
+          aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
+          IMAGE_TAG="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ENV_NAME}-${IMAGE}:latest"
+          docker tag "$PREV_TAG" "$IMAGE_TAG"
+          docker push "$IMAGE_TAG"
+        done
+      - rm account_id.txt
+      - echo Writing ${IMAGE} image definition file..

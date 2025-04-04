@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    ENV_NAME: "abprod"
+    ENV_NAME: "abprod" # can make ENV_NAME, REGION_LIST env vars with tf
     REGION_LIST: "us-west-1"
     IMAGE: "celery"
     INITIAL_TAG: "temp_tag"
