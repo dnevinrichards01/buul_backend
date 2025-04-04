@@ -12,11 +12,12 @@ import json
 
 from plaid.model.accounts_get_request import AccountsGetRequest
 from plaid.model.accounts_balance_get_request import AccountsBalanceGetRequest
+from plaid.exceptions import ApiException
 
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \
-    RobinhoodCashbackDeposit
+    RobinhoodCashbackDeposit, Investments, SYMBOL_CHOICES
 from ..serializers.rhSerializers import GetLinkedBankAccountsResponseSerializer, \
-    DepositSerializer
+    DepositSerializer, RobinhoodAccountListSerializer
 from ..serializers.PlaidSerializers.balanceSerializers import \
     BalanceGetResponseSerializer, AccountsGetResponseSerializer
 # retry all of these bc sometimes you get 
@@ -104,6 +105,23 @@ def rh_get_linked_bank_accounts(uid, eq={}, gt={}, lt={}, lte={}, gte={},
     return filter_jsons(serializer.validated_data, eq=eq, gt=gt, lt=lt, lte=lte, 
                         gte=gte, metric_to_return_by=metric_to_return_by)
 
+# get their cash holdings to know if you can invest...
+def rh_load_account_profile(uid):
+    import pdb
+    breakpoint()
+
+    try:
+        session, userRobinhtoodInfo = r.rh_create_session(uid)
+    except Exception as e:
+        return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
+    result = r.load_account_profile(session)
+
+    try:
+        serializer = RobinhoodAccountListSerializer(data=result, many=True)
+        serializer.is_valid(raise_exception=True)
+        return serializer.validate_data["portfolio_cash"], serializer.validate_data
+    except Exception as e:
+        return {"error": f"{str(e)}"}
 
 # plaid balance
 
@@ -185,6 +203,7 @@ def process_plaid_balance(plaid_balance_responses, eq={}, gt={}, lt={}, lte={},
         for account in balance_response['accounts']:
             balances.append(account)
     
+    # no verification status - maybe thats for the accounts and not balance endpoint?
     eq["verification_status"] = ["manually_verified", "automatically_verified"]
     eq["subtype"] = ["checking", "savings"]
     return filter_jsons(balances, eq=eq, gt=gt, lt=lt, lte=lte, gte=gte, 

@@ -200,6 +200,9 @@ def login(session=None, uid=None, username=None, password=None, expiresIn=86400,
     if data is None and (challenge_code is None and mfa_code is None and not device_approval):
         save_error_to_cache(uid, "An internal error occurred. Please log in again.")
         return f"(initial login request returned None) An internal error occurred. Please log in again."
+    if data and 'detail' in data and data['detail'] == "Unable to log in with provided credentials.":
+        save_error_to_cache(uid, "Incorrect credentials")
+        return f"(data retured detail: incorrect credentails) Incorrect credentials"
     # if need mfa app code, retry once user enters it
     if data and 'mfa_required' in data: 
         save_mfa_challenge_to_cache(uid, None, None, device_token,

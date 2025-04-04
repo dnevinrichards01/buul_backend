@@ -15,7 +15,8 @@ class ErrorSerializer(serializers.Serializer):
     )
     error_message = serializers.CharField(
         help_text="A developer-friendly error message.",
-        required=False
+        required=False,
+        allow_null=True
     )
     display_message = serializers.CharField(
         allow_null=True, 
@@ -33,5 +34,6 @@ class ErrorSerializer(serializers.Serializer):
     )
     status_code = serializers.IntegerField(
         help_text="The HTTP status code associated with the error.",
-        required=False
+        required=False,
+        allow_null=True
     )

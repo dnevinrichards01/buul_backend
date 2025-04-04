@@ -20,6 +20,9 @@ FIELD_CHOICES = [
     ('delete_account', 'delete_account')
 ]
 
+class GraphDataRequestSerializer(serializers.Serializer):
+    start_date = serializers.DateTimeField()
+
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.RegexField(
         regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',

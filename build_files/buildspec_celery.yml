@@ -1,20 +1,39 @@
 version: 0.2
 
+env:
+  variables:
+    ENV_NAME: "abprod"
+
 phases:
   pre_build:
     commands:
       - echo Logging / auth in to Amazon ECR
-      - aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin 528757822565.dkr.ecr.us-west-1.amazonaws.com
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - echo ${ACCOUNT_ID} > account_id.txt
+      - REGION=$(aws configure get region)
+      - echo ${REGION} > region.txt
+      - aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
 
   build:
     commands:
       - echo Build started
       - echo Building the celery docker image
-      - docker build -t 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-celery-ecr:latest -f build_files/Dockerfile.celery .
+      - ACCOUNT_ID=$(cat account_id.txt)
+      - REGION=$(cat region.txt)
+      - REPO_NAME=$(aws ecr describe-repositories \
+        --region ${REGION} \
+        --query "repositories[?contains(tags[?Key=='Image' && Value=='celery'].Value, 'celery') && contains(tags[?Key=='Environment' && Value=='${ENV_NAME}'].repositoryName" \
+        --output text)
+      - echo ${REPO_NAME} > repo_name.txt
+      - docker build -t ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:latest -f build_files/Dockerfile.celery .
 
   post_build:
     commands:
       - echo build completed
       - echo pushing celery image in to docker ECR...
-      - docker push 528757822565.dkr.ecr.us-west-1.amazonaws.com/ab-celery-ecr:latest
+      - ACCOUNT_ID=$(cat account_id.txt)
+      - REPO_NAME=$(cat repo_name.txt)
+      - REGION=$(cat region.txt)
+      - docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:latest
+      - rm account_id.txt repo_name.txt region.txt
       - echo Writing celery image definition file..

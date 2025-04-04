@@ -17,10 +17,10 @@ from datetime import timedelta
 import ssl
 import json
 
-env = environ.Env()
+env = environ.Env()  
 
 BASE_DIR = Path(__file__).resolve().parent.parent  
-# Take environment variables from .env file
+# Take environment variables from .env file  
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))  
 
 SECRET_KEY = env("SECRET_KEY", default="change_me")  

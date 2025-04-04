@@ -1,5 +1,0 @@
-requests
-pyotp
-python-dotenv
-cryptography
-django

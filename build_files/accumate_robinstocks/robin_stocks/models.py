@@ -16,3 +16,18 @@ class UserRobinhoodInfo(models.Model):
     def refresh(self):
         from robin_stocks.robinhood import refresh, create_session
         refresh(create_session(), self.user.id)
+
+class Log(models.Model):
+    name = models.CharField()
+    user = models.DateTimeField(default=None, null=True)
+    date = models.DateTimeField(auto_now=True)
+    args = models.JSONField()
+    response = models.JSONField()
+    status = models.IntegerField()
+    success = models.BooleanField()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['date', 'success', 'status']),
+            models.Index(fields=['user', 'date', 'success', 'status'])
+        ]

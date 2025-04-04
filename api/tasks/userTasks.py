@@ -105,7 +105,6 @@ def plaid_link_token_create(**kwargs):
     # breakpoint()
 
     uid = kwargs.pop('uid')
-    
     try:
         plaidUser = PlaidUser.objects.get(user__id=uid)
         exchange_request = LinkTokenCreateRequest(
@@ -222,8 +221,6 @@ def plaid_user_create(**kwargs):
     uid = kwargs.pop('uid')
     
     try:
-        plaidUser = PlaidUser(user=User.objects.get(id=uid))
-
         duplicate_client_id_count = float('inf')
         while duplicate_client_id_count > 0:
             client_user_id = str(uuid.uuid4())

@@ -9,6 +9,68 @@ from .tasks import login_robinhood
 from django.core.cache import cache
 import json
 from rest_framework.exceptions import ValidationError
+from robin_stocks.models import Log
+
+
+def log(instance, status, success, response, user=None, args={}):
+    log = Log(
+        name = instance.__class__.__name__,
+        user = user,
+        response = response,
+        success = success,
+        args = args,
+        status = status
+    )
+    log.save()
+
+def validate(serializer, instance, fields_to_correct=[], fields_to_fail=[],
+             edit_error_message=lambda x: x):
+    try:
+        serializer.is_valid(raise_exception=True)
+    except ValidationError as e:
+        # validation errors which we have no tolerance for
+        for field in fields_to_fail:
+            if field in e.detail and len(e.detail[field]) >= 1:
+                status = 400
+                result = JsonResponse(
+                    {
+                        "success": None,
+                        "error": f"error '{field}': {e.detail[field][0]}"
+                    }, 
+                    status=400
+                )
+                return result
+        # validation errors which we send error messages for
+        error_messages = {}
+        for field in fields_to_correct:
+            if field in e.detail and len(e.detail[field]) >= 1:
+                error_message = e.detail[field][0]
+                error_messages[field] = edit_error_message(error_message)
+            else:
+                error_messages[field] = None
+        status = 200
+        result = JsonResponse(
+            {
+                "success": None, 
+                "error": error_messages
+            }, 
+            status=status
+        )
+        log(instance, status, False, result, args=dict(instance.request.data))
+        return result
+    except Exception as e:
+        # unknown error
+        status = 400
+        result = JsonResponse(
+            {
+                "success": None, 
+                "error": str(e)
+            }, 
+            status=status
+        )
+        log(instance, status, False, result, args=dict(instance.request.data))
+        return result
+
 
 class ConnectRobinhoodView(APIView):
     permission_classes = [IsAuthenticated]
@@ -17,17 +79,25 @@ class ConnectRobinhoodView(APIView):
         # import pdb
         # breakpoint() 
         serializer = ConnectRobinhoodLoginSerializer(data=request.data)
+        
+        user = request.user
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
             if "non_field_errors" in e.detail and len(e.detail["non_field_errors"]) > 0:
-                return JsonResponse(
+                status = 400
+                response = JsonResponse(
                     {
                         "success": None, 
                         "error": e.detail["non_field_errors"][0]
                     }, 
-                    status=400
+                    status = status
                 )
+                sanitized_data = request.data.copy()
+                sanitized_data.pop("username", None)
+                sanitized_data.pop("password", None)
+                log(self, status, False, response, user=user, args=sanitized_data)
+                return response
             error_messages = {}
             for field in e.detail:
                 if field in e.detail and len(e.detail[field]) > 0:
@@ -35,28 +105,33 @@ class ConnectRobinhoodView(APIView):
                         error_messages["email"] = e.detail["username"][0]
                     else:
                         error_messages[field] = e.detail[field][0]
-                return JsonResponse(
-                    {
-                        "success": None, 
-                        "error": error_messages
-                    }, 
-                    status=200
-                )
-            return JsonResponse(
+            status = 200
+            response = JsonResponse(
                 {
                     "success": None, 
-                    "error": f"error: {str(e)}"
+                    "error": error_messages
                 }, 
-                status=400
+                status = status
             )
+            sanitized_data = request.data.copy()
+            sanitized_data.pop("username", None)
+            sanitized_data.pop("password", None)
+            log(self, status, False, response, user=user, args=sanitized_data)
+            return response
         except Exception as e:
-            return JsonResponse(
+            status = 400
+            response = JsonResponse(
                 {
                     "success": None, 
                     "error": f"error: {str(e)}"
                 }, 
-                status=400
+                status = status
             )
+            sanitized_data = request.data.copy()
+            sanitized_data.pop("username", None)
+            sanitized_data.pop("password", None)
+            log(self, status, False, response, user=user, args=sanitized_data)
+            return response
         
         validated_data = serializer.validated_data
         uid = self.request.user.id
@@ -75,39 +150,53 @@ class ConnectRobinhoodView(APIView):
             }
         )
 
-        return JsonResponse(
+        status = 200
+        response = JsonResponse(
             {
-                "success": "recieved",
+                "success": "recieved", 
                 "error": None
             }, 
-            status=201
+            status = status
         )
+        sanitized_data = request.data.copy()
+        sanitized_data.pop("username", None)
+        sanitized_data.pop("password", None)
+        log(self, status, True, response, user=user, args=sanitized_data)
+        return response
     
     def get(self, request, *args, **kwargs):
-        uid = self.request.user.id
+        user = self.request.user
+        uid = user.id
         # import pdb 
         # breakpoint()
         challenge = cache.get(f"uid_{uid}_rh_challenge")
         if not challenge:
-            return JsonResponse(
+            status = 200
+            response = JsonResponse(
                 {
                     "success": None,
                     "error": None
                 }, 
-                status=201
+                status = status
             )
+            log(self, status, False, response, user=user)
+            return response
         
         challenge_data = json.loads(challenge)
         if challenge_data["success"]:
-            return JsonResponse(
+            status = 200
+            response = JsonResponse(
                 {
                     "success": challenge_data["success"],
                     "error": None
                 }, 
-                status=201
+                status = status
             )
+            log(self, status, True, response, user=user)
+            return response
         elif challenge_data["challenge_type"]:
-            return JsonResponse(
+            status = 200
+            response = JsonResponse(
                 {
                     "success": None,
                     "error": {
@@ -115,10 +204,13 @@ class ConnectRobinhoodView(APIView):
                         "error_message": challenge_data["error"]
                     }
                 }, 
-                status=200
+                status = status
             )
+            log(self, status, False, response, user=user)
+            return response
         else:
-            return JsonResponse(
+            status = 200
+            response = JsonResponse(
                 {
                     "success": None,
                     "error": {
@@ -126,27 +218,7 @@ class ConnectRobinhoodView(APIView):
                         "error_message": challenge_data["error"]
                     }
                 }, 
-                status=200
+                status = status
             )
-
-
-        
-
-        # challenge_data = json.loads(challenge)
-        # if challenge_data['challenge_type'] == 'device_approvals':
-            # check_device_approvals(uid)
-            # challenge_updated = cache.get(f"uid_{uid}_rh_challenge")
-            # if challenge_updated:
-            #     challenge_data_updated = json.loads(challenge_updated)
-            #     return...
-            # else:
-            #     return JsonResponse(
-            #         {
-            #             "success": None,
-            #             "error": None
-            #         }, 
-            #         status=201
-            #     )
-
-        # return JsonResponse(data, status=201)
-    
+            log(self, status, False, response, user=user)
+            return response

@@ -12,8 +12,7 @@ from ..jsonUtils import filter_jsons
 from datetime import datetime, timedelta
 import json
 
-from ..models import RobinhoodStockOrder, UserBrokerageInfo, User
-
+from ..models import RobinhoodStockOrder, UserBrokerageInfo, User, Investments
 from ..serializers.rhSerializers import StockOrderSerializer
 
 
@@ -400,5 +399,44 @@ def update_order(uid, order_id):
     # if filled then done
     return order["state"] # completed?
 
+def rh_order_to_investment(rh_order, investment=None):
+    if rh_order.state != "filled":
+        return
+    
+    cumulative_quantities_query = Investments.objects.filter(
+            user=rh_order.user, 
+            date__lt=rh_order.updated_at
+        )\
+            .order_by("-date")
+    if cumulative_quantities_query.exists():
+        cumulative_quantities = cumulative_quantities_query.first().cumulative_quantities
+    else:
+        cumulative_quantities = {symbol: 0 for symbol in SYMBOL_CHOICES}
+    cumulative_quantities[rh_order.symbol] += rh_order.quantity
+    
+    if investment:
+        investment.user = rh_order.user
+        investment.deposit = rh_order.deposit
+        investment.investment_id = rh_order.order_id
+        investment.brokerage = "robinhood"
+        investment.symbol = rh_order.symbol
+        investment.date = rh_order.updated_at
+        investment.quantity = rh_order.quantity
+        investment.cumulative_quantities = cumulative_quantities
+        investment.buy = True
+    else:
+        investment = Investments(
+            user = rh_order.user,
+            deposit = rh_order.deposit,
+            investment_id = rh_order.order_id,
+            brokerage = "robinhood",
+            symbol = rh_order.symbol,
+            date = rh_order.updated_at,
+            quantity = rh_order.quantity,
+            cumulative_quantities = cumulative_quantities,
+            buy = True
+        )
+    investment.save()
 
+    
 

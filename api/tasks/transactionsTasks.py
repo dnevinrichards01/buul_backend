@@ -23,11 +23,12 @@ from plaid.exceptions import ApiException
 
 from..serializers.PlaidSerializers.transactionSerializers import TransactionsSyncResponseSerializer, \
     TransactionsGetResponseSerializer
-from ..models import PlaidItem, User, RobinhoodStockOrder, StockData, \
-    PlaidCashbackTransaction
+from ..models import PlaidItem, User, RobinhoodStockOrder, PlaidCashbackTransaction
 
+from django.utils import timezone
+from zoneinfo import ZoneInfo
 
-
+from django.apps import apps
 
 # plaid transactions 
 
@@ -173,6 +174,7 @@ def all_categories():
 def is_cashback(name):
     cashback_names = [
         "CASH REWARD REDEMPTION",
+        "CASH REWARDS STATEMENT CREDIT",
         "REWARDS DEPOSIT",
         "CASHBACK BONUS",
         "REWARDS DEPOSIT",
@@ -188,7 +190,9 @@ def is_cashback(name):
     ]
     cashback_keywords = [
         "CASHBACK",
-        "REWARDS"
+        "REWARDS",
+        "CASHREWARD", 
+        "CASH"
     ]
 
     pattern = '|'.join(map(re.escape, cashback_names + cashback_keywords))  # Escape substrings to handle special characters
@@ -237,145 +241,3 @@ def find_cashback(uid):
         all_cashback.append(cashback)
     return all_cashback
         
-
-# stock graph data
-@shared_task(name="get_investment_graph_data")
-def get_investment_graph_data(uid, symbol):
-    # import pdb 
-    # breakpoint()
-
-    # get orders
-    try:
-        orders = RobinhoodStockOrder.objects \
-            .filter(user__id=uid, state="filled") \
-            .order_by('updated_at')
-        if not orders.exists():
-            raise Exception()
-    except Exception as e:
-        return {
-            "success": None,
-            "error": f"could not find robinhoodInvest object for user {uid}"
-        }
-    
-    # calculate values for indexing and determining arrray lengths
-    orders_start_date = orders.first().updated_at.replace(hour=0, minute=0, second=0, microsecond=0)
-    date_today = timezone.now().date().replace(hour=0, minute=0, second=0, microsecond=0)
-    date_five_years_ago = date_today - relativedelta(years=5)
-    if orders_start_date > date_five_years_ago:
-        start_date = date_five_years_ago
-    else:
-        start_date = orders_start_date
-    total_days = (date_today - start_date).days
-
-    stock_quantities = {}
-    stock_prices = {}
-    prev_indices = {}
-    for investment in orders:
-        # initialize stock prices and investment value array if stock not yet seen
-        if investment not in stock_prices:
-            stockData = StockData.objects.get(symbol=symbol)
-            stock_start_date = stockData.startDate.replace(hour=0, minute=0, second=0, microsecond=0)
-            if stock_start_date > start_date:
-                padding = (stock_start_date - start_date).days
-                stock_prices[investment.symbol] = np.pad(
-                    np.array(stockData.dailyPrice), 
-                    pad_width = (padding, 0),
-                    mode='constant', 
-                    constant_values=0
-                )
-                stock_quantities[investment.symbol] = np.zeros(len(stock_prices[investment.symbol]))
-                prev_indices[investment.symbol] = None
-            else:
-                trim = (start_date - stock_start_date).days
-                stock_prices[investment.symbol] = np.array(stockData.dailyPrice)[trim:]
-                stock_quantities[investment.symbol] = np.zeros(len(stock_prices[investment.symbol]))
-                prev_indices[investment.symbol] = None
-            
-            # make sure that all investment / price arrays are same length
-            if len(stock_prices[investment.symbol]) != total_days:
-                cache.set(
-                    f"uid_{uid}_get_investment_graph_data",
-                    json.dumps(
-                        {
-                            "success": None, 
-                            "error": "mismatch in vector lengths between securities"
-                        }
-                    ),
-                    timeout=120
-                )
-                return
-            
-        # get relevant info for current investment and the prev investment for this stock
-        curr_date = investment.updated_at.replace(hour=0, minute=0, second=0, microsecond=0)
-        curr_index = (curr_date - start_date).days
-        prev_index = prev_indices[investment.symbol]
-        prev_quantity = stock_quantities[investment.symbol][prev_index]
-        
-        # update stock quantities
-        stock_quantities[investment.symbol][prev_index:curr_index+1] = prev_quantity
-        prev_indices[investment.symbol] = curr_index
-        stock_quantities[investment.symbol] = investment.quantity
-
-    # calculate investment values
-    investment_values = np.zeros(total_days)
-    for stock in stock_prices:
-        investment_values += stock_quantities[stock] * stock_prices[stock]
-
-    # create graph data object and cache it
-    graph_data = []
-    for i in range(len(investment_values)):
-        graph_data.append(
-            {
-                "price": investment_values[i],
-                "date": (start_date + relativedelta(days=i)).isoformat()
-            }
-        )
-    cache.set(
-        f"uid_{uid}_get_investment_graph_data",
-        json.dumps({"success": graph_data, "error": None}),
-        timeout=120
-    )
-
-
-@shared_task(name="refresh_stock_data")
-def refresh_stock_data(symbols=["VOO"], start_date=None, end_date=None):
-    # for symbol in symbols:
-    #     stockData, created = StockData.objects.get_or_create(symbol=symbol)
-         
-    #     data = yf.download(
-    #         symbol, 
-    #         start = start_date or stockData.cursor.strftime("%Y-%m-%d"),
-    #         end = end_date or timezone.now().strftime("%Y-%m-%d"),
-    #         interval="1d"
-    #     )
-        
-    #     stockData.dailyPrice += list(data[("Close", symbol)])
-
-    #     stockData.cursor = timezone.now()
-    #     stockData.save()
-    return 
-
-def get_stock_data_24h(symbols=["VOO"], start_date=None, end_date=None):
-    # for symbol in symbols:
-    #     data = yf.download(
-    #         symbol, 
-    #         start = start_date or stockData.cursor.strftime("%Y-%m-%d"),
-    #         end = end_date or timezone.now().strftime("%Y-%m-%d"),
-    #         interval="1d"
-    #     )
-
-    #     # Determine 'yesterday' (previous calendar day)
-    #     yesterday = datetime.date.today() - datetime.timedelta(days=1)
-
-    #     # Filter the DataFrame for rows corresponding to yesterday
-    #     previous_day_data = data_two_days[data_two_days['date'] == yesterday]
-    #     print("\nIntraday Data for the Previous Day:")
-    #     print(previous_day_data)
-         
-    #     data = yf.download(
-    #         symbol, 
-    #         start = start_date or stockData.cursor.strftime("%Y-%m-%d"),
-    #         end = end_date or timezone.now().strftime("%Y-%m-%d"),
-    #         interval="1m"
-    #     )
-    return

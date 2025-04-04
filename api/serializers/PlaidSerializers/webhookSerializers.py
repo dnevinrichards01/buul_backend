@@ -39,19 +39,23 @@ class WebhookSerializer(serializers.Serializer):
     account_ids = serializers.ListField(
         child=serializers.CharField(),
         required=False,
+        allow_null=True,
         help_text="List of account IDs affected by the webhook."
     )
     new_transactions = serializers.IntegerField(
         required=False,
+        allow_null=True,
         help_text="Number of new transactions available."
     )
     removed_transactions = serializers.ListField(
         child=serializers.CharField(),
         required=False,
+        allow_null=True,
         help_text="List of transaction IDs that have been removed."
     )
     reset_transactions = serializers.IntegerField(
         required=False,
+        allow_null=True,
         help_text="Indicates a reset of transactions."
     )
     # Additional fields can be added as needed based on webhook_code

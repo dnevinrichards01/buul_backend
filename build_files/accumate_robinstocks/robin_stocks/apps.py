@@ -29,7 +29,7 @@ class MyLibraryConfig(AppConfig):
                     "interval": IntervalSchedule.objects.get_or_create(
                         every=1, period=IntervalSchedule.DAYS
                     )[0],
-                    "task": f"robin_stocks.tasks.{task_name}"
+                    "task": task_name#f"robin_stocks.tasks.{task_name}"
                 },
             )
             if created:

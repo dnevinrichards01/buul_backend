@@ -4,6 +4,9 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from .serializers.PlaidSerializers.linkSerializers import e164_phone_number_validator
 import uuid
+import json
+from django.utils import timezone
+from django_celery_results.models import TaskResult
 # Create your models here.
 
 SYMBOL_CHOICES = [
@@ -19,6 +22,21 @@ BROKERAGE_CHOICES = [
     ('charles_schwab', 'charles_schwab'),
     ('fidelity', 'fidelity')
 ]
+
+class Log(models.Model):
+    name = models.CharField()
+    user = models.DateTimeField(default=None, null=True)
+    date = models.DateTimeField(auto_now=True)
+    args = models.JSONField()
+    response = models.JSONField()
+    status = models.IntegerField()
+    success = models.BooleanField()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['date', 'success', 'status']),
+            models.Index(fields=['user', 'date', 'success', 'status'])
+        ]
 
 class User(AbstractUser):
     id = models.UUIDField(
@@ -38,18 +56,49 @@ class User(AbstractUser):
 
 class WaitlistEmail(models.Model):
     email = models.EmailField(primary_key=True)
-    date_enrolled = models.DateField(auto_now=True)
+    date_enrolled = models.DateTimeField(auto_now=True)
 
 class UserBrokerageInfo(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
     brokerage = models.CharField(choices=BROKERAGE_CHOICES, max_length=255, null=True, default=None)
     symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True, default=None)
 
+# need to create this sometime
+class UserInvestmentGraph(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateTimeField()
+    value = models.FloatField()
+
+    # in the future we can partition on date as well in psql
+    class Meta:
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['user', 'date']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'date'], 
+                name='user_portfolio_value_by_date'
+            )
+        ]
+
+# need to create this sometime
 class StockData(models.Model):
-    symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255)
-    dailyPrice = ArrayField(models.FloatField(), default=list)
-    cursor = models.DateTimeField(auto_now=True)
-    startDate = models.DateTimeField(auto_now=True)
+    VOO = models.FloatField(null=True, default=None)
+    VOOG = models.FloatField(null=True, default=None)
+    QQQ = models.FloatField(null=True, default=None)
+    IBIT = models.FloatField(null=True, default=None)
+    date = models.DateTimeField(primary_key=True)
+
+    class Meta:
+        ordering = ['date']
+    
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
+        self.save()
 
 class PlaidUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
@@ -118,12 +167,38 @@ class RobinhoodCashbackDeposit(models.Model):
             models.UniqueConstraint(fields=['user', 'deposit_id'], name='unique_rh_deposit')
         ]
 
+class Investments(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    # one to one?
+    investment_id = models.CharField(max_length=255)
+    deposit = models.ForeignKey(RobinhoodCashbackDeposit, on_delete=models.SET_NULL, null=True)
+    symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True, default=None)
+    brokerage = models.CharField(choices=BROKERAGE_CHOICES, max_length=255, null=True, default=None)
+    quantity = models.FloatField()
+    cumulative_quantities = models.JSONField(default=dict)
+    date = models.DateTimeField()
+    buy = models.BooleanField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'investment_id', 'brokerage', 'buy'], 
+                name='unique_investment'
+            )
+        ]
+        ordering = ['user', 'date']
+        indexes = [
+            models.Index(fields=['investment_id']),
+            models.Index(fields=['user', 'date'])
+        ]
+
 class RobinhoodStockOrder(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     deposit = models.ForeignKey(RobinhoodCashbackDeposit, on_delete=models.SET_NULL, null=True)
     order_id = models.CharField(max_length=255)
     cancel = models.CharField(max_length=255, null=True)
     instrument_id = models.CharField(max_length=255) # uid for security!!!!!
+    symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True)
     state = models.CharField(max_length=255) # 'queued', filled
     side = models.CharField(max_length=255) # 'buy'
     quantity = models.FloatField()
@@ -137,6 +212,11 @@ class RobinhoodStockOrder(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'order_id'], name='unique_rh_order')
+        ]
+        ordering = ['user', 'updated_at']
+        indexes = [
+            models.Index(fields=['order_id']),
+            models.Index(fields=['user', 'updated_at'])
         ]
 
 
