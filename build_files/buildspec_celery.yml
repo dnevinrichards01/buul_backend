@@ -1,5 +1,9 @@
 version: 0.2
 
+env:
+  variables:
+    ENV_NAME: "abprod"
+
 phases:
   pre_build:
     commands:
@@ -18,7 +22,7 @@ phases:
       - REGION=$(cat region.txt)
       - REPO_NAME=$(aws ecr describe-repositories \
         --region ${REGION} \
-        --query "repositories[?contains(tags[?Key=='Image' && Value=='celery'].Value, 'celery')].repositoryName" \
+        --query "repositories[?contains(tags[?Key=='Image' && Value=='celery'].Value, 'celery') && contains(tags[?Key=='Environment' && Value=='${ENV_NAME}'].repositoryName" \
         --output text)
       - echo ${REPO_NAME} > repo_name.txt
       - docker build -t ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:latest -f build_files/Dockerfile.celery .
