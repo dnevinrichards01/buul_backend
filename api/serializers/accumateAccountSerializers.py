@@ -30,16 +30,22 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True,
         error_messages={"invalid": invalid_password_error_message}
     )
+    pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=True)
     class Meta:
         model = User
-        fields = ['phone_number', 'full_name', 'password', 'email', 'username']
+        fields = ['phone_number', 'full_name', 'password', 'email', 'username', 'pre_account_id']
         extra_kwargs = {'password': {'write_only': True}}
-
+    
+    def validate(self, attrs):
+        attrs.pop("pre_account_id")
+        return attrs
+    
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
 
 class NamePasswordValidationSerializer(serializers.Serializer):
+    pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=True)
     full_name = serializers.CharField(required=False)
     password = serializers.RegexField(
         regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
@@ -54,6 +60,7 @@ class NamePasswordValidationSerializer(serializers.Serializer):
         return attrs
 
 class VerificationCodeResponseSerializer(serializers.Serializer):
+    pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=True)
     verification_email = serializers.EmailField(required=False)
     verification_phone_number = serializers.CharField(required=False, validators=[e164_phone_number_validator])
     email = serializers.EmailField(required=False)
@@ -82,13 +89,15 @@ class VerificationCodeResponseSerializer(serializers.Serializer):
     def validate(self, attrs):
         if ("verification_email" in attrs) == ("verification_phone_number" in attrs):
             raise serializers.ValidationError("You must submit either the email or phone number associated with your account.")
-        if len(attrs) != 4:
+        if ('pre_account_id' in attrs and len(attrs) != 5) \
+                or ('pre_account_id' not in attrs and len(attrs) != 4):
             raise serializers.ValidationError("You may only change or verify one thing at a time.")
         if attrs["field"] not in attrs:
             raise ValidationError(f"No {attrs['field']} was submitted")
         return attrs
     
 class VerificationCodeRequestSerializer(serializers.Serializer):
+    pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=True)
     verification_email = serializers.EmailField(required=False)
     verification_phone_number = serializers.CharField(required=False, validators=[e164_phone_number_validator])
     email = serializers.EmailField(required=False)
@@ -122,7 +131,8 @@ class VerificationCodeRequestSerializer(serializers.Serializer):
             if attrs["password"] != attrs["password2"]:
                 raise ValidationError("Passwords do not match")
         else:
-            if len(attrs) != 3:
+            if ('pre_account_id' in attrs and len(attrs) != 4) \
+                or ('pre_account_id' not in attrs and len(attrs) != 3):
                 raise ValidationError("You may only change or verify one thing at a time.")
         if attrs["field"] not in attrs:
             raise ValidationError(f"No {attrs['field']} was submitted")
