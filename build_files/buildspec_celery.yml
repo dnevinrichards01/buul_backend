@@ -4,6 +4,7 @@ env:
   variables:
     ENV_NAME: "abprod"
     REGION: "us-west-1"
+    IMAGE: "celery"
 
 phases:
   pre_build:
@@ -18,19 +19,13 @@ phases:
       - echo Build started
       - echo Building the celery docker image
       - ACCOUNT_ID=$(cat account_id.txt)
-      - REPO_NAME=$(aws ecr describe-repositories \
-        --region ${REGION} \
-        --query "repositories[?contains(tags[?Key=='Image' && Value=='celery'].Value, 'celery') && contains(tags[?Key=='Environment' && Value=='${ENV_NAME}'].repositoryName" \
-        --output text)
-      - echo ${REPO_NAME} > repo_name.txt
-      - docker build -t ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:latest -f build_files/Dockerfile.celery .
+      - docker build -t ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ENV_NAME}-${IMAGE}:latest -f build_files/Dockerfile.celery .
 
   post_build:
     commands:
       - echo build completed
       - echo pushing celery image in to docker ECR...
       - ACCOUNT_ID=$(cat account_id.txt)
-      - REPO_NAME=$(cat repo_name.txt)
-      - docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:latest
-      - rm account_id.txt repo_name.txt region.txt
+      - docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ENV_NAME}-${IMAGE}:latest
+      - rm account_id.txt
       - echo Writing celery image definition file..
