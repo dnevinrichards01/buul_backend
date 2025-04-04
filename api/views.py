@@ -55,14 +55,15 @@ def cached_task_status(cached_string):
 def healthCheck(request):
     return JsonResponse({"success": "healthy"}, status=200)
 
-def log(instance, status, success, response, user=None, args={}):
+def log(instance, status, success, response, user=None, args={}, pre_account_id=None):
     log = Log(
         name = instance.__class__.__name__,
         user = user,
         response = response,
         success = success,
         args = args,
-        status = status
+        status = status,
+        pre_account_id = pre_account_id
     )
     log.save()
 
@@ -80,8 +81,11 @@ def validate(serializer, instance, fields_to_correct=[], fields_to_fail=[],
                         "success": None,
                         "error": f"error '{field}': {e.detail[field][0]}"
                     }, 
-                    status=400
+                    status = status
                 )
+                pre_account_id = None if field == 'pre_account_id' else dict(instance.request.data).get('pre_account_id', '')
+                log(instance, status, False, result, args=dict(instance.request.data),
+                    pre_account_id = pre_account_id)
                 return result
         # validation errors which we send error messages for
         error_messages = {}
@@ -99,7 +103,9 @@ def validate(serializer, instance, fields_to_correct=[], fields_to_fail=[],
             }, 
             status=status
         )
-        log(instance, status, False, result, args=dict(instance.request.data))
+        pre_account_id = dict(instance.request.data).get('pre_account_id', '')
+        log(instance, status, False, result, args=dict(instance.request.data),
+            pre_account_id = pre_account_id)
         return result
     except Exception as e:
         # unknown error
@@ -111,7 +117,9 @@ def validate(serializer, instance, fields_to_correct=[], fields_to_fail=[],
             }, 
             status=status
         )
-        log(instance, status, False, result, args=dict(instance.request.data))
+        pre_account_id = None if field == 'pre_account_id' else dict(instance.request.data).get('pre_account_id', '')
+        log(instance, status, False, result, args=dict(instance.request.data),
+            pre_account_id = pre_account_id)
         return result
 
 # sign up flow
@@ -126,6 +134,7 @@ class CreateUserView(APIView):
         validation_error_response = validate(
             serializer, self, 
             fields_to_check=["email", "password", "phone_number", "full_name"], 
+            fields_to_fail=['pre_account_id'],
             edit_error_message=lambda x: "A " + x if x[:4] == "user" else x
         )
         if validation_error_response:
@@ -137,7 +146,8 @@ class CreateUserView(APIView):
             {"success": "user registered", "error": None}, 
             status=status
         )
-        log(self, status, True, response, user=user, args=serializer.validated_data)
+        log(self, status, True, response, user=user, args=serializer.validated_data, 
+            pre_account_id=serializer.validated_data['pre_account_id'])
         return response
 
 class NamePasswordValidation(APIView):
@@ -148,7 +158,7 @@ class NamePasswordValidation(APIView):
         serializer = NamePasswordValidationSerializer(data=request.data)
         validation_error_respose = validate(
             serializer, self, fields_to_correct=["full_name", "password"], 
-            fields_to_fail=["non_field_errors"]
+            fields_to_fail=["non_field_errors", "pre_account_id"]
         )
         if validation_error_respose:
             return validation_error_respose
@@ -161,7 +171,8 @@ class NamePasswordValidation(APIView):
             }, 
             status=status
         ) 
-        log(self, status, True, result, args=serializer.validated_data)
+        log(self, status, True, result, args=serializer.validated_data,
+            pre_account_id = serializer.validated_data['pre_account_id'])
         return result
 
 class EmailPhoneSignUpValidation(APIView):
@@ -179,11 +190,13 @@ class EmailPhoneSignUpValidation(APIView):
                 "phone_number", "phone_number", "full_name", "brokerage", 
                 "symbol", "password", "password2", "delete_account"
             ], 
-            fields_to_fail=["field", "non_field_errors"]
+            fields_to_fail=["field", "non_field_errors", "pre_account_id"]
         )
         if validation_error_respose:
             return validation_error_respose
         
+        pre_account_id = serializer.validated_data['pre_account_id']
+
         # this endpoint is only for email and phone_number validation
         if serializer.validated_data["field"] not in ["email", "phone_number"]:
             status = 400
@@ -194,7 +207,8 @@ class EmailPhoneSignUpValidation(APIView):
                 }, 
                 status = status
             )
-            log(self, status, False, result, args=serializer.validated_data)
+            log(self, status, False, result, args=serializer.validated_data,
+                pre_account_id = pre_account_id)
             return result
         
         # fail if a user already exists with this contact info
@@ -230,7 +244,8 @@ class EmailPhoneSignUpValidation(APIView):
                 }, 
                 status = status
             )
-            log(self, status, False, result, args=serializer.validated_data)
+            log(self, status, False, result, args=serializer.validated_data, 
+                pre_account_id=pre_account_id)
             return result
         
         # can't yet do sms messages, accept phone without giving a verification code
@@ -243,7 +258,8 @@ class EmailPhoneSignUpValidation(APIView):
                 }, 
                 status = status
             )
-            log(self, status, True, result, args=serializer.validated_data)
+            log(self, status, True, result, args=serializer.validated_data,
+                pre_account_id=pre_account_id)
             return result
 
         # generate verification code
@@ -276,7 +292,8 @@ class EmailPhoneSignUpValidation(APIView):
             }, 
             status = status
         )
-        log(self, status, True, result, args=serializer.validated_data)
+        log(self, status, True, result, args=serializer.validated_data, 
+            pre_account_id=pre_account_id)
         return result
 
     def post(self, request, *args, **kwargs):
@@ -290,10 +307,12 @@ class EmailPhoneSignUpValidation(APIView):
                 "phone_number", "phone_number", "full_name", "brokerage", 
                 "symbol", "password", "delete_account", "code"
             ], 
-            fields_to_fail=["field", "non_field_errors"]
+            fields_to_fail=["field", "non_field_errors", "pre_account_id"]
         )
         if validation_error_respose:
             return validation_error_respose
+        
+        pre_account_id = serializer.validated_data['pre_account_id']
         
         # this endpoint is only for email and phone_number validation
         if serializer.validated_data["field"] not in ["email", "phone_number"]:
@@ -305,7 +324,8 @@ class EmailPhoneSignUpValidation(APIView):
                 }, 
                 status = status
             )
-            log(self, status, False, result, args=serializer.validated_data)
+            log(self, status, False, result, args=serializer.validated_data,
+                pre_account_id=pre_account_id)
             return result
         
         # check if the code has been requested for that field, and if values match
@@ -325,7 +345,8 @@ class EmailPhoneSignUpValidation(APIView):
                 },
                 status=200
             )
-            log(self, status, False, result, args=serializer.validated_data)
+            log(self, status, False, result, args=serializer.validated_data,
+                pre_account_id=pre_account_id)
             return result
         loaded_value = json.loads(cached_value)
         if loaded_value[field] != value:
@@ -339,7 +360,8 @@ class EmailPhoneSignUpValidation(APIView):
                 },
                 status=200
             )
-            log(self, status, False, result, args=serializer.validated_data)
+            log(self, status, False, result, args=serializer.validated_data,
+                pre_account_id=pre_account_id)
             return result
         
         cache.delete(f"validate_{field}_{code}")
@@ -350,9 +372,10 @@ class EmailPhoneSignUpValidation(APIView):
                 "success": "verification code valid",
                 "error": None
             },
-            status=200
+            status = status
         )
-        log(self, status, True, result, args=serializer.validated_data)
+        log(self, status, True, result, args=serializer.validated_data,
+            pre_account_id=pre_account_id)
         return response
 
 class SetBrokerageInvestment(APIView):
