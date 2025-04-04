@@ -47,3 +47,87 @@ Watching for file changes with StatReloader
 /usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
   warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
 Watching for file changes with StatReloader
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks, models
+  File "/code/build_files/accumate_robinstocks/robin_stocks/views.py", line 8, in <module>
+    from .tasks import login_robinhood
+  File "/code/build_files/accumate_robinstocks/robin_stocks/tasks.py", line 9, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 203
+    if data and 'detail' in data and data['detail']
+                                                   ^
+SyntaxError: expected ':'
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/runserver.py", line 126, in inner_run
+    autoreload.raise_last_exception()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 394, in execute
+    autoreload.check_errors(django.setup)()
+  File "/usr/local/lib/python3.12/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/usr/local/lib/python3.12/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/usr/local/lib/python3.12/site-packages/django/apps/registry.py", line 124, in populate
+    app_config.ready()
+  File "/code/build_files/accumate_robinstocks/robin_stocks/apps.py", line 14, in ready
+    from robin_stocks import serializers, views, tasks, models
+  File "/code/build_files/accumate_robinstocks/robin_stocks/views.py", line 8, in <module>
+    from .tasks import login_robinhood
+  File "/code/build_files/accumate_robinstocks/robin_stocks/tasks.py", line 9, in <module>
+    import robin_stocks.robinhood as r
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/__init__.py", line 18, in <module>
+    from .authentication import login, refresh
+  File "/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py", line 203
+    if data and 'detail' in data and data['detail'] == ""
+                                                         ^
+SyntaxError: expected ':'
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+/code/build_files/accumate_robinstocks/robin_stocks/robinhood/authentication.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader
+/code/api/serializers/accumateAccountSerializers.py changed, reloading.
+/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py:98: RuntimeWarning: Accessing the database during app initialization is discouraged. To fix this warning, avoid executing queries in AppConfig.ready() or when your app modules are imported.
+  warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+Watching for file changes with StatReloader

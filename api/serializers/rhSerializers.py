@@ -91,7 +91,7 @@ class GetLinkedBankAccountsResponseSerializer(serializers.Serializer):
     account = serializers.CharField()
     bank_account_nickname = serializers.CharField()
     bank_account_type = serializers.CharField()
-    bank_routing_number = serializers.CharField()
+    bank_account_number = serializers.CharField()
     verified = serializers.BooleanField() # True
     state = serializers.CharField() # approved
 
@@ -99,10 +99,80 @@ class GetLinkedBankAccountsResponseSerializer(serializers.Serializer):
         if url[:44] != "https://api.robinhood.com/ach/relationships/":
             raise ValidationError("url")
         return url
-
-    def validate_bank_routing_number(self, num):
-        if len(num) < 4:
-            raise ValidationError()
-        return num[-4:]
     
 
+class MarginBalancesSerializer(serializers.Serializer):
+    sma = serializers.CharField()
+    day_trade_buying_power_held_for_orders = serializers.CharField()
+    start_of_day_dtbp = serializers.CharField()
+    overnight_buying_power_held_for_orders = serializers.CharField()
+    leverage_enabled = serializers.BooleanField()
+    unsettled_funds = serializers.CharField()
+    unsettled_debit = serializers.CharField()
+    cash_held_for_crypto_orders = serializers.CharField()
+    cash_held_for_dividends = serializers.CharField()
+    cash_held_for_restrictions = serializers.CharField()
+    cash_held_for_options_collateral = serializers.CharField()
+    cash_held_for_orders = serializers.CharField()
+    eligible_deposit_as_instant = serializers.CharField()
+    instant_used = serializers.CharField()
+    outstanding_interest = serializers.CharField()
+    pending_debit_card_debits = serializers.CharField()
+    settled_amount_borrowed = serializers.CharField()
+    uncleared_deposits = serializers.CharField()
+    cash = serializers.CharField()
+    cash_held_for_nummus_restrictions = serializers.CharField()
+    cash_available_for_withdrawal = serializers.CharField()
+    unallocated_margin_cash = serializers.CharField()
+    margin_limit = serializers.CharField()
+    crypto_buying_power = serializers.CharField()
+    day_trade_buying_power = serializers.CharField()
+    day_trades_protection = serializers.BooleanField()
+    start_of_day_overnight_buying_power = serializers.CharField()
+    overnight_buying_power = serializers.CharField()
+    overnight_ratio = serializers.CharField()
+    day_trade_ratio = serializers.CharField()
+    marked_pattern_day_trader_date = serializers.DateTimeField(allow_null=True)
+    pattern_day_trader_expiry_date = serializers.DateTimeField(allow_null=True)
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+    portfolio_cash = serializers.CharField()
+    gold_equity_requirement = serializers.CharField()
+    uncleared_nummus_deposits = serializers.CharField()
+    cash_pending_from_options_events = serializers.CharField()
+    pending_deposit = serializers.CharField()
+    funding_hold_balance = serializers.CharField()
+    net_moving_cash = serializers.CharField()
+    margin_withdrawal_limit = serializers.CharField(allow_null=True)
+    instant_allocated = serializers.CharField()
+    is_primary_account = serializers.BooleanField()
+    is_pdt_forever = serializers.BooleanField()
+
+class RobinhoodAccountSerializer(serializers.Serializer):
+    url = serializers.URLField()
+    portfolio_cash = serializers.CharField() # this one
+    account_number = serializers.CharField()
+    deactivated = serializers.BooleanField()
+    deposit_halted = serializers.BooleanField()
+    withdrawal_halted = serializers.BooleanField()
+    buying_power = serializers.CharField() # this one
+    onbp = serializers.CharField() # this one
+    cash_available_for_withdrawal = serializers.CharField() # this one
+    cash_available_for_withdrawal_without_margin = serializers.CharField() # this one
+    cash = serializers.CharField() # this one
+    amount_eligible_for_deposit_cancellation = serializers.CharField()
+    cash_held_for_orders = serializers.CharField()
+    uncleared_deposits = serializers.CharField()
+    sma = serializers.CharField()
+    sma_held_for_orders = serializers.CharField()
+    unsettled_funds = serializers.CharField()
+    unsettled_debit = serializers.CharField()
+    crypto_buying_power = serializers.CharField()
+    max_ach_early_access_amount = serializers.CharField()
+    cash_balances = serializers.CharField(allow_null=True)
+    margin_balances = MarginBalancesSerializer()
+
+class RobinhoodAccountListSerializer(serializers.Serializer):
+    next = serializers.CharField(allow_null=True)
+    previous = serializers.CharField(allow_null=True)
+    results = RobinhoodAccountSerializer(many=True)

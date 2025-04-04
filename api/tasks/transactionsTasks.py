@@ -174,6 +174,7 @@ def all_categories():
 def is_cashback(name):
     cashback_names = [
         "CASH REWARD REDEMPTION",
+        "CASH REWARDS STATEMENT CREDIT",
         "REWARDS DEPOSIT",
         "CASHBACK BONUS",
         "REWARDS DEPOSIT",
@@ -189,7 +190,9 @@ def is_cashback(name):
     ]
     cashback_keywords = [
         "CASHBACK",
-        "REWARDS"
+        "REWARDS",
+        "CASHREWARD", 
+        "CASH"
     ]
 
     pattern = '|'.join(map(re.escape, cashback_names + cashback_keywords))  # Escape substrings to handle special characters
