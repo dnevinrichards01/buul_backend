@@ -30,8 +30,8 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 # DOMAIN = "127.0.0.1:8000"
 
 EMAIL_HOST = "smtp.gmail.com"
-EMAIL_HOST_USER = "accumate-verify@accumatewealth.com"
-EMAIL_HOST_PASSWORD = "tjeyouapnqagnvso"
+EMAIL_HOST_USER = "notifications@bu-ul.com"
+EMAIL_HOST_PASSWORD = "izyaqueugqtaiiwh"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
