@@ -23,22 +23,6 @@ BROKERAGE_CHOICES = [
     ('fidelity', 'fidelity')
 ]
 
-class Log(models.Model):
-    name = models.CharField()
-    user = models.DateTimeField(default=None, null=True)
-    date = models.DateTimeField(auto_now=True)
-    args = models.JSONField()
-    response = models.JSONField()
-    status = models.IntegerField()
-    success = models.BooleanField()
-    pre_account_id = models.PositiveIntegerField(default=None, null=True)
-
-    class Meta:
-        indexes = [
-            models.Index(fields=['date', 'success', 'status']),
-            models.Index(fields=['user', 'date', 'success', 'status'])
-        ]
-
 class User(AbstractUser):
     id = models.UUIDField(
         primary_key=True,  # Redefine id as primary key
@@ -53,7 +37,30 @@ class User(AbstractUser):
     )
     full_name = models.TextField(max_length=255)
     email = models.EmailField(blank=True, max_length=254, unique=True)
-    username = models.EmailField(blank=True, max_length=254, unique=True)
+    username = models.CharField(unique=True, max_length=50)
+
+    def save(self, *args, **kwargs):
+        if not self.username:
+            self.username = str(self.id)
+        super().save(*args, **kwargs)
+
+
+class Log(models.Model):
+    name = models.CharField()
+    user = models.ForeignKey(User, default=None, null=True, 
+                             on_delete=models.DO_NOTHING, related_name='api_logs')
+    date = models.DateTimeField(auto_now=True)
+    args = models.JSONField()
+    response = models.JSONField()
+    status = models.IntegerField()
+    success = models.BooleanField()
+    pre_account_id = models.PositiveIntegerField(default=None, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['date', 'success', 'status']),
+            models.Index(fields=['user', 'date', 'success', 'status'])
+        ]
 
 class WaitlistEmail(models.Model):
     email = models.EmailField(primary_key=True)

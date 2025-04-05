@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, MyTokenObtainPairView
 
 
 urlpatterns = [
@@ -27,6 +27,6 @@ urlpatterns = [
     
     # etc
     path('waitlist/', views.AddToWaitlist.as_view(), name='waitlist'),
-    path('token/', TokenObtainPairView.as_view(), name='get_token'),
+    path('token/', MyTokenObtainPairView.as_view(), name='get_token'),
     path('token/refresh/', TokenRefreshView.as_view(), name='refresh')
 ]
