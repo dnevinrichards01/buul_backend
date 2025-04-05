@@ -35,9 +35,9 @@ RUN pip install -r requirements.txt
 COPY conf_files/supervisord_beat.conf /etc/supervisor/conf.d/supervisord.conf
 RUN chown www-data: /var/log/ /var/www/
 RUN chmod 777 /etc
-RUN mkdir -p /etc/letsencrypt /etc/letsencrypt/live /etc/letsencrypt/live/accumate-backend.link/
-COPY conf_files/fullchain.pem /etc/letsencrypt/live/accumate-backend.link/fullchain.pem
-COPY conf_files/privkey.pem /etc/letsencrypt/live/accumate-backend.link/privkey.pem
+RUN mkdir -p /etc/letsencrypt /etc/letsencrypt/live /etc/letsencrypt/live/buul-load-balancer.link/
+COPY conf_files/fullchain.pem /etc/letsencrypt/live/buul-load-balancer.link/fullchain.pem
+COPY conf_files/privkey.pem /etc/letsencrypt/live/buul-load-balancer.link/privkey.pem
 RUN chmod 775 /var/run/ /run
 RUN mkdir /run/beat/
 RUN chown www-data: /run/beat/
