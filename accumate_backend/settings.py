@@ -31,8 +31,8 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
 
 EMAIL_HOST = "smtp.gmail.com"
-EMAIL_HOST_USER = "accumate-verify@accumatewealth.com"
 email_cred_dict = json.loads(env("EMAIL_CREDENTIALS"))
+EMAIL_HOST_USER = email_cred_dict["EMAIL_HOST_USER"]
 EMAIL_HOST_PASSWORD = email_cred_dict["EMAIL_HOST_PASSWORD"]
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
