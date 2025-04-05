@@ -39,9 +39,9 @@ RUN chown www-data: /var/log/ /var/log/nginx /var/lib/nginx /var/www/
 RUN chown www-data: /etc/nginx /etc/nginx/conf.d /etc/nginx/nginx.conf
 RUN chmod 777 /etc
 RUN mkdir -p /etc/letsencrypt /etc/letsencrypt/live \
- /etc/letsencrypt/live/accumate-backend.link/ /var/lib/letsencrypt
-COPY conf_files/fullchain.pem /etc/letsencrypt/live/accumate-backend.link/fullchain.pem
-COPY conf_files/privkey.pem /etc/letsencrypt/live/accumate-backend.link/privkey.pem
+ /etc/letsencrypt/live/buul-load-balancer.link/ /var/lib/letsencrypt
+COPY conf_files/fullchain.pem /etc/letsencrypt/live/buul-load-balancer.link/fullchain.pem
+COPY conf_files/privkey.pem /etc/letsencrypt/live/buul-load-balancer.link/privkey.pem
 RUN chown www-data: /etc/letsencrypt /var/lib/letsencrypt /etc/letsencrypt/live
 RUN chmod 744 /etc/letsencrypt /etc/letsencrypt/live
 RUN mkdir /run/nginx/
