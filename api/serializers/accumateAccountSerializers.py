@@ -21,30 +21,24 @@ FIELD_CHOICES = [
     ('delete_account', 'delete_account')
 ]
 
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-
-        # Add custom claims
-        token['username'] = user.username
-        token['role'] = user.role if hasattr(user, 'role') else None
-        # etc...
-
-        return token
+class MyTokenObtainPairSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.RegexField(
+        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
+        required=False,
+        write_only=True,
+        error_messages={"invalid": invalid_password_error_message}
+    )
 
     def validate(self, attrs):
-        # get user
         email = attrs.pop('email')
         try:
             user = User.objects.get(email=email)
-            attrs['username'] = user.id
+            attrs['user'] = user
+            return attrs
         except:
             raise ValidationError("no such user")
         
-        # if found user, validate as before
-        data = super().validate(attrs)
-        return data
 
 class GraphDataRequestSerializer(serializers.Serializer):
     start_date = serializers.DateTimeField()
