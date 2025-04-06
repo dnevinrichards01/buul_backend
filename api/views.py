@@ -14,6 +14,7 @@ from .serializers.PlaidSerializers.linkSerializers import \
     PlaidSessionFinishedSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
 from rest_framework.exceptions import ValidationError
@@ -133,21 +134,24 @@ def validate(serializer, instance, fields_to_correct=[], fields_to_fail=[],
 
 class MyTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request, *args, **kwargs):
         serializer = MyTokenObtainPairSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            modified_request = Request(
-                request._request,
-                data=serializer.validated_data,
-                parsers=self.get_parsers(),
-                authenticators=self.get_authenticators(),
-                negotiator=self.get_content_negotiator(),
-                parser_context=self.get_parser_context(request)
+
+            user = serializer.validated_data['user']
+            refresh = RefreshToken.for_user(user)
+
+            return JsonResponse(
+                {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token)
+                }, 
+                status=200
             )
-            return super().post(modified_request, *args, **kwargs)
-        except:
+        except Exception as e:
             return JsonResponse({}, status=401)
 
 
