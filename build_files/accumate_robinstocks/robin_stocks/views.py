@@ -13,6 +13,12 @@ from robin_stocks.models import Log
 
 
 def log(instance, status, success, response, user=None, args={}):
+    if isinstance(response, JsonResponse):
+        response = json.loads(response.content)
+    if instance.authentication_classes:
+        user = instance.request.user
+    else:
+        user = None
     log = Log(
         name = instance.__class__.__name__,
         user = user,
@@ -96,7 +102,7 @@ class ConnectRobinhoodView(APIView):
                 sanitized_data = request.data.copy()
                 sanitized_data.pop("username", None)
                 sanitized_data.pop("password", None)
-                log(self, status, False, response, user=user, args=sanitized_data)
+                log(self, status, False, response, args=sanitized_data)
                 return response
             error_messages = {}
             for field in e.detail:
@@ -116,7 +122,7 @@ class ConnectRobinhoodView(APIView):
             sanitized_data = request.data.copy()
             sanitized_data.pop("username", None)
             sanitized_data.pop("password", None)
-            log(self, status, False, response, user=user, args=sanitized_data)
+            log(self, status, False, response, args=sanitized_data)
             return response
         except Exception as e:
             status = 400
@@ -130,7 +136,7 @@ class ConnectRobinhoodView(APIView):
             sanitized_data = request.data.copy()
             sanitized_data.pop("username", None)
             sanitized_data.pop("password", None)
-            log(self, status, False, response, user=user, args=sanitized_data)
+            log(self, status, False, response, args=sanitized_data)
             return response
         
         validated_data = serializer.validated_data
@@ -161,7 +167,7 @@ class ConnectRobinhoodView(APIView):
         sanitized_data = request.data.copy()
         sanitized_data.pop("username", None)
         sanitized_data.pop("password", None)
-        log(self, status, True, response, user=user, args=sanitized_data)
+        log(self, status, True, response, args=sanitized_data)
         return response
     
     def get(self, request, *args, **kwargs):
@@ -179,7 +185,7 @@ class ConnectRobinhoodView(APIView):
                 }, 
                 status = status
             )
-            log(self, status, False, response, user=user)
+            log(self, status, False, response)
             return response
         
         challenge_data = json.loads(challenge)
@@ -192,7 +198,7 @@ class ConnectRobinhoodView(APIView):
                 }, 
                 status = status
             )
-            log(self, status, True, response, user=user)
+            log(self, status, True, response)
             return response
         elif challenge_data["challenge_type"]:
             status = 200
@@ -206,7 +212,7 @@ class ConnectRobinhoodView(APIView):
                 }, 
                 status = status
             )
-            log(self, status, False, response, user=user)
+            log(self, status, False, response)
             return response
         else:
             status = 200
@@ -220,5 +226,5 @@ class ConnectRobinhoodView(APIView):
                 }, 
                 status = status
             )
-            log(self, status, False, response, user=user)
+            log(self, status, False, response)
             return response

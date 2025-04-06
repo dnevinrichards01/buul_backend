@@ -19,7 +19,9 @@ class UserRobinhoodInfo(models.Model):
 
 class Log(models.Model):
     name = models.CharField()
-    user = models.DateTimeField(default=None, null=True)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, 
+                             null=True, default=None,
+                             related_name='rh_logs')
     date = models.DateTimeField(auto_now=True)
     args = models.JSONField()
     response = models.JSONField()

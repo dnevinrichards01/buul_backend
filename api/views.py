@@ -36,6 +36,10 @@ from django.core.mail import send_mail
 from django.urls import reverse
 import secrets 
 
+from rest_framework.request import Request
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers.accumateAccountSerializers import MyTokenObtainPairSerializer
+
 import bcrypt 
 
 
@@ -56,6 +60,10 @@ def healthCheck(request):
     return JsonResponse({"success": "healthy"}, status=200)
 
 def log(instance, status, success, response, user=None, args={}, pre_account_id=None):
+    if isinstance(response, JsonResponse):
+        response = json.loads(response.content)
+    if instance.authentication_classes:
+        user = instance.request.user
     log = Log(
         name = instance.__class__.__name__,
         user = user,
@@ -84,8 +92,7 @@ def validate(serializer, instance, fields_to_correct=[], fields_to_fail=[],
                     status = status
                 )
                 pre_account_id = None if field == 'pre_account_id' else dict(instance.request.data).get('pre_account_id', '')
-                log(instance, status, False, result, args=dict(instance.request.data),
-                    pre_account_id = pre_account_id)
+                log(instance, status, False, result, args=dict(instance.request.data), pre_account_id = pre_account_id)
                 return result
         # validation errors which we send error messages for
         error_messages = {}
@@ -122,6 +129,28 @@ def validate(serializer, instance, fields_to_correct=[], fields_to_fail=[],
             pre_account_id = pre_account_id)
         return result
 
+
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = MyTokenObtainPairSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            modified_request = Request(
+                request._request,
+                data=serializer.validated_data,
+                parsers=self.get_parsers(),
+                authenticators=self.get_authenticators(),
+                negotiator=self.get_content_negotiator(),
+                parser_context=self.get_parser_context(request)
+            )
+            return super().post(modified_request, *args, **kwargs)
+        except:
+            return JsonResponse({}, status=401)
+
+
 # sign up flow
 
 class CreateUserView(APIView):
@@ -133,13 +162,14 @@ class CreateUserView(APIView):
         serializer = UserSerializer(data=request.data)
         validation_error_response = validate(
             serializer, self, 
-            fields_to_check=["email", "password", "phone_number", "full_name"], 
-            fields_to_fail=['pre_account_id'],
+            fields_to_correct=["email", "password", "phone_number", "full_name"], 
+            fields_to_fail=['pre_account_id', 'username'],
             edit_error_message=lambda x: "A " + x if x[:4] == "user" else x
         )
         if validation_error_response:
             return validation_error_response
         
+        pre_account_id = serializer.validated_data['pre_account_id']
         user = serializer.save()
         status = 200
         response = JsonResponse(
@@ -147,7 +177,7 @@ class CreateUserView(APIView):
             status=status
         )
         log(self, status, True, response, user=user, args=serializer.validated_data, 
-            pre_account_id=serializer.validated_data['pre_account_id'])
+            pre_account_id=pre_account_id)
         return response
 
 class NamePasswordValidation(APIView):
@@ -374,7 +404,7 @@ class EmailPhoneSignUpValidation(APIView):
             },
             status = status
         )
-        log(self, status, True, result, args=serializer.validated_data,
+        log(self, status, True, response, args=serializer.validated_data,
             pre_account_id=pre_account_id)
         return response
 
@@ -530,7 +560,7 @@ class PlaidLinkTokenCreate(APIView):
                 "phone_number": user.phone_number,
                 "email_address": user.email
             },
-            "client_name": "Accumate",
+            "client_name": "Buul",
             "products": ["transactions"],
             "transactions": {
                 "days_requested": 100

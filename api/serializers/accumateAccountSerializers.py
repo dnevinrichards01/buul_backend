@@ -1,10 +1,11 @@
 # from django.contrib.auth.models import User
 from rest_framework import serializers
 from ..models import WaitlistEmail, User, BROKERAGE_CHOICES, SYMBOL_CHOICES
-
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .PlaidSerializers.linkSerializers import e164_phone_number_validator
+from api.models import User
 
 invalid_password_error_message = "The password must contain at least one capital " + \
     "letter, one digit, 8 characters, and one symbol of the following symbols: " + \
@@ -20,6 +21,22 @@ FIELD_CHOICES = [
     ('delete_account', 'delete_account')
 ]
 
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+
+
+    def validate(self, attrs):
+        # get user
+        email = attrs.pop('email')
+        try:
+            user = User.objects.get(email=email)
+            attrs['username'] = user.id
+        except:
+            raise ValidationError("no such user")
+        
+        # if found user, validate as before
+        data = super().validate(attrs)
+        return data
+
 class GraphDataRequestSerializer(serializers.Serializer):
     start_date = serializers.DateTimeField()
 
@@ -33,15 +50,14 @@ class UserSerializer(serializers.ModelSerializer):
     pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=True)
     class Meta:
         model = User
-        fields = ['phone_number', 'full_name', 'password', 'email', 'username', 'pre_account_id']
+        fields = ['phone_number', 'full_name', 'password', 'email', 'pre_account_id']
         extra_kwargs = {'password': {'write_only': True}}
     
-    def validate(self, attrs):
-        attrs.pop("pre_account_id")
-        return attrs
-    
+
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
+        validated_data.pop('pre_account_id', None)
+        user = User(**validated_data)
+        user.save()
         return user
 
 class NamePasswordValidationSerializer(serializers.Serializer):
@@ -60,7 +76,7 @@ class NamePasswordValidationSerializer(serializers.Serializer):
         return attrs
 
 class VerificationCodeResponseSerializer(serializers.Serializer):
-    pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=True)
+    pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=False)
     verification_email = serializers.EmailField(required=False)
     verification_phone_number = serializers.CharField(required=False, validators=[e164_phone_number_validator])
     email = serializers.EmailField(required=False)
@@ -97,7 +113,7 @@ class VerificationCodeResponseSerializer(serializers.Serializer):
         return attrs
     
 class VerificationCodeRequestSerializer(serializers.Serializer):
-    pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=True)
+    pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=False)
     verification_email = serializers.EmailField(required=False)
     verification_phone_number = serializers.CharField(required=False, validators=[e164_phone_number_validator])
     email = serializers.EmailField(required=False)
