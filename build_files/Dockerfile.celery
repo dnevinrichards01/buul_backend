@@ -11,10 +11,10 @@ RUN apt-get update && apt-get install -y \
  python3-venv python3-dev libpq-dev postgresql postgresql-contrib nginx systemd-sysv \
  snapd redis-tools openssl less \
   && rm -rf /var/lib/apt/lists/*
-RUN sudo apt-get install -y lsb-release curl gpg \ 
+RUN sudo apt-get install -y curl gpg \ 
   && curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg \
   && sudo chmod 644 /usr/share/keyrings/redis-archive-keyring.gpg \
-  && echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list \
+  && echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb bullseye main" | sudo tee /etc/apt/sources.list.d/redis.list \
   && sudo apt-get update \
   && sudo apt-get install -y redis-tools \ 
   && rm -rf /var/lib/apt/lists/*

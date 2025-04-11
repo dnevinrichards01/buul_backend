@@ -28,5 +28,5 @@ urlpatterns = [
     # etc
     path('waitlist/', views.AddToWaitlist.as_view(), name='waitlist'),
     path('token/', views.MyTokenObtainPairView.as_view(), name='get_token'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='refresh')
+    path('token/refresh/', views.MyTokenRefreshView.as_view(), name='refresh')
 ]

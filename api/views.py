@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from .serializers.accumateAccountSerializers import WaitlistEmailSerializer, \
     UserBrokerageInfoSerializer, NamePasswordValidationSerializer, \
     VerificationCodeResponseSerializer, VerificationCodeRequestSerializer, SendEmailSerializer, \
-    DeleteAccountVerifySerializer
+    DeleteAccountVerifySerializer, MyTokenRefreshSerializer
 from .serializers.accumateAccountSerializers import UserSerializer, \
     WaitlistEmailSerializer, GraphDataRequestSerializer
 from .serializers.PlaidSerializers.itemSerializers import ItemPublicTokenExchangeRequestSerializer
@@ -16,121 +16,39 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
+from django.http import JsonResponse
 from rest_framework.exceptions import ValidationError
 from django.core.cache import cache
 import json
-import phonenumbers
 from api.yahooRapidApiClient import FPMUtils
-from datetime import datetime
 from celery import current_app, chain, chord
-from functools import partial
-from django.db import transaction
 from .tasks.userTasks import plaid_item_public_tokens_exchange, \
     plaid_link_token_create, plaid_user_create, accumate_user_remove, \
     plaid_user_remove, send_verification_code, send_waitlist_email, send_forgot_email
 from .tasks.graphTasks import refresh_stock_data_by_interval, get_graph_data
 from robin_stocks.models import UserRobinhoodInfo
 
-import time
-from django.core.mail import send_mail
-from django.urls import reverse
 import secrets 
 
-from rest_framework.request import Request
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .serializers.accumateAccountSerializers import MyTokenObtainPairSerializer
-
 import bcrypt 
+
+from accumate_backend.viewHelper import LogState, log, validate, \
+    cached_task_logging_info
 
 
 # helper methods
+
+def healthCheck(request):
+    return JsonResponse({"success": "healthy"}, status=200)
 
 def createVerificationCode():
     digits = str(secrets.randbelow(1000000))
     return "0" * (6 - len(digits)) + digits
 
-def cached_task_status(cached_string):
-    cached_value = json.loads(cached_string)
-    if cached_value["success"] is None and cached_value["error"] is not None:
-        return 400
-    else:
-        return 200
 
-def healthCheck(request):
-    return JsonResponse({"success": "healthy"}, status=200)
-
-def log(instance, status, success, response, user=None, args={}, pre_account_id=None):
-    if isinstance(response, JsonResponse):
-        response = json.loads(response.content)
-    if instance.authentication_classes:
-        user = instance.request.user
-    log = Log(
-        name = instance.__class__.__name__,
-        user = user,
-        response = response,
-        success = success,
-        args = args,
-        status = status,
-        pre_account_id = pre_account_id
-    )
-    log.save()
-
-def validate(serializer, instance, fields_to_correct=[], fields_to_fail=[],
-             edit_error_message=lambda x: x):
-    try:
-        serializer.is_valid(raise_exception=True)
-    except ValidationError as e:
-        # validation errors which we have no tolerance for
-        for field in fields_to_fail:
-            if field in e.detail and len(e.detail[field]) >= 1:
-                status = 400
-                result = JsonResponse(
-                    {
-                        "success": None,
-                        "error": f"error '{field}': {e.detail[field][0]}"
-                    }, 
-                    status = status
-                )
-                pre_account_id = None if field == 'pre_account_id' else dict(instance.request.data).get('pre_account_id', '')
-                log(instance, status, False, result, args=dict(instance.request.data), pre_account_id = pre_account_id)
-                return result
-        # validation errors which we send error messages for
-        error_messages = {}
-        for field in fields_to_correct:
-            if field in e.detail and len(e.detail[field]) >= 1:
-                error_message = e.detail[field][0]
-                error_messages[field] = edit_error_message(error_message)
-            else:
-                error_messages[field] = None
-        status = 200
-        result = JsonResponse(
-            {
-                "success": None, 
-                "error": error_messages
-            }, 
-            status=status
-        )
-        pre_account_id = dict(instance.request.data).get('pre_account_id', '')
-        log(instance, status, False, result, args=dict(instance.request.data),
-            pre_account_id = pre_account_id)
-        return result
-    except Exception as e:
-        # unknown error
-        status = 400
-        result = JsonResponse(
-            {
-                "success": None, 
-                "error": str(e)
-            }, 
-            status=status
-        )
-        pre_account_id = None if field == 'pre_account_id' else dict(instance.request.data).get('pre_account_id', '')
-        log(instance, status, False, result, args=dict(instance.request.data),
-            pre_account_id = pre_account_id)
-        return result
-
-
+# tokens
 
 class MyTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
@@ -144,15 +62,59 @@ class MyTokenObtainPairView(TokenObtainPairView):
             user = serializer.validated_data['user']
             refresh = RefreshToken.for_user(user)
 
+            status = 200
+            log(Log, self, status, LogState.SUCCESS, user = serializer.validated_data['user'])
             return JsonResponse(
                 {
                     'refresh': str(refresh),
                     'access': str(refresh.access_token)
                 }, 
-                status=200
+                status = status
             )
+        except ValidationError as e:
+            error_messages = {}
+            for field in e.detail:
+                if len(e.detail[field]) >= 1:
+                    error_messages[field] = e.detail[field][0]
+            status = 401
+            log(Log, self, status, LogState.VAL_ERR_NO_MESSAGE, errors = error_messages)
+            return JsonResponse({}, status = status)
         except Exception as e:
-            return JsonResponse({}, status=401)
+            status = 401
+            log(Log, self, status, LogState.VAL_ERR_UNKOWN, errors = {"error": str(type(e))})
+            return JsonResponse({}, status = status)
+
+class MyTokenRefreshView(TokenRefreshView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = MyTokenRefreshSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            status = 200
+            log(Log, self, status, LogState.SUCCESS,
+                user = serializer.validated_data['user'])
+            return JsonResponse(
+                {
+                    'refresh': serializer.validated_data['refresh'],
+                    'access': serializer.validated_data['access']
+                }, 
+                status = status
+            )
+        except ValidationError as e:
+        # validation errors which we have no tolerance for
+            error_messages = {}
+            for field in e.detail:
+                if len(e.detail[field]) >= 1:
+                    error_messages[field] = e.detail[field][0]
+            status = 401
+            log(Log, self, status, LogState.VAL_ERR_NO_MESSAGE, errors = error_messages)
+            return JsonResponse({}, status = status)
+        except Exception as e:
+            status = 401
+            log(Log, self, status, LogState.VAL_ERR_INTERNAL, errors = {"error": str(type(e))})
+            return JsonResponse({}, status = status)
 
 
 # sign up flow
@@ -165,7 +127,7 @@ class CreateUserView(APIView):
         # Use the serializer to validate input data
         serializer = UserSerializer(data=request.data)
         validation_error_response = validate(
-            serializer, self, 
+            Log, serializer, self, 
             fields_to_correct=["email", "password", "phone_number", "full_name"], 
             fields_to_fail=['pre_account_id', 'username'],
             edit_error_message=lambda x: "A " + x if x[:4] == "user" else x
@@ -176,13 +138,11 @@ class CreateUserView(APIView):
         pre_account_id = serializer.validated_data['pre_account_id']
         user = serializer.save()
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS, user = user, pre_account_id=pre_account_id)
+        return JsonResponse(
             {"success": "user registered", "error": None}, 
             status=status
         )
-        log(self, status, True, response, user=user, args=serializer.validated_data, 
-            pre_account_id=pre_account_id)
-        return response
 
 class NamePasswordValidation(APIView):
     permission_classes = [AllowAny]
@@ -191,23 +151,22 @@ class NamePasswordValidation(APIView):
     def post(self, request, *args, **kwargs):
         serializer = NamePasswordValidationSerializer(data=request.data)
         validation_error_respose = validate(
-            serializer, self, fields_to_correct=["full_name", "password"], 
+            Log, serializer, self, fields_to_correct=["full_name", "password"], 
             fields_to_fail=["non_field_errors", "pre_account_id"]
         )
         if validation_error_respose:
             return validation_error_respose
         
         status = 200
-        result = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS,
+            pre_account_id = serializer.validated_data['pre_account_id'])
+        return JsonResponse(
             {
                 "success": "validated", 
                 "error": None
             }, 
-            status=status
+            status = status
         ) 
-        log(self, status, True, result, args=serializer.validated_data,
-            pre_account_id = serializer.validated_data['pre_account_id'])
-        return result
 
 class EmailPhoneSignUpValidation(APIView):
     permission_classes = [AllowAny]
@@ -218,7 +177,7 @@ class EmailPhoneSignUpValidation(APIView):
 
         serializer = VerificationCodeRequestSerializer(data=request.data)
         validation_error_respose = validate(
-            serializer, self, 
+            Log, serializer, self, 
             fields_to_correct=[
                 "verification_email", "verification_phone_number", "email", 
                 "phone_number", "phone_number", "full_name", "brokerage", 
@@ -234,16 +193,18 @@ class EmailPhoneSignUpValidation(APIView):
         # this endpoint is only for email and phone_number validation
         if serializer.validated_data["field"] not in ["email", "phone_number"]:
             status = 400
-            result = JsonResponse(
+            error_messages = {
+                "field": "The field parameter must be 'email' or 'phone_number'."
+            }
+            log(Log, self, status, LogState.VAL_ERR_NO_MESSAGE, 
+                errors = error_messages, pre_account_id = pre_account_id)
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": "The field parameter must be 'email' or 'phone_number'."
+                    "error": error_messages
                 }, 
                 status = status
             )
-            log(self, status, False, result, args=serializer.validated_data,
-                pre_account_id = pre_account_id)
-            return result
         
         # fail if a user already exists with this contact info
         user_exists = False
@@ -267,34 +228,32 @@ class EmailPhoneSignUpValidation(APIView):
         if user_exists:
             status = 200
             error_message = f"This {field.replace("_", " ")} is already in use."
-            result = JsonResponse(
+            error_messages = {
+                "email": error_message if email else None,
+                "phone_number": error_message if phone_number else None
+            }
+            log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = error_messages,
+                pre_account_id=pre_account_id)
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": {
-                        "email": error_message if email else None,
-                        "phone_number": error_message if phone_number else None
-                    }
-                    
+                    "error": error_messages
                 }, 
                 status = status
             )
-            log(self, status, False, result, args=serializer.validated_data, 
-                pre_account_id=pre_account_id)
-            return result
         
         # can't yet do sms messages, accept phone without giving a verification code
         if field == "phone_number":
             status = 200
-            result = JsonResponse(
+            log(Log, self, status, LogState.SUCCESS, 
+                pre_account_id=pre_account_id)
+            return JsonResponse(
                 {
                     "success": "recieved",
                     "error": None
                 }, 
                 status = status
             )
-            log(self, status, True, result, args=serializer.validated_data,
-                pre_account_id=pre_account_id)
-            return result
 
         # generate verification code
         field = serializer.validated_data['field']
@@ -319,23 +278,22 @@ class EmailPhoneSignUpValidation(APIView):
         )
         
         status = 200
-        result = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS, 
+            pre_account_id=pre_account_id)
+        return JsonResponse(
             {
                 "success": "recieved",
                 "error": None
             }, 
             status = status
         )
-        log(self, status, True, result, args=serializer.validated_data, 
-            pre_account_id=pre_account_id)
-        return result
 
     def post(self, request, *args, **kwargs):
         """Given the correct code, extend its lifespan if no password given, 
         and if given the password then update password"""
         serializer = VerificationCodeResponseSerializer(data=request.data)
         validation_error_respose = validate(
-            serializer, self, 
+            Log, serializer, self, 
             fields_to_correct=[
                 "verification_email", "verification_phone_number", "email", 
                 "phone_number", "phone_number", "full_name", "brokerage", 
@@ -351,16 +309,18 @@ class EmailPhoneSignUpValidation(APIView):
         # this endpoint is only for email and phone_number validation
         if serializer.validated_data["field"] not in ["email", "phone_number"]:
             status = 400
-            result = JsonResponse(
+            error_messages = {
+                "field": "The field parameter must be 'email' or 'phone_number'."
+            }
+            log(Log, self, status, LogState.VAL_ERR_NO_MESSAGE, 
+                errors = error_messages, pre_account_id=pre_account_id)
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": "The field parameter must be 'email' or 'phone_number'."
+                    "error": error_messages
                 }, 
                 status = status
             )
-            log(self, status, False, result, args=serializer.validated_data,
-                pre_account_id=pre_account_id)
-            return result
         
         # check if the code has been requested for that field, and if values match
         code = serializer.validated_data['code']
@@ -369,48 +329,42 @@ class EmailPhoneSignUpValidation(APIView):
         cached_value = cache.get(f"validate_{field}_{code}")
         if cached_value is None:
             status = 200
-            result = JsonResponse(
+            error_messages = {"code": "Code is invalid or expired"}
+            log(Log, self, status, LogState.VAL_ERR_MESSAGE, 
+                errors = error_messages, pre_account_id=pre_account_id)
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": {
-                        "code": "Code is invalid or expired"
-                    }
-                    
+                    "error": error_messages
                 },
-                status=200
+                status = status
             )
-            log(self, status, False, result, args=serializer.validated_data,
-                pre_account_id=pre_account_id)
-            return result
         loaded_value = json.loads(cached_value)
         if loaded_value[field] != value:
             status = 200
-            result = JsonResponse(
+            error_messages = {"code": "Code is invalid or expired"}
+            log(Log, self, status, LogState.VAL_ERR_MESSAGE, 
+                errors = error_messages, pre_account_id=pre_account_id)
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": {
-                        "code": "Code is invalid or expired"
-                    }
+                    "error": error_messages
                 },
-                status=200
+                status = status
             )
-            log(self, status, False, result, args=serializer.validated_data,
-                pre_account_id=pre_account_id)
-            return result
         
         cache.delete(f"validate_{field}_{code}")
 
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS, 
+            pre_account_id=pre_account_id)
+        return JsonResponse(
             {
                 "success": "verification code valid",
                 "error": None
             },
             status = status
         )
-        log(self, status, True, response, args=serializer.validated_data,
-            pre_account_id=pre_account_id)
-        return response
 
 class SetBrokerageInvestment(APIView):
     permission_classes = [IsAuthenticated]
@@ -420,7 +374,7 @@ class SetBrokerageInvestment(APIView):
         # breakpoint()
         serializer = UserBrokerageInfoSerializer(data=request.data)
         validation_error_respose = validate(
-            serializer, self, fields_to_correct=["brokerage", "symbol"],
+            Log, serializer, self, fields_to_correct=["brokerage", "symbol"],
             fields_to_fail=["non_field_errors"]
         )
         if validation_error_respose:
@@ -451,15 +405,14 @@ class SetBrokerageInvestment(APIView):
         userBrokerageInfo.save()
 
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
             {
                 "success": "recieved", 
                 "error": None
             }, 
-            status=201
+            status = status
         )
-        log(self, status, True, response, args=serializer.validated_data)
-        return response
 
 
 # Plaid
@@ -473,10 +426,7 @@ class PlaidUserCreate(APIView):
         
         user = self.request.user
         uid = user.id
-        try:
-            if PlaidUser.objects.filter(user__id=uid).count() != 0:
-                raise Exception("Plaid user already exists for this account")
-        except Exception as e:
+        if PlaidUser.objects.filter(user__id=uid).count() != 0:
             cache.delete(f"uid_{uid}_plaid_user_create")
             cache.set(
                 f"uid_{uid}_plaid_user_create",
@@ -484,15 +434,14 @@ class PlaidUserCreate(APIView):
                 timeout=120
             )
             status = 200
-            response = JsonResponse(
+            log(Log, self, status, LogState.SUCCESS)
+            return JsonResponse(
                 {
                     "success": "already exists",
                     "error": None
                 }, 
-                status=200
+                status = status
             )
-            log(self, status, False, response, user=user)
-            return response
     
         cache.delete(f"uid_{uid}_plaid_user_create")
         cache.set(
@@ -502,39 +451,39 @@ class PlaidUserCreate(APIView):
         )
         plaid_user_create.apply_async(kwargs={"uid": uid})
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
             {
                 "success": "recieved", 
                 "error": None
             }, 
-            status=200
+            status = status
         )
-        log(self, status, True, response, user=user)
-        return response
     
     def get(self, request, *args, **kwargs):
         user = self.request.user
         uid = user.id
         task_status = cache.get(f"uid_{uid}_plaid_user_create")
         if task_status:
-            status = cached_task_status(task_status)
-            response = JsonResponse(
-                json.loads(task_status),
+            status, log_state, errors = cached_task_logging_info(task_status)
+            response = json.loads(task_status)
+            log(Log, self, status, log_state, errors = errors)
+            return JsonResponse(
+                response,
                 status = status
             )
-            log(self, status, status==200, response, user=user)
-            return response
         else:
             status = 200
-            response = JsonResponse(
+            error_message = "no cache value found"
+            log(Log, self, status, LogState.BACKGROUND_TASK_NO_CACHE, 
+                errors = {"error": error_message})
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": "no cache value found"
+                    "error": error_message
                 }, 
                 status = status
             )
-            log(self, status, False, response, user=user)
-            return response
 
 class PlaidLinkTokenCreate(APIView):
     permission_classes = [IsAuthenticated]
@@ -549,14 +498,16 @@ class PlaidLinkTokenCreate(APIView):
             PlaidUser.objects.get(user__id=user.id)
         except Exception:
             status = 400 
+            error_message = "This user does not yet have a plaid user object"
             response = JsonResponse(
                 {
                     "success": None,
-                    "error": "This user does not yet have a plaid user object"
+                    "error": error_message
                 }, 
                 status = status
             )
-            log(self, status, False, response, user=user)
+            log(Log, self, status, LogState.ERR_NO_MESSAGE, 
+                errors = {"error": error_message})
             return response
 
         data = {
@@ -582,16 +533,19 @@ class PlaidLinkTokenCreate(APIView):
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
+            error_messages = {}
+            for field in e.detail:
+                if len(e.detail[field]) >= 1:
+                    error_messages[field] = e.detail[field][0]
             status = 400 
-            response = JsonResponse(
+            log(Log, self, status, LogState.ERR_NO_MESSAGE, errors = error_messages)
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": json.dumps(e.detail)
+                    "error": error_messages
                 },
-                status=400
+                status = status
             )
-            log(self, status, False, response, user=user)
-            return response
         # Access the validated data
         validated_data = serializer.validated_data
         uid = user.id
@@ -608,39 +562,38 @@ class PlaidLinkTokenCreate(APIView):
         )
         plaid_link_token_create.apply_async(kwargs=validated_data)
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
             {
                 "success": "recieved", 
                 "error": None
             }, 
             status = status
         )
-        log(self, status, True, response, user=user)
-        return response
     
     def get(self, request, *args, **kwargs):
         user = self.request.user
         uid = user.id
         task_status = cache.get(f"uid_{uid}_plaid_link_token_create")
         if task_status:
-            status = cached_task_status(task_status)
-            response = JsonResponse(
+            status, log_state, errors = cached_task_logging_info(task_status)
+            log(Log, self, status, log_state, errors = errors)
+            return JsonResponse(
                 json.loads(task_status),
                 status = status
             )
-            log(self, status, True, response, user=user)
-            return response
         else:
             status = 400
-            response = JsonResponse(
+            error_message = "no cache value found"
+            log(Log, self, status, LogState.BACKGROUND_TASK_NO_CACHE, 
+                errors = {"error": error_message})
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": "no cache value found"
+                    "error": error_message
                 }, 
-                status=400
+                status = status
             )
-            log(self, status, False, response, user=user)
-            return response
 
 class PlaidItemWebhook(APIView):
     #make it so that it also takes webhooks for ITEM_REMOVED or needing update flow later
@@ -652,35 +605,40 @@ class PlaidItemWebhook(APIView):
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
+            error_messages = {}
+            for field in e.detail:
+                if (e.detail[field]) >= 1:
+                    error_messages[field] = e.detail[field][0]
             status = 400
-            response = JsonResponse(
+            log(Log, self, status, LogState.VAL_ERR_NO_MESSAGE, errors = error_messages)
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": e.detail
+                    "error": error_messages
                 }, 
                 status = status
             )
-            log(self, status, False, response, user=user, args=dict(request.data))
-            return 
         
         user = self.request.user
         uid = user.id
         link_token = serializer.validated_data["link_token"]
         cached_uid = cache.get(f"link_token_{link_token}_user")
         if cached_uid:
+            # maybe change this to be in the db itself... so it cant expire
             uid = json.loads(cached_uid)["uid"]
             cache.delete(f"link_token_{link_token}_user")
         else:
             status = 400
-            response = JsonResponse(
+            error_message = "corresponding link token and user are no longer cached"
+            log(Log, self, status, LogState.ERR_NO_MESSAGE, 
+                errors = {"error": error_message})
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": "corresponding link token and user are no longer cached"
+                    "error": error_message
                 }, 
-                status = 400
+                status = status
             )
-            log(self, status, False, response, user=user, args=serializer.validated_data)
-            return response
 
         cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
         cache.set(
@@ -691,20 +649,20 @@ class PlaidItemWebhook(APIView):
         plaid_item_public_tokens_exchange.apply_async(
             kwargs = {
                 "uid": uid,
-                "public_tokens": serializer.validated_data["public_tokens"]
+                "public_tokens": serializer.validated_data["public_tokens"],
+                "context": {}
             }
         )
 
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
             {
-                "success": None, 
+                "success": "recieved", 
                 "error": None
             }, 
             status = status
         )
-        log(self, status, True, response, user=user, args=serializer.validated_data)
-        return response
 
     def get(self, request, *args, **kwargs):
         user = self.request.user
@@ -715,24 +673,24 @@ class PlaidItemWebhook(APIView):
             if not exchage_result["success"] and not exchage_result["error"]:
                 cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
             
-            status = cached_task_status(exchage_result)
-            response = JsonResponse(
+            status, log_state, errors = cached_task_logging_info(exchage_result)
+            log(Log, self, status, log_state, errors = errors)
+            return JsonResponse(
                 exchage_result,
                 status = status
             )
-            log(self, status, status==200, response, user=user)
-            return response
         else:
             status = 400
-            response = JsonResponse(
+            error_message = "no cache value found"
+            log(Log, self, status, LogState.BACKGROUND_TASK_NO_CACHE, 
+                errors = {"error": error_message})
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": "no cache value found"
+                    "error": error_message
                 }, 
                 status = status 
             )
-            log(self, status, False, response, user=user)
-            return response
 
 
 # fetch account info
@@ -742,7 +700,6 @@ class GetUserInfo(APIView):
 
     def get(self, request, *args, **kwargs):
         user = self.request.user
-        # brokerage, etf (symbol), full_name, email, phone_number
         try:
             userBrokerageInfo = UserBrokerageInfo.objects.get(user__id=user.id)
             brokerage, etf = userBrokerageInfo.brokerage, userBrokerageInfo.symbol
@@ -754,7 +711,8 @@ class GetUserInfo(APIView):
             brokerage, etf, brokerage_completed = None, None, False
         
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
             {
                 "full_name": user.full_name,
                 "email": user.email,
@@ -766,8 +724,6 @@ class GetUserInfo(APIView):
             }, 
             status = status
         )
-        log(self, status, True, response, user=user)
-        return response
      
 class StockGraphData(APIView):
     permission_classes = [IsAuthenticated]
@@ -783,22 +739,21 @@ class StockGraphData(APIView):
             timeout=120
         )
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
             {
                 "success": "recieved", 
                 "error": None
             }, 
             status = status
         )
-        log(self, status, True, response, user=user)
-        return response
     
     def post(self, request, *args, **kwargs):
         # import pdb
         # breakpoint()
         serializer = GraphDataRequestSerializer(data=request.data)
         validation_error_response = validate(
-            serializer, self, fields_to_correct=["start_date"], 
+            Log, serializer, self, fields_to_correct=["start_date"], 
             fields_to_fail=["non_field_errors"]
         )
         if validation_error_response:
@@ -809,14 +764,13 @@ class StockGraphData(APIView):
         start_date = serializer.validated_data["start_date"]
         task_status = cache.get(f"uid_{uid}_get_investment_graph_data")
         if task_status:
-            status = cached_task_status(task_status)
+            status, log_state, errors = cached_task_logging_info(task_status)
             if status == 400:
-                response = JsonResponse(
+                log(Log, self, status, log_state, errors = errors)
+                return JsonResponse(
                     json.loads(task_status), 
                     status = status
                 )
-                log(self, status, False, response, user=user, args=serializer.validated_data)
-                return response
             else:
                 query = UserInvestmentGraph.objects.filter(
                     user__id=uid,
@@ -828,23 +782,21 @@ class StockGraphData(APIView):
                         "date": item.date.isoformat(),
                         "price": item.value
                     })
-                # breakpoint()
                 status = 200
-                response = JsonResponse({"data": data}, status=status)
-                log(self, status, True, response, user=user, args=serializer.validated_data)
-                return response
+                log(Log, self, status, LogState.SUCCESS, errors)
+                return JsonResponse({"data": data}, status=status)
         else:
             status = 200
+            error_message = "no cache value found"
             response = JsonResponse(
                 {
                     "success": None, 
-                    "error": "no cache value found"
+                    "error": error_message
                 }, 
                 status=status
             )
-            log(self, status, False, response, user=user, args=serializer.validated_data)
+            log(Log, self, status, LogState.BACKGROUND_TASK_NO_CACHE, errors = {"error": error_message})
             return response
-
 
 
 # update info
@@ -858,7 +810,7 @@ class ResetPassword(APIView):
 
         serializer = VerificationCodeRequestSerializer(data=request.data)
         validation_error_response = validate(
-            serializer, self, 
+            Log, serializer, self, 
             fields_to_correct = [
                 "verification_email", "verification_phone_number", "email", 
                 "phone_number", "phone_number", "full_name", "brokerage", 
@@ -874,15 +826,16 @@ class ResetPassword(APIView):
         
         if serializer.validated_data["field"] != "password":
             status = 400
-            response = JsonResponse(
+            error_message = "The field parameter must be 'password'."
+            log(Log, self, status, LogState.VAL_ERR_NO_MESSAGE, 
+                errors = {"error": error_message})
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": "The field parameter must be 'password'."
+                    "error": error_message
                 }, 
                 status = status
             )
-            log(self, status, False, response, user=user, args=sanitized_data)
-            return response
         
         # check if a user with that password exists
         user_exists = False
@@ -907,15 +860,14 @@ class ResetPassword(APIView):
                 user_exists = False
         if not user_exists:
             status = 200
-            response = JsonResponse(
+            log(Log, self, status, LogState.SUCCESS)
+            return JsonResponse(
                 {
                     "success": "recieved",
                     "error": None
                 }, 
                 status=status
             )
-            log(self, status, False, response, user=user, args=sanitized_data)
-            return response
         
         field = serializer.validated_data['field']
         salt = bcrypt.gensalt()
@@ -941,22 +893,21 @@ class ResetPassword(APIView):
         )
         
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
             {
                 "success": "recieved",
                 "error": None
             }, 
             status=status
         )
-        log(self, status, True, response, user=user, args=sanitized_data)
-        return response
 
     def post(self, request, *args, **kwargs):
         """Given the correct code, extend its lifespan if no password given, 
         and if given the password then update password"""
         serializer = VerificationCodeResponseSerializer(data=request.data)
         validation_error_respose = validate(
-            serializer, self, 
+            Log, serializer, self, 
             fields_to_correct=[
                 "verification_email", "verification_phone_number", "email", 
                 "phone_number", "phone_number", "full_name", "brokerage", 
@@ -970,17 +921,18 @@ class ResetPassword(APIView):
         sanitized_data = serializer.validated_data.copy()
         sanitized_data.pop("password", None)
         
-        if serializer.validated_data["field"]!= "password":
+        if serializer.validated_data["field"] != "password":
             status = 400
-            response = JsonResponse(
+            error_message = "The field parameter must be 'password'."
+            log(Log, self, status, LogState.VAL_ERR_NO_MESSAGE, 
+                errors = {"error": error_message})
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": "The field parameter must be 'password'."
+                    "error": error_message
                 }, 
-                status=400
+                status = status
             )
-            log(self, status, False, response, user=user, args=sanitized_data)
-            return response
         
         # check if a user with the given account info exists
         user_exists = False
@@ -1005,17 +957,17 @@ class ResetPassword(APIView):
                 user_exists = False
         if not user_exists:
             status = 200
-            response = JsonResponse(
+            error_messages = {
+                "code": "This code is invalid or expired. Request a new one."
+            }
+            log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = error_messages)
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": {
-                        "code": "This code is invalid or expired. Request a new one."
-                    }
+                    "error": error_messages
                 },
-                status=200
+                status = status
             )
-            log(self, status, False, response, user=user, args=sanitized_data)
-            return response
         
         # check if the code has been requested for that field, and if values match
         code = serializer.validated_data['code']
@@ -1024,33 +976,35 @@ class ResetPassword(APIView):
         cached_value = cache.get(f"signed_out_uid_{user.id}_set_{field}_{code}")
         if cached_value is None:
             status = 200
-            response = JsonResponse(
+            error_messages = {
+                "code": "This code is invalid or expired. Request a new one."
+            }
+            log(Log, self, status, LogState.VAL_ERR_MESSAGE, 
+                errors = error_messages)
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": {
-                        "code": "This code is invalid or expired. Request a new one."
-                    }
+                    "error": error_messages
                 },
-                status=200
+                status = status
             )
-            log(self, status, False, response, user=user, args=sanitized_data)
-            return response
         loaded_value = json.loads(cached_value)
         curr_val = value.encode('utf-8')
         cached_val = loaded_value[field].encode('utf-8')
         if not bcrypt.checkpw(curr_val, cached_val):
             status = 200
-            response = JsonResponse(
+            error_messages = {
+                "code": "This code is invalid or expired. Request a new one."
+            }
+            log(Log, self, status, LogState.VAL_ERR_MESSAGE, 
+                errors = error_messages)
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": {
-                        "code": "This code is invalid or expired. Request a new one."
-                    }
+                    "error": error_messages
                 },
                 status = status
             )
-            log(self, status, False, response, user=user, args=sanitized_data)
-            return response
 
         user.set_password(serializer.validated_data["password"])
         user.save()
@@ -1058,15 +1012,14 @@ class ResetPassword(APIView):
         cache.delete(f"signed_out_uid_{user.id}_set_{field}_{code}")
 
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
             {
                 "success": "verification code valid",
                 "error": None
             },
-            status=200
+            status = status
         )
-        log(self, status, True, response, user=user, args=sanitized_data)
-        return response
 
 class RequestVerificationCode(APIView):
     permission_classes = [IsAuthenticated]
@@ -1077,7 +1030,7 @@ class RequestVerificationCode(APIView):
 
         serializer = VerificationCodeRequestSerializer(data=request.data)
         validation_error_response = validate(
-            serializer, self, 
+            Log, serializer, self, 
             fields_to_correct = [
                 "verification_email", "verification_phone_number", "email", 
                 "phone_number", "phone_number", "full_name", "brokerage", 
@@ -1111,15 +1064,16 @@ class RequestVerificationCode(APIView):
                 user_exists = False
         if not user_exists:
             status = 400
-            response = JsonResponse(
+            error_message = "No user is associated with the information given"
+            log(Log, self, status, LogState.VAL_ERR_NO_MESSAGE, 
+                errors = {"error": error_message})
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": "No user is associated with the information given"
+                    "error": error_message
                 }, 
                 status = status
             )
-            log(self, status, False, response, user=user, args=sanitized_data)
-            return response
         
 
         # check that this email / number aren't yet taken
@@ -1134,17 +1088,17 @@ class RequestVerificationCode(APIView):
                 user_exists = False
             if user_exists:
                 status = 200
-                response = JsonResponse(
+                error_messages = {
+                    "email": "This email is already in use."
+                }
+                log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = error_messages)
+                return JsonResponse(
                     {
                         "success": None,
-                        "error": {
-                            "email": "This email is already in use."
-                        }
+                        "error": error_messages
                     }, 
                     status = status
                 )
-                log(self, status, False, response, user=user, args=sanitized_data)
-                return response
         elif 'phone_number' in serializer.validated_data:
             email = None
             phone_number = serializer.validated_data['phone_number']
@@ -1155,17 +1109,17 @@ class RequestVerificationCode(APIView):
                 user_exists = False
             if user_exists:
                 status = 200
-                response = JsonResponse(
+                error_messages = {
+                    "phone_number": "This number is already in use."
+                }
+                log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = error_messages)
+                return JsonResponse(
                     {
                         "success": None,
-                        "error": {
-                            "phone_number": "This number is already in use."
-                        }
+                        "error": error_messages
                     }, 
                     status = status
                 )
-                log(self, status, False, response, user=user, args=sanitized_data)
-                return response
         
         field = serializer.validated_data['field']
         value = serializer.validated_data[field]
@@ -1193,22 +1147,21 @@ class RequestVerificationCode(APIView):
         )
         
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
             {
                 "success": "recieved",
                 "error": None
             }, 
             status = status
         )
-        log(self, status, True, response, user=user, args=sanitized_data)
-        return response
 
     def post(self, request, *args, **kwargs):
         """Given the correct code, extend its lifespan if no password given, 
         and if given the password then update password"""
         serializer = VerificationCodeResponseSerializer(data=request.data)
         validation_error_respose = validate(
-            serializer, self, 
+            Log, serializer, self, 
             fields_to_correct=[
                 "verification_email", "verification_phone_number", "email", 
                 "phone_number", "phone_number", "full_name", "brokerage", 
@@ -1230,47 +1183,47 @@ class RequestVerificationCode(APIView):
         cached_value = cache.get(f"uid_{user.id}_set_{field}_{code}")
         if cached_value is None:
             status = 200
-            response = JsonResponse(
+            error_messages = {
+                "code": "Code is invalid or expired"
+            }
+            log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = error_messages)
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": {
-                        "code": "Code is invalid or expired"
-                    }
+                    "error": error_messages
                 },
-                status=200
+                status = status
             )
-            log(self, status, False, response, user=user, args=sanitized_data)
-            return response
         loaded_value = json.loads(cached_value)
         if field == "password":
             curr_val = value.encode('utf-8')
             cached_val = loaded_value[field].encode('utf-8')
             if not bcrypt.checkpw(curr_val, cached_val):
                 status = 200
-                response = JsonResponse(
+                error_messages = {
+                    "code": "Code is invalid or expired"
+                }
+                log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = error_messages)
+                return JsonResponse(
                     {
                         "success": None,
-                        "error": {
-                            "code": "Code is invalid or expired"
-                        }
+                        "error": error_messages
                     },
                     status = status
                 )
-                log(self, status, False, response, user=user, args=sanitized_data)
-                return response
         elif loaded_value[field] != value:
             status = 200
-            response = JsonResponse(
+            error_messages = {
+                "code": "Code is invalid or expired"
+            }
+            log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = error_messages)
+            return JsonResponse(
                 {
                     "success": None,
-                    "error": {
-                        "code": "Code is invalid or expired"
-                    }
+                    "error": error_messages
                 },
                 status = status
             )
-            log(self, status, False, response, user=user, args=sanitized_data)
-            return response
         
         cache.delete(f"uid_{user.id}_set_{field}_{code}")
 
@@ -1278,18 +1231,17 @@ class RequestVerificationCode(APIView):
             email = serializer.validated_data["email"]
             if User.objects.filter(email=email).exists():
                 status = 200
-                response = JsonResponse(
+                error_messages = {
+                    "email": "This email is already being used by another account"
+                }
+                log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = error_messages)
+                return JsonResponse(
                     {
                         "success": None,
-                        "error": {
-                            "email": "This email is already being used by another account"
-                        }
-                        
+                        "error": error_messages
                     },
                     status = status
                 )
-                log(self, status, False, response, user=user, args=sanitized_data)
-                return response
             else:
                 user.email = email
                 user.save()
@@ -1297,17 +1249,17 @@ class RequestVerificationCode(APIView):
             phone_number = serializer.validated_data["phone_number"]
             if User.objects.filter(phone_number=phone_number).exists():
                 status = 200
-                response = JsonResponse(
+                error_messages = {
+                    "phone_number": "This number is already being used by another account"
+                }
+                log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = error_messages)
+                return JsonResponse(
                     {
                         "success": None,
-                        "error": {
-                            "phone_number": "This number is already being used by another account"
-                        }
+                        "error": error_messages
                     },
                     status = status
                 )
-                log(self, status, False, response, user=user, args=sanitized_data)
-                return response
             else:
                 user.phone_number = phone_number
                 user.save()
@@ -1321,15 +1273,15 @@ class RequestVerificationCode(APIView):
                 userBrokerageInfo.save()
             except Exception as e:
                 status = 200
-                response = JsonResponse(
+                error_message = "We could not find your brokerage and investment choice. Please contact Accumate."
+                log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = {"error": error_message})
+                return JsonResponse(
                     {
                         "success": None,
-                        "error": "We could not find your brokerage and investment choice. Please contact Accumate."
+                        "error": error_message
                     },
                     status = status
                 )
-                log(self, status, False, response, user=user, args=sanitized_data)
-                return response
         elif field == "symbol":
             try: 
                 userBrokerageInfo = UserBrokerageInfo.objects.get(user=user)
@@ -1337,15 +1289,15 @@ class RequestVerificationCode(APIView):
                 userBrokerageInfo.save()
             except Exception as e:
                 status = 200
-                response = JsonResponse(
+                error_message = "We could not find your brokerage and investment choice. Please contact Accumate."
+                log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = {"error": error_message})
+                return JsonResponse(
                     {
                         "success": None,
-                        "error": "We could not find your brokerage and investment choice. Please contact Accumate."
+                        "error": error_message
                     },
                     status = status
                 )
-                log(self, status, False, response, user=user, args=sanitized_data)
-                return response
         elif field == "password":
             user.set_password(serializer.validated_data["password"])
             user.save()
@@ -1362,28 +1314,27 @@ class RequestVerificationCode(APIView):
             ).apply_async()
         else:
             status = 200
-            response = JsonResponse(
-                {
-                    "success": None,
-                    "error": "The field parameter must be one of 'password', " + \
+            error_message = "The field parameter must be one of 'password', " + \
                             "'email', 'phone_number', 'full_name', 'brokerage', " + \
                             "or 'symbol'."
+            log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = {"error": error_message})
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": error_message
                 },
-                status=200
+                status = status
             )
-            log(self, status, False, response, user=user, args=sanitized_data)
-            return response
 
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
             {
                 "success": "verification code valid",
                 "error": None
             },
             status = status
         )
-        log(self, status, True, response, user=user, args=sanitized_data)
-        return response
 
 class SendEmail(APIView):
     permission_classes = [AllowAny]
@@ -1391,28 +1342,32 @@ class SendEmail(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer = SendEmailSerializer(data=request.data)
-        validation_error_message = validate(serializer, self, fields_to_correct=["email"])
+        validation_error_message = validate(Log, serializer, self, 
+                                            fields_to_correct=["email"])
         if validation_error_message:
             return validation_error_message
 
         email = serializer.validated_data["email"]
-        if not User.objects.filter(email=email).exists():
+        try:
+            user = User.objects.get(email=email)
             send_forgot_email.apply_async(
                 kwargs = {
                     "useEmail": True, 
                     "sendTo": serializer.validated_data["email"],
                 }
             )
+        except:
+            user = None
+            
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS, user = user)
+        return JsonResponse(
             {
                 "success": "email sent", 
                 "error": None
             }, 
             status = status
         )
-        log(self, status, True, response, args=serializer.validated_data)
-        return response
 
 class DeleteAccountVerify(APIView):
     permission_classes = [AllowAny]
@@ -1426,34 +1381,33 @@ class DeleteAccountVerify(APIView):
             cached_result = cache.get(f"code_{code}_accumate_user_remove")
             if cached_result:
                 status = 200
-                response = JsonResponse(
+                log(Log, self, status, LogState.SUCCESS)
+                return JsonResponse(
                     json.loads(cached_result),
-                    status=200
+                    status = status
                 )
-                log(self, status, True, response, args=serializer.validated_data)
-                return response
             else:
                 status = 400
-                response = JsonResponse(
+                error_message = "no cached value found for that code"
+                log(Log, self, status, LogState.BACKGROUND_TASK_NO_CACHE,
+                    errors = {"error": error_message})
+                return JsonResponse(
                     {
                         "success": None,
-                        "error": "no cached value found for that code"
+                        "error": error_message
                     },
-                    status=400
+                    status = status
                 )
-                log(self, status, False, response, args=serializer.validated_data)
-                return response
         except Exception as e:
             status = 400
-            response = JsonResponse(
+            log(Log, self, status, LogState.VAL_ERR_MESSAGE)
+            return JsonResponse(
                 {
                     "success": None,
                     "error": f"error: {str(e)}"
                 },
-                status=400
+                status = status
             )
-            log(self, status, False, response, args=dict(request.data))
-            return response
 
 
 # etc
@@ -1475,22 +1429,19 @@ class AddToWaitlist(APIView):
 
             send_waitlist_email.apply_async(kwargs={"sendTo": email})
             status = 200
-            response = JsonResponse(
+            log(Log, self, status, LogState.SUCCESS)
+            return JsonResponse(
                 {
                     "success": "email added"
                 }, 
                 status = status
             )
-            log(self, status, True, response, args=serializer.validated_data)
-            return response
         except Exception as e:
             status = 400
-            response = JsonResponse(
-                {
-                    "error": e.args[0]
-                }, 
-                status = 400
+            error_messages = {"error": e.args[0]}
+            log(Log, self, status, LogState.VAL_ERR_NO_MESSAGE, errors = error_messages)
+            return JsonResponse( 
+                error_messages,
+                status = status
             )
-            log(self, status, False, response, args=dict(request.validated_data))
-            return response
 

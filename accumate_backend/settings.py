@@ -225,3 +225,11 @@ PLAID_SECRET = env("PLAID_SECRET", default="")
 PLAID_HOST = env("PLAID_HOST", default="")
 
 FMP_KEY = env("FMP_KEY", default="")
+
+RH_ACCESS_KMS_ALIAS = env("RH_ACCESS_KMS_ALIAS", default="")
+RH_REFRESH_KMS_ALIAS = env("RH_REFRESH_KMS_ALIAS", default="")
+PLAID_ITEM_KMS_ALIAS = env("PLAID_ITEM_KMS_ALIAS", default="")
+PLAID_USER_KMS_ALIAS = env("PLAID_USER_KMS_ALIAS", default="")
+USER_PII_KMS_ALIAS = env("USER_PII_KMS_ALIAS", default="")
+
+ANONYMIZE_USER_HMAC_KEY = env("ANONYMIZE_USER_HMAC_KEY", default="")

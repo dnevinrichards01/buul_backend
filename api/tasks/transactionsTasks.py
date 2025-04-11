@@ -34,7 +34,8 @@ from django.apps import apps
 
 @shared_task(name="transactions_get")
 def transactions_get(uid, start_date_str, end_date_str, item_ids={}, 
-                     transactions_by_item_id={}, page_size=100):
+                     transactions_by_item_id={}, page_size=100,
+                     context={}):
     # import pdb
     # breakpoint()
     
@@ -55,7 +56,7 @@ def transactions_get(uid, start_date_str, end_date_str, item_ids={},
             total_transactions = float('inf')
             while total_transactions > offset:
                 exchange_request = TransactionsGetRequest(
-                    access_token = plaidItem.accessToken,
+                    plaidItem.accessToken,
                     start_date = start_date,
                     end_date = end_date,
                     options = TransactionsGetRequestOptions(
@@ -86,7 +87,7 @@ def transactions_get(uid, start_date_str, end_date_str, item_ids={},
 
 @shared_task(name="transactions_sync")
 def transactions_sync(uid, item_ids={}, transactions_by_item_id={}, 
-                      update_cursor=False, page_size=100):
+                      update_cursor=False, page_size=100, context={}):
     # import pdb
     # breakpoint()
     
@@ -104,13 +105,13 @@ def transactions_sync(uid, item_ids={}, transactions_by_item_id={},
             while hasMore:
                 if nextCursor is not None:
                     exchange_request = TransactionsSyncRequest(
-                        access_token=plaidItem.accessToken,
+                        plaidItem.accessToken,
                         cursor = nextCursor,
                         count=page_size
                     )
                 else:
                     exchange_request = TransactionsSyncRequest(
-                        access_token=plaidItem.accessToken,
+                        plaidItem.accessToken,
                         count=page_size
                     )
                 exchange_response = plaid_client.transactions_sync(exchange_request)
