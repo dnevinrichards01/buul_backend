@@ -1,18 +1,19 @@
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 import os
+import boto3
 
 def generate_dek():
     return os.urandom(32)
 def encrypt_dek(plaintext_dek, alias, context=None):
-    encrypted_dek = plaintext_dek
-    return encrypted_dek
-    # kms = boto3.client('kms')
-    # encrypted = kms.encrypt(
-    #     KeyId=alias,
-    #     Plaintext=decrypted.encode(),
-    #     EncryptionContext=context or {}
-    # )["CiphertextBlob"]
-    # return encrypted
+    # encrypted_dek = plaintext_dek
+    # return encrypted_dek
+    kms = boto3.client('kms')
+    encrypted = kms.encrypt(
+        KeyId=alias,
+        Plaintext=plaintext_dek.encode(),
+        EncryptionContext=context or {}
+    )["CiphertextBlob"]
+    return encrypted
 def encrypt_data(plaintext_dek, data):
     iv = os.urandom(12)
     encryptor = Cipher(algorithms.AES(plaintext_dek), modes.GCM(iv)).encryptor()
@@ -35,13 +36,13 @@ def parse_data_blob(data_blob):
     data_ciphertext = data_blob[28:]
     return iv, tag, data_ciphertext
 def decrypt_dek(encrypted_dek, context=None):
-    decrypted_dek = encrypted_dek
-    return decrypted_dek
-    # kms = boto3.client('kms')
-    # return kms.decrypt(
-    #     CiphertextBlob=encrypted,
-    #     EncryptionContext=context or {}
-    # )["Plaintext"].decode()
+    # decrypted_dek = encrypted_dek
+    # return decrypted_dek
+    kms = boto3.client('kms')
+    return kms.decrypt(
+        CiphertextBlob=encrypted_dek,
+        EncryptionContext=context or {}
+    )["Plaintext"].decode()
 def decrypt_data(dek, iv, tag, data_ciphertext):
     decryptor = Cipher(algorithms.AES(dek), modes.GCM(iv, tag)).decryptor()
     data = decryptor.update(data_ciphertext) + decryptor.finalize()
