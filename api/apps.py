@@ -39,12 +39,12 @@ class ApiConfig(AppConfig):
                     "kwargs": json.dumps({}),
                     "crontab": crontab_daily,
                     "task_type": "graphTasks"
-                },
-                "plaid_access_token_refresh_all": {
-                    "kwargs": json.dumps({}),
-                    "crontab": crontab_daily,
-                    "task_type": "userTasks"
                 }
+                # "plaid_access_token_refresh_all": {
+                #     "kwargs": json.dumps({}),
+                #     "crontab": crontab_daily,
+                #     "task_type": "userTasks"
+                # }
             }
 
             for task_name in tasks:
