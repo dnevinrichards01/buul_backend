@@ -10,7 +10,7 @@ def encrypt_dek(plaintext_dek, alias, context=None):
     kms = boto3.client('kms')
     encrypted = kms.encrypt(
         KeyId=alias,
-        Plaintext=plaintext_dek.encode(),
+        Plaintext=plaintext_dek,
         EncryptionContext=context or {}
     )["CiphertextBlob"]
     return encrypted
@@ -42,7 +42,7 @@ def decrypt_dek(encrypted_dek, context=None):
     return kms.decrypt(
         CiphertextBlob=encrypted_dek,
         EncryptionContext=context or {}
-    )["Plaintext"].decode()
+    )["Plaintext"]
 def decrypt_data(dek, iv, tag, data_ciphertext):
     decryptor = Cipher(algorithms.AES(dek), modes.GCM(iv, tag)).decryptor()
     data = decryptor.update(data_ciphertext) + decryptor.finalize()
