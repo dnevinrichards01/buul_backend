@@ -11,71 +11,8 @@ import json
 from rest_framework.exceptions import ValidationError
 from robin_stocks.models import Log
 
-
-def log(instance, status, success, response, user=None, args={}):
-    if isinstance(response, JsonResponse):
-        response = json.loads(response.content)
-    if instance.authentication_classes:
-        user = instance.request.user
-    else:
-        user = None
-    log = Log(
-        name = instance.__class__.__name__,
-        user = user,
-        response = response,
-        success = success,
-        args = args,
-        status = status
-    )
-    log.save()
-
-def validate(serializer, instance, fields_to_correct=[], fields_to_fail=[],
-             edit_error_message=lambda x: x):
-    try:
-        serializer.is_valid(raise_exception=True)
-    except ValidationError as e:
-        # validation errors which we have no tolerance for
-        for field in fields_to_fail:
-            if field in e.detail and len(e.detail[field]) >= 1:
-                status = 400
-                result = JsonResponse(
-                    {
-                        "success": None,
-                        "error": f"error '{field}': {e.detail[field][0]}"
-                    }, 
-                    status=400
-                )
-                return result
-        # validation errors which we send error messages for
-        error_messages = {}
-        for field in fields_to_correct:
-            if field in e.detail and len(e.detail[field]) >= 1:
-                error_message = e.detail[field][0]
-                error_messages[field] = edit_error_message(error_message)
-            else:
-                error_messages[field] = None
-        status = 200
-        result = JsonResponse(
-            {
-                "success": None, 
-                "error": error_messages
-            }, 
-            status=status
-        )
-        log(instance, status, False, result, args=dict(instance.request.data))
-        return result
-    except Exception as e:
-        # unknown error
-        status = 400
-        result = JsonResponse(
-            {
-                "success": None, 
-                "error": str(e)
-            }, 
-            status=status
-        )
-        log(instance, status, False, result, args=dict(instance.request.data))
-        return result
+from accumate_backend.viewHelper import LogState, log, validate, \
+    cached_task_logging_info
 
 
 class ConnectRobinhoodView(APIView):
@@ -85,90 +22,35 @@ class ConnectRobinhoodView(APIView):
         # import pdb
         # breakpoint() 
         serializer = ConnectRobinhoodLoginSerializer(data=request.data)
-        
-        user = request.user
-        try:
-            serializer.is_valid(raise_exception=True)
-        except ValidationError as e:
-            if "non_field_errors" in e.detail and len(e.detail["non_field_errors"]) > 0:
-                status = 400
-                response = JsonResponse(
-                    {
-                        "success": None, 
-                        "error": e.detail["non_field_errors"][0]
-                    }, 
-                    status = status
-                )
-                sanitized_data = request.data.copy()
-                sanitized_data.pop("username", None)
-                sanitized_data.pop("password", None)
-                log(self, status, False, response, args=sanitized_data)
-                return response
-            error_messages = {}
-            for field in e.detail:
-                if field in e.detail and len(e.detail[field]) > 0:
-                    if field == "username":
-                        error_messages["email"] = e.detail["username"][0]
-                    else:
-                        error_messages[field] = e.detail[field][0]
-            status = 200
-            response = JsonResponse(
-                {
-                    "success": None, 
-                    "error": error_messages
-                }, 
-                status = status
-            )
-            sanitized_data = request.data.copy()
-            sanitized_data.pop("username", None)
-            sanitized_data.pop("password", None)
-            log(self, status, False, response, args=sanitized_data)
-            return response
-        except Exception as e:
-            status = 400
-            response = JsonResponse(
-                {
-                    "success": None, 
-                    "error": f"error: {str(e)}"
-                }, 
-                status = status
-            )
-            sanitized_data = request.data.copy()
-            sanitized_data.pop("username", None)
-            sanitized_data.pop("password", None)
-            log(self, status, False, response, args=sanitized_data)
-            return response
-        
-        validated_data = serializer.validated_data
-        uid = self.request.user.id
-        mfa_code = validated_data["app"] if "app" in validated_data else None
-        challenge_code = validated_data["sms"] if "sms" in validated_data else None
-        device_approval = validated_data["prompt"] if "prompt" in validated_data else None
+        validation_error_response = validate(
+            Log, serializer, self, 
+            fields_to_correct=["username", "password", "sms", "prompt", "app", "by_sms"], 
+            fields_to_fail=["non_field_errors"],
+            rename_field=lambda x: "email" if x == "username" else x
+        )
+        if validation_error_response:
+            return validation_error_response
 
         login_robinhood.apply_async(
             kwargs = {
-                "uid": uid,
-                "username": validated_data["username"],
-                "password": validated_data["password"],
-                "mfa_code": mfa_code,
-                "device_approval": challenge_code,
-                "challenge_code": device_approval
+                "uid": self.request.user.id,
+                "username": serializer.validated_data["username"],
+                "password": serializer.validated_data["password"],
+                "mfa_code": serializer.validated_data.get("app", None),
+                "device_approval": serializer.validated_data("prompt", None),
+                "challenge_code": serializer.validated_data("sms", None)
             }
         )
 
         status = 200
-        response = JsonResponse(
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
             {
                 "success": "recieved", 
                 "error": None
             }, 
             status = status
         )
-        sanitized_data = request.data.copy()
-        sanitized_data.pop("username", None)
-        sanitized_data.pop("password", None)
-        log(self, status, True, response, args=sanitized_data)
-        return response
     
     def get(self, request, *args, **kwargs):
         user = self.request.user
@@ -178,53 +60,68 @@ class ConnectRobinhoodView(APIView):
         challenge = cache.get(f"uid_{uid}_rh_challenge")
         if not challenge:
             status = 200
-            response = JsonResponse(
+            log(Log, self, status, LogState.BACKGROUND_TASK_WAITING)
+            return JsonResponse(
                 {
                     "success": None,
                     "error": None
                 }, 
                 status = status
             )
-            log(self, status, False, response)
-            return response
         
         challenge_data = json.loads(challenge)
         if challenge_data["success"]:
             status = 200
-            response = JsonResponse(
+            log(Log, self, status, LogState.SUCCESS)
+            return JsonResponse(
                 {
                     "success": challenge_data["success"],
                     "error": None
                 }, 
                 status = status
             )
-            log(self, status, True, response)
-            return response
         elif challenge_data["challenge_type"]:
             status = 200
-            response = JsonResponse(
+            error_message = challenge_data["error"]
+            log(Log, self, status, LogState.RH_MFA,
+                errors = {"error": error_message})
+            return JsonResponse(
                 {
                     "success": None,
                     "error": {
                         "challenge_type": challenge_data["challenge_type"],
-                        "error_message": challenge_data["error"]
+                        "error_message": error_message
                     }
                 }, 
                 status = status
             )
-            log(self, status, False, response)
-            return response
-        else:
+        elif challenge_data["error"]:
             status = 200
-            response = JsonResponse(
+            error_message = challenge_data["error"]
+            log(Log, self, status, LogState.BACKGROUND_TASK_ERR, 
+                errors = {"error": error_message})
+            return JsonResponse(
                 {
                     "success": None,
                     "error": {
                         "challenge_type": challenge_data["challenge_type"],
-                        "error_message": challenge_data["error"]
+                        "error_message": error_message
                     }
                 }, 
                 status = status
             )
-            log(self, status, False, response)
-            return response
+        else:
+            status = 400
+            log(Log, self, status, LogState.BACKGROUND_TASK_MISFORMATTED)
+            return JsonResponse(
+                {
+                    "success": None,
+                    "error": {}
+                }, 
+                status = status
+            )
+
+
+
+
+

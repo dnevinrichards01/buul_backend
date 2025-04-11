@@ -226,3 +226,12 @@ PLAID_HOST = plaid_cred_dict["PLAID_HOST"]
 
 fmp_cred_dict = json.loads(env("FMP_CREDENTIALS"))
 FMP_KEY = fmp_cred_dict["FMP_KEY"]
+
+RH_ACCESS_KMS_ALIAS = env("RH_ACCESS_KMS_ALIAS", default="")
+RH_REFRESH_KMS_ALIAS = env("RH_REFRESH_KMS_ALIAS", default="")
+PLAID_ITEM_KMS_ALIAS = env("PLAID_ITEM_KMS_ALIAS", default="")
+PLAID_USER_KMS_ALIAS = env("PLAID_USER_KMS_ALIAS", default="")
+USER_PII_KMS_ALIAS = env("USER_PII_KMS_ALIAS", default="")
+
+anonymize_user_hmac_key_dict = json.loads(env("ANONYMIZE_USER_HMAC_KEY"))
+ANONYMIZE_USER_HMAC_KEY = anonymize_user_hmac_key_dict["ANONYMIZE_USER_HMAC_KEY"]

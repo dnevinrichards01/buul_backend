@@ -33,3 +33,4 @@ class ConnectRobinhoodLoginSerializer(serializers.Serializer):
             raise ValidationError("You must submit both username and password")
         return attrs
         
+

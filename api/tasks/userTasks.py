@@ -5,7 +5,7 @@ from ..plaid_client import plaid_client
 from django.core.cache import cache 
 from django.core.mail import send_mail
 import re
-
+from django.utils import timezone
 
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -31,8 +31,12 @@ from plaid.model.products import Products
 from plaid.exceptions import ApiException
 from rest_framework.exceptions import ValidationError
 
+from plaid.model.item_access_token_invalidate_request import ItemAccessTokenInvalidateRequest
+
+import boto3
+
 from ..serializers.PlaidSerializers.itemSerializers import ItemPublicTokenExchangeResponseSerializer, \
-    ItemRemoveResponseSerializer
+    ItemRemoveResponseSerializer, ItemAccessTokenInvalidateResponseSerializer
 from ..serializers.PlaidSerializers.linkSerializers import LinkTokenCreateResponseSerializer
 from ..serializers.PlaidSerializers.userSerializers import UserRemoveResponseSerializer, \
     UserCreateResponseSerializer
@@ -50,6 +54,7 @@ def plaid_item_public_tokens_exchange(**kwargs):
     # breakpoint()
     uid = kwargs.pop('uid')
     public_tokens = kwargs.pop('public_tokens')
+    context = kwargs.pop('context')
     
     try:
         plaidUser = PlaidUser.objects.get(user__id=uid) # make sure we have a user
@@ -68,7 +73,7 @@ def plaid_item_public_tokens_exchange(**kwargs):
             plaidUser = PlaidUser.objects.get(user__id=uid) # make sure we have a user
 
             plaidItem = PlaidItem(user=plaidUser.user)
-            plaidItem.accessToken = validated_data['access_token']
+            plaidItem.accessToken = serializer.validated_data["new_access_token"]
             plaidItem.itemId = validated_data['item_id']
             plaidItem.save()
 
@@ -98,6 +103,7 @@ def plaid_item_public_tokens_exchange(**kwargs):
             timeout=120
         )
         return f"cached plaid public token exchange error: {str(e)}"
+
 
 @shared_task(name="plaid_link_token_create")
 def plaid_link_token_create(**kwargs):
@@ -196,9 +202,7 @@ def plaid_item_remove(uid, item_id):
     breakpoint()
     try:
         plaidItem = PlaidItem.objects.get(user__id=uid, item_id=item_id)
-        exchange_request = ItemRemoveRequest(
-            access_token=plaidItem.accessToken
-        )
+        exchange_request = ItemRemoveRequest(access_token = plaidItem.accessToken)
         plaidItem.delete()
         
         exchange_response = plaid_client.item_remove(exchange_request)
@@ -258,7 +262,7 @@ def plaid_user_create(**kwargs):
         cache.delete(f"uid_{uid}_plaid_user_create")
         cache.set(
             f"uid_{uid}_plaid_user_create",
-            json.dumps({"success": None, "error": f"{e.status}: {str(e)}"}), 
+            json.dumps({"success": None, "error": str(type(e))}), 
             timeout=120
         )
         return f"cached plaid user create error: {error.get("error_code")}"
@@ -266,10 +270,10 @@ def plaid_user_create(**kwargs):
         cache.delete(f"uid_{uid}_plaid_user_create")
         cache.set(
             f"uid_{uid}_plaid_user_create",
-            json.dumps({"success": None, "error": "error: " + str(e)}), 
+            json.dumps({"success": None, "error": str(type(e))}), 
             timeout=120
         )
-        return f"cached plaid user create error: {str(e)}"
+        return f"cached plaid user create error: {str(type(e))}"
 
 @shared_task(name="plaid_user_remove")
 def plaid_user_remove(uid, code):

@@ -1,11 +1,14 @@
 # from django.contrib.auth.models import User
 from rest_framework import serializers
 from ..models import WaitlistEmail, User, BROKERAGE_CHOICES, SYMBOL_CHOICES
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, \
+    TokenRefreshSerializer
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .PlaidSerializers.linkSerializers import e164_phone_number_validator
 from api.models import User
+from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.tokens import RefreshToken
 
 invalid_password_error_message = "The password must contain at least one capital " + \
     "letter, one digit, 8 characters, and one symbol of the following symbols: " + \
@@ -40,6 +43,24 @@ class MyTokenObtainPairSerializer(serializers.Serializer):
             raise ValidationError("no such user")
         
 
+class MyTokenRefreshSerializer(TokenRefreshSerializer):
+    def validate(self, attrs):
+        try:
+            refresh = RefreshToken(attrs["refresh"])
+        except:
+            raise ValidationError("Invalid or expired refresh token.")
+
+        user_id = refresh.payload.get(api_settings.USER_ID_CLAIM, None)
+        if user_id:
+            user = User.objects.get(id=user_id)
+        else:
+            raise ValidationError("User not found")
+        
+        data = super().validate(attrs)
+
+        data["user"] = user
+        return data
+
 class GraphDataRequestSerializer(serializers.Serializer):
     start_date = serializers.DateTimeField()
 
@@ -50,6 +71,7 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True,
         error_messages={"invalid": invalid_password_error_message}
     )
+        
     pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=True)
     class Meta:
         model = User
