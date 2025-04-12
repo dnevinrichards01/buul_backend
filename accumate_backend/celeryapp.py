@@ -33,13 +33,13 @@ app = Celery(
     broker_transport_options={
         "region": "us-west-1", # your AWS SQS region
         "predefined_queues": {
-            "ab-long-running": {  ## the name of the SQS queue
+            "long-running": {  ## the name of the SQS queue
                 "url": SQS_LONG_RUNNING_URL
             },
-            "ab-user-interaction": {
+            "user-interaction": {
                 "url": SQS_USER_INTERACTION_URL
             },
-            "ab-dlq": {
+            "dlq": {
                 "url": SQS_DLQ_URL
             }
         },
@@ -49,7 +49,7 @@ app = Celery(
 
 
 app.conf.broker_connection_retry_on_startup = True
-app.conf.task_default_queue = 'ab-long-running'
+app.conf.task_default_queue = 'long-running'
 app.conf.result_backend = 'django-db'
 app.conf.result_extended = True
 app.conf.accept_content = ["application/json"] 
