@@ -45,6 +45,7 @@ def log(logger, instance, status, state, errors=None, user=None,
 
     log = logger(
         name = instance.__class__.__name__,
+        method = instance.request.method,
         user = user,
         state = state,
         errors = errors,

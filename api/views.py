@@ -520,7 +520,7 @@ class PlaidLinkTokenCreate(APIView):
             "transactions": {
                 "days_requested": 100
             },
-            "webhook": "https://62ea-2601-646-8283-4f00-fd82-54cf-fd0a-2ca.ngrok-free.app" + "/api/plaid/itemwebhook/",
+            "webhook": "https://3102-2601-646-8283-4f00-9850-fcc9-a4ca-e7bc.ngrok-free.app/" + "api/plaid/itemwebhook/",
             "country_codes": ["US"],
             "language": "en",
             "enable_multi_item_link": True,
