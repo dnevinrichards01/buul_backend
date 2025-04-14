@@ -52,6 +52,7 @@ class User(AbstractUser):
 
 class LogAnon(models.Model):
     name = models.CharField()
+    method = models.CharField()
     user = models.CharField(default=None, null=True)
     date = models.DateTimeField(auto_now=True)
     errors = models.JSONField(default=None, null=True)
@@ -66,6 +67,7 @@ class LogAnon(models.Model):
         ]
 class Log(models.Model):
     name = models.CharField()
+    method = models.CharField()
     user = models.ForeignKey(User, default=None, null=True, 
                              on_delete=models.DO_NOTHING, related_name='api_logs')
     date = models.DateTimeField(auto_now=True)
@@ -100,6 +102,7 @@ class Log(models.Model):
 
         log_anonymized = LogAnon(
             name = self.name,
+            method = self.method,
             user = user_hmac,
             date = self.date,
             errors = self.errors,
@@ -162,7 +165,7 @@ class PlaidUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
     countryCodes = models.CharField(choices=[], max_length=2, null=True, default=None) # create a class with these choices in serializers?
     language = models.CharField(choices=[], max_length=2, null=True, default=None)
-    userToken = models.BinaryField()
+    _userToken = models.BinaryField()
     userTokenDek = models.BinaryField()
     userId = models.CharField(max_length=255)
     clientUserId = models.CharField(max_length=255)
@@ -175,12 +178,12 @@ class PlaidUser(models.Model):
             self.userToken = userToken
 
     @property 
-    def accessToken(self):
+    def userToken(self):
         return decrypt(self, "userToken", "userTokenDek", 
                        alias=PLAID_USER_KMS_ALIAS)
     
-    @accessToken.setter
-    def accessToken(self, value):
+    @userToken.setter
+    def userToken(self, value):
         encrypt(self, value.encode("utf-8"), "userToken", 
                 "userTokenDek", alias=PLAID_USER_KMS_ALIAS)
 
@@ -198,9 +201,10 @@ class PlaidItem(models.Model):
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     itemId = models.CharField(max_length=255, unique=True)
-    accessToken = models.BinaryField()
+    _accessToken = models.BinaryField()
     accessTokenDek = models.BinaryField()
     previousRefresh = models.DateTimeField(auto_now=True)
+    previousRefreshSuccess = models.BooleanField(default=True)
     transactionsCursor = models.CharField(max_length=255, null=True, default=None)
 
     class Meta:
@@ -253,14 +257,6 @@ class PlaidItem(models.Model):
         encrypt(self, value.encode("utf-8"), "accessToken", 
                 "accessTokenDek", context_fields=[], 
                 alias=PLAID_ITEM_KMS_ALIAS)
-    
-    def __getitem__(self, key):
-        return getattr(self, key)
-
-    def __setitem__(self, key, value):
-        setattr(self, key, value) 
-
-
 
 class PlaidCashbackTransaction(models.Model):
     user = models.ForeignKey(PlaidItem, on_delete=models.CASCADE)

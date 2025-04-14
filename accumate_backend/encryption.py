@@ -26,9 +26,9 @@ def encrypt(model_instance, value, field_name, dek_field_name,
     # breakpoint()
     dek = generate_dek()
     data_blob = encrypt_data(dek, value)
-    model_instance.__dict__[f"_{field_name}"] = data_blob
+    object.__setattr__(model_instance, f"_{field_name}", data_blob)
     encrypted_dek = encrypt_dek(dek, alias)
-    model_instance.__dict__[dek_field_name] = encrypted_dek
+    object.__setattr__(model_instance, dek_field_name, encrypted_dek)
 
 def parse_data_blob(data_blob):
     iv = data_blob[:12]
@@ -53,7 +53,7 @@ def decrypt(model_instance, field_name, dek_field_name,
     # breakpoint()
     data_blob = model_instance.__dict__[f"_{field_name}"]
     iv, tag, data_ciphertext = parse_data_blob(data_blob)
-    dek = decrypt_dek(model_instance[dek_field_name])
+    dek = decrypt_dek(model_instance.__dict__[dek_field_name])
     data = decrypt_data(dek, iv, tag, data_ciphertext)
     return data.decode("utf-8")
 

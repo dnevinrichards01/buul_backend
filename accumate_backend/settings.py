@@ -34,6 +34,8 @@ EMAIL_HOST = "smtp.gmail.com"
 email_cred_dict = json.loads(env("EMAIL_CREDENTIALS"))
 EMAIL_HOST_USER = email_cred_dict["EMAIL_HOST_USER"]
 EMAIL_HOST_PASSWORD = email_cred_dict["EMAIL_HOST_PASSWORD"]
+NOTIFICATIONS_EMAIL = email_cred_dict["NOTIFICATIONS_EMAIL"]
+SENDGRID_API_KEY = email_cred_dict["SENDGRID_API_KEY"]
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -232,6 +234,7 @@ RH_REFRESH_KMS_ALIAS = env("RH_REFRESH_KMS_ALIAS", default="")
 PLAID_ITEM_KMS_ALIAS = env("PLAID_ITEM_KMS_ALIAS", default="")
 PLAID_USER_KMS_ALIAS = env("PLAID_USER_KMS_ALIAS", default="")
 USER_PII_KMS_ALIAS = env("USER_PII_KMS_ALIAS", default="")
+
 
 anonymize_user_hmac_key_dict = json.loads(env("ANONYMIZE_USER_HMAC_KEY"))
 ANONYMIZE_USER_HMAC_KEY = anonymize_user_hmac_key_dict["ANONYMIZE_USER_HMAC_KEY"]

@@ -12,15 +12,15 @@ import hashlib
 class UserRobinhoodInfo(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     token_type = models.CharField(max_length=255) 
-    access_token = models.BinaryField()
+    _access_token = models.BinaryField()
     access_token_dek = models.BinaryField()
-    refresh_token = models.BinaryField()
+    _refresh_token = models.BinaryField()
     refresh_token_dek = models.BinaryField()
-    device_token = models.BinaryField()
+    _device_token = models.BinaryField()
     device_token_dek = models.BinaryField()
     issued_time = models.DateTimeField(default=now)
-    # adding this in a later migration, so need to make it nullable for hypothetical existing rows...
-    expiration_time = models.DateTimeField(null=True) 
+    expiration_time = models.DateTimeField() 
+    previousRefreshSuccess = models.BooleanField(default=True)
 
     def refresh(self):
         from robin_stocks.robinhood import refresh, create_session
@@ -70,15 +70,10 @@ class UserRobinhoodInfo(models.Model):
         encrypt(self, value.encode("utf-8"), "device_token", 
                 "device_token_dek", context_fields=[], 
                 alias=RH_REFRESH_KMS_ALIAS)
-    
-    def __getitem__(self, key):
-        return getattr(self, key)
-
-    def __setitem__(self, key, value):
-        setattr(self, key, value) 
 
 class LogAnon(models.Model):
     name = models.CharField()
+    method = models.CharField()
     user = models.CharField(default=None, null=True)
     date = models.DateTimeField(auto_now=True)
     errors = models.JSONField(default=None, null=True)
@@ -93,6 +88,7 @@ class LogAnon(models.Model):
         ]
 class Log(models.Model):
     name = models.CharField()
+    method = models.CharField()
     user = models.ForeignKey(User, default=None, null=True, 
                              on_delete=models.DO_NOTHING, related_name='rh_logs')
     date = models.DateTimeField(auto_now=True)
@@ -127,6 +123,7 @@ class Log(models.Model):
 
         log_anonymized = LogAnon(
             name = self.name,
+            method = self.method,
             user = user_hmac,
             date = self.date,
             errors = self.errors,

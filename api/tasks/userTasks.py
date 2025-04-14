@@ -4,6 +4,9 @@ from ..plaid_client import plaid_client
 # from ..twilio_client import twilio_client
 from django.core.cache import cache 
 from django.core.mail import send_mail
+from api.sendgrid_client import sendgrid_client
+from sendgrid.helpers.mail import Mail
+from accumate_backend.settings import NOTIFICATIONS_EMAIL
 import re
 from django.utils import timezone
 
@@ -73,7 +76,7 @@ def plaid_item_public_tokens_exchange(**kwargs):
             plaidUser = PlaidUser.objects.get(user__id=uid) # make sure we have a user
 
             plaidItem = PlaidItem(user=plaidUser.user)
-            plaidItem.accessToken = serializer.validated_data["new_access_token"]
+            plaidItem.accessToken = serializer.validated_data["access_token"]
             plaidItem.itemId = validated_data['item_id']
             plaidItem.save()
 
@@ -389,16 +392,31 @@ def accumate_user_remove(uid, code, ignore_plaid_delete=False):
         )
         return f"cached accumate user remove error: {str(e)}"
 
+
+
+
+
 @shared_task(name="send_verification_code")
 def send_verification_code(**kwargs):
     if kwargs["useEmail"]:
-        send_mail(
-            "Accumate verification code",
-            f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}.\nIf you didn't request this code, please ignore this email.",
-            "accumate-verify@accumatewealth.com",
-            [kwargs["sendTo"]],
-            fail_silently=False,
+        message = Mail(
+            from_email=NOTIFICATIONS_EMAIL,
+            to_emails=kwargs["sendTo"],
+            subject="Buul verification code",
+            html_content=f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}.\nIf you didn't request this code, please ignore this email.",
         )
+        try:
+            response = sendgrid_client.send(message)
+            return response.status_code
+        except Exception as e:
+            return f"error: {str(e)}"
+        # send_mail(
+        #     "Accumate verification code",
+        #     f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}.\nIf you didn't request this code, please ignore this email.",
+        #     "accumate-verify@accumatewealth.com",
+        #     [kwargs["sendTo"]],
+        #     fail_silently=False,
+        # )
     else:
         return
         # twilio_client.messages.create(
@@ -410,15 +428,19 @@ def send_verification_code(**kwargs):
 @shared_task(name="send_forgot_email")
 def send_forgot_email(**kwargs):
     if kwargs["useEmail"]:
-        send_mail(
-            "Accumate Email Verification",
-            f"We were asked to send an email to this address to remind you that " + \
-            "you have an Accumate account registered with this email. \nIf you " + \
-            "didn't request this email, please ignore this.",
-            "accumate-verify@accumatewealth.com",
-            [kwargs["sendTo"]],
-            fail_silently=False,
+        message = Mail(
+            from_email=NOTIFICATIONS_EMAIL,
+            to_emails=kwargs["sendTo"],
+            subject="Buul Email Verification",
+            html_content=f"We were asked to send an email to this address to remind you that " + \
+                "you have an Buul account registered with this email. \nIf you " + \
+                "didn't request this email, please ignore this.",
         )
+        try:
+            response = sendgrid_client.send(message)
+            return response.status_code
+        except Exception as e:
+            return f"error: {str(e)}"
     else:
         return
         # twilio_client.messages.create(
@@ -489,6 +511,44 @@ def modify_task_result(sender, instance, **kwargs):
         instance.task_args = f'{{"uid": UUID({uuid}), ' + json.dumps(task_args)[1:]
     except:
         instance.task_args = instance.task_args
+
+
+
+@shared_task(name="plaid_access_token_refresh")
+def plaid_access_token_refresh(plaid_item_id):
+    #ApiException, ValidationError
+    try:
+        plaidItem = PlaidItem.objects.get(id=plaid_item_id)
+        request = ItemAccessTokenInvalidateRequest(plaidItem.accessToken)
+        exchange_response = plaid_client.item_access_token_invalidate(request)
+        serializer = ItemAccessTokenInvalidateResponseSerializer(
+            data=exchange_response.to_dict()
+        )
+        serializer.is_valid(raise_exception=True)
+        plaidItem.accessToken = serializer.validated_data["new_access_token"]
+        plaidItem.previousRefresh = timezone.now()
+        plaidItem.previousRefreshSuccess = True
+        plaidItem.save()
+    # log this?
+    # except ApiException as e:
+    #     return 
+    # except ValidationError as e:
+    #     return
+    except Exception as e:
+        plaidItem = PlaidItem.objects.get(id=plaid_item_id)
+        plaidItem.previousRefreshSuccess = False
+
+@shared_task(name="plaid_access_token_refresh_all")
+def plaid_access_token_refresh_all():
+    plaidItems = PlaidItem.objects.all()
+    for plaidItem in plaidItems:
+        plaid_access_token_refresh(plaidItem.id)
+
+
+
+
+
+
 
 
 

@@ -63,10 +63,12 @@ def refresh(session, uid, expiresIn=86400, scope='internal'):
     try:
         data = request_post(url, session, payload=payload, jsonify_data=False)
         if data.status_code not in [200, 201, 202, 204]:
-            Exception(f"could not make refresh request: {e}")
+            raise Exception("could not refresh token")
         data = data.json()
     except Exception as e:
-        raise Exception(f"could not make refresh request: {e}")
+        brokerageInfo.previousRefreshSuccess = False
+        brokerageInfo.save()
+        return
     
     save_cred(data, payload, uid, session)
     
@@ -87,6 +89,7 @@ def save_cred(data, payload, uid, session):
             brokerageInfo.refresh_token = data['refresh_token']
             brokerageInfo.device_token = payload['device_token']
             brokerageInfo.expiration_time = now() + timedelta(seconds=data['expires_in'])
+            brokerageInfo.previousRefreshSuccess = True
             brokerageInfo.save()
         except Exception as e:
             User = apps.get_model("api", "User")

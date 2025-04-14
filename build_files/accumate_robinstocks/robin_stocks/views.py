@@ -37,8 +37,8 @@ class ConnectRobinhoodView(APIView):
                 "username": serializer.validated_data["username"],
                 "password": serializer.validated_data["password"],
                 "mfa_code": serializer.validated_data.get("app", None),
-                "device_approval": serializer.validated_data("prompt", None),
-                "challenge_code": serializer.validated_data("sms", None)
+                "device_approval": serializer.validated_data.get("prompt", None),
+                "challenge_code": serializer.validated_data.get("sms", None)
             }
         )
 
