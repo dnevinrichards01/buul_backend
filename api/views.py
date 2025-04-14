@@ -30,6 +30,8 @@ from robin_stocks.models import UserRobinhoodInfo
 
 import secrets 
 
+from accumate_backend.settings import LOAD_BALANCER_ENDPOINT
+
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .serializers.accumateAccountSerializers import MyTokenObtainPairSerializer
 import bcrypt 
@@ -520,7 +522,7 @@ class PlaidLinkTokenCreate(APIView):
             "transactions": {
                 "days_requested": 100
             },
-            "webhook": "https://accumate-backend-load-balancer.link/" + "api/plaid/itemwebhook/",
+            "webhook": f"https://{LOAD_BALANCER_ENDPOINT}/" + "api/plaid/itemwebhook/",
             "country_codes": ["US"],
             "language": "en",
             "enable_multi_item_link": True,

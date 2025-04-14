@@ -29,6 +29,7 @@ DEBUG = env("DEBUG", default=False)
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
+LOAD_BALANCER_ENDPOINT = env("LOAD_BALANCER_ENDPOINT", default="")
 
 EMAIL_HOST = "smtp.gmail.com"
 email_cred_dict = json.loads(env("EMAIL_CREDENTIALS"))
