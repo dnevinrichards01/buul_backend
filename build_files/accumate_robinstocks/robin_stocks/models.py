@@ -90,7 +90,7 @@ class Log(models.Model):
     name = models.CharField()
     method = models.CharField()
     user = models.ForeignKey(User, default=None, null=True, 
-                             on_delete=models.DO_NOTHING, related_name='rh_logs')
+                             on_delete=models.SET_NULL, related_name='rh_logs')
     date = models.DateTimeField(auto_now=True)
     errors = models.JSONField(default=None, null=True)
     state = models.CharField()
