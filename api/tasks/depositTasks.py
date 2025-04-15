@@ -25,6 +25,12 @@ from ..serializers.PlaidSerializers.balanceSerializers import \
 # refreshed access token but are using the old one here. 
 # but not this one, retry the whole chain - for idempotency... 
 
+
+# maybe form a group of cashback if it is more than 3 dollars and over a month old
+# or if it is over 30
+# and if
+
+
 # plaid deposit 
 
 @shared_task(name="rh_deposit_funds_to_robinhood_account")

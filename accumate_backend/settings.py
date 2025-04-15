@@ -27,7 +27,8 @@ SECRET_KEY = env("SECRET_KEY", default="change_me")
 DEBUG = env("DEBUG", default=False)  
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
-# DOMAIN = "127.0.0.1:8000"
+
+LOAD_BALANCER_ENDPOINT = env("LOAD_BALANCER_ENDPOINT", default="")
 
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_HOST_USER = "notifications@bu-ul.com"

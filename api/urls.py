@@ -18,6 +18,8 @@ urlpatterns = [
     # fetch account info 
     path('user/getuserinfo/', views.GetUserInfo.as_view(), name='get_user_info'),
     path('user/getstockgraphdata/', views.StockGraphData.as_view(), name='get_stock_graph_data'),
+    path('user/getspendingrecommendations/', views.GetSpendingRecommendations.as_view(), name='get_spending_recommendations'),
+    
 
     # update info
     path('user/resetpassword/', views.ResetPassword.as_view(), name='reset_password'),

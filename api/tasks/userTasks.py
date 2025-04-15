@@ -516,6 +516,8 @@ def modify_task_result(sender, instance, **kwargs):
 
 @shared_task(name="plaid_access_token_refresh")
 def plaid_access_token_refresh(plaid_item_id):
+    import pdb
+    breakpoint()
     #ApiException, ValidationError
     try:
         plaidItem = PlaidItem.objects.get(id=plaid_item_id)

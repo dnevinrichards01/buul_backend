@@ -71,7 +71,7 @@ class Log(models.Model):
     name = models.CharField()
     method = models.CharField()
     user = models.ForeignKey(User, default=None, null=True, 
-                             on_delete=models.DO_NOTHING, related_name='api_logs')
+                             on_delete=models.SET_NULL, related_name='api_logs')
     date = models.DateTimeField(auto_now=True)
     errors = models.JSONField(default=None, null=True)
     state = models.CharField()
@@ -260,14 +260,59 @@ class PlaidItem(models.Model):
                 "accessTokenDek", context_fields=[], 
                 alias=PLAID_ITEM_KMS_ALIAS)
 
+class PlaidPersonalFinanceCategories(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    income = models.FloatField(default=0)
+    transfer_in = models.FloatField(default=0)
+    transfer_out = models.FloatField(default=0)
+    loan_payments = models.FloatField(default=0)
+    bank_fees = models.FloatField(default=0)
+    entertainment = models.FloatField(default=0)
+    food_and_drink = models.FloatField(default=0)
+    general_merchandise = models.FloatField(default=0)
+    home_improvement = models.FloatField(default=0)
+    medical = models.FloatField(default=0)
+    personal_care = models.FloatField(default=0)
+    general_services = models.FloatField(default=0)
+    government_and_non_profit = models.FloatField(default=0)
+    transportation = models.FloatField(default=0)
+    travel = models.FloatField(default=0)
+    rent_and_utilities = models.FloatField(default=0)
+    income = models.FloatField(default=0)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+
+    def __setattr__(self, name, value):
+        return super().__setattr__(name, value)
+
+
+
+class PlaidDeposits(models.Model):
+    deposit_id = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    mask = models.CharField(max_length=4)
+    state = models.CharField(max_length=255)
+    amount = models.FloatField()
+    created_at = models.DateTimeField()
+    invested = models.BooleanField(default=False)
+    # user canceled request state?
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'deposit_id'], name='unique_rh_deposit')
+        ]
+
 class PlaidCashbackTransaction(models.Model):
     user = models.ForeignKey(PlaidItem, on_delete=models.CASCADE)
     account_id = models.CharField(max_length=255)
     transaction_id = models.CharField(max_length=255)
     amount = models.FloatField()
-    # currency = models.CharField(max_length=10)
-    authorized_date =  models.DateTimeField(max_length=255)
-    deposited = models.BooleanField(default=False)
+    pending = models.BooleanField()
+    iso_currency_code = models.CharField(max_length=10)
+    authorized_date =  models.DateField()
+    authorized_datetime =  models.DateTimeField()
+    deposit = models.ForeignKey(PlaidDeposits, on_delete=models.SET_NULL, 
+                                default=None, null=True)
 
     class Meta:
         constraints = [
@@ -277,10 +322,8 @@ class PlaidCashbackTransaction(models.Model):
 class RobinhoodCashbackDeposit(models.Model):
     deposit_id = models.CharField(max_length=255)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    transaction = models.ForeignKey(PlaidCashbackTransaction, on_delete=models.SET_NULL, null=True) # bank transfers
     rh_account_id = models.CharField(max_length=255)
     rh_account_ach = models.CharField(max_length=255)
-    plaid_account_id = models.CharField(max_length=255)
     mask = models.CharField(max_length=4)
     state = models.CharField(max_length=255)
     amount = models.FloatField()
@@ -296,6 +339,37 @@ class RobinhoodCashbackDeposit(models.Model):
             models.UniqueConstraint(fields=['user', 'deposit_id'], name='unique_rh_deposit')
         ]
 
+
+
+class RobinhoodStockOrder(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    deposit = models.ForeignKey(PlaidDeposits, on_delete=models.SET_NULL, 
+                                default=None, null=True)
+    order_id = models.CharField(max_length=255)
+    cancel = models.CharField(max_length=255, null=True)
+    instrument_id = models.CharField(max_length=255) # uid for security!!!!!
+    symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True)
+    state = models.CharField(max_length=255) # 'queued', filled
+    side = models.CharField(max_length=255) # 'buy'
+    quantity = models.FloatField()
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField() # a bit after created_at. check if has changed to see if updated...
+    pending_cancel_open_agent = models.CharField(max_length=255, null=True)
+    requested_amount = models.FloatField()
+    executed_amount = models.FloatField(null=True)
+    user_cancel_request_state = models.CharField(max_length=255) # 'no_cancel_requested', 'order_finalized'
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'order_id'], name='unique_rh_order')
+        ]
+        ordering = ['user', 'updated_at']
+        indexes = [
+            models.Index(fields=['order_id']),
+            models.Index(fields=['user', 'updated_at'])
+        ]
+
+
 class LogAnonInvestments(models.Model):
     user = models.CharField()
     symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True, default=None)
@@ -304,11 +378,13 @@ class LogAnonInvestments(models.Model):
     quantity = models.FloatField()
     buy = models.BooleanField()
 
+
 class Investments(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     # one to one?
     investment_id = models.CharField(max_length=255)
-    deposit = models.ForeignKey(RobinhoodCashbackDeposit, on_delete=models.SET_NULL, null=True)
+    deposit = models.ForeignKey(RobinhoodCashbackDeposit, on_delete=models.SET_NULL)
+    rh = models.ForeignKey(RobinhoodStockOrder, on_delete=models.CASCADE, null=True, default=None)
     symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True, default=None)
     brokerage = models.CharField(choices=BROKERAGE_CHOICES, max_length=255, null=True, default=None)
     quantity = models.FloatField()
@@ -351,32 +427,7 @@ class Investments(models.Model):
         )
         logAnonInvestments.save()
 
-class RobinhoodStockOrder(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    deposit = models.ForeignKey(RobinhoodCashbackDeposit, on_delete=models.SET_NULL, null=True)
-    order_id = models.CharField(max_length=255)
-    cancel = models.CharField(max_length=255, null=True)
-    instrument_id = models.CharField(max_length=255) # uid for security!!!!!
-    symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True)
-    state = models.CharField(max_length=255) # 'queued', filled
-    side = models.CharField(max_length=255) # 'buy'
-    quantity = models.FloatField()
-    created_at = models.DateTimeField()
-    updated_at = models.DateTimeField() # a bit after created_at. check if has changed to see if updated...
-    pending_cancel_open_agent = models.CharField(max_length=255, null=True)
-    requested_amount = models.FloatField()
-    executed_amount = models.FloatField(null=True)
-    user_cancel_request_state = models.CharField(max_length=255) # 'no_cancel_requested', 'order_finalized'
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'order_id'], name='unique_rh_order')
-        ]
-        ordering = ['user', 'updated_at']
-        indexes = [
-            models.Index(fields=['order_id']),
-            models.Index(fields=['user', 'updated_at'])
-        ]
 
 
 

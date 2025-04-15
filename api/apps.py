@@ -28,6 +28,13 @@ class ApiConfig(AppConfig):
                 day_of_month="*",
                 month_of_year="*"
             )
+            crontab_weekly, _ = CrontabSchedule.objects.get_or_create(
+                minute=0,
+                hour=0,
+                day_of_week=1,
+                day_of_month="*",
+                month_of_year="*"
+            )
 
             tasks = {
                 "refresh_stock_data_by_interval": {
@@ -44,7 +51,13 @@ class ApiConfig(AppConfig):
                     "kwargs": json.dumps({}),
                     "crontab": crontab_daily,
                     "task_type": "userTasks"
+                },
+                "all_users_spending_by_category": {
+                    "kwargs": json.dumps({}),
+                    "crontab": crontab_weekly,
+                    "task_type": "transactionsTasks"
                 }
+                
             }
 
             for task_name in tasks:
