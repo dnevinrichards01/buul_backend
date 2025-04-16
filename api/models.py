@@ -16,19 +16,19 @@ import hashlib
 
 # Create your models here.
 
-SYMBOL_CHOICES = [
-    ('VOO', 'VOO'),
-    ('VOOG', 'VOOG'),
-    ('QQQ', 'QQQ'),
-    ('IBIT', 'IBIT')
-]
+# SYMBOL_CHOICES = [
+#     ('VOO', 'VOO'),
+#     ('VOOG', 'VOOG'),
+#     ('QQQ', 'QQQ'),
+#     ('IBIT', 'IBIT')
+# ]
 
-BROKERAGE_CHOICES = [
-    ('robinhood', 'robinhood'),
-    ('webull', 'webull'),
-    ('charles_schwab', 'charles_schwab'),
-    ('fidelity', 'fidelity')
-]
+# BROKERAGE_CHOICES = [
+#     ('robinhood', 'robinhood'),
+#     ('webull', 'webull'),
+#     ('charles_schwab', 'charles_schwab'),
+#     ('fidelity', 'fidelity')
+# ]
 
 class User(AbstractUser):
     # if we must encrypt we can encrypt but have prefix. 
@@ -123,8 +123,8 @@ class WaitlistEmail(models.Model):
 
 class UserBrokerageInfo(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
-    brokerage = models.CharField(choices=BROKERAGE_CHOICES, max_length=255, null=True, default=None)
-    symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True, default=None)
+    brokerage = models.CharField(max_length=255, null=True, default=None)
+    symbol = models.CharField(max_length=255, null=True, default=None)
 
 # need to create this sometime
 class UserInvestmentGraph(models.Model):
@@ -287,7 +287,7 @@ class PlaidPersonalFinanceCategories(models.Model):
 
 
 
-class PlaidDeposits(models.Model):
+class Deposits(models.Model):
     deposit_id = models.CharField(max_length=255)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     mask = models.CharField(max_length=4)
@@ -299,7 +299,7 @@ class PlaidDeposits(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['user', 'deposit_id'], name='unique_rh_deposit')
+            models.UniqueConstraint(fields=['user', 'deposit_id'], name='unique_deposit')
         ]
 
 class PlaidCashbackTransaction(models.Model):
@@ -311,7 +311,7 @@ class PlaidCashbackTransaction(models.Model):
     iso_currency_code = models.CharField(max_length=10)
     authorized_date =  models.DateField()
     authorized_datetime =  models.DateTimeField()
-    deposit = models.ForeignKey(PlaidDeposits, on_delete=models.SET_NULL, 
+    deposit = models.ForeignKey(Deposits, on_delete=models.SET_NULL, 
                                 default=None, null=True)
 
     class Meta:
@@ -343,12 +343,12 @@ class RobinhoodCashbackDeposit(models.Model):
 
 class RobinhoodStockOrder(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    deposit = models.ForeignKey(PlaidDeposits, on_delete=models.SET_NULL, 
+    deposit = models.ForeignKey(Deposits, on_delete=models.SET_NULL, 
                                 default=None, null=True)
     order_id = models.CharField(max_length=255)
     cancel = models.CharField(max_length=255, null=True)
     instrument_id = models.CharField(max_length=255) # uid for security!!!!!
-    symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True)
+    symbol = models.CharField(max_length=255, null=True)
     state = models.CharField(max_length=255) # 'queued', filled
     side = models.CharField(max_length=255) # 'buy'
     quantity = models.FloatField()
@@ -372,8 +372,8 @@ class RobinhoodStockOrder(models.Model):
 
 class LogAnonInvestments(models.Model):
     user = models.CharField()
-    symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True, default=None)
-    brokerage = models.CharField(choices=BROKERAGE_CHOICES, max_length=255, null=True, default=None)
+    symbol = models.CharField(max_length=255, null=True, default=None)
+    brokerage = models.CharField(max_length=255, null=True, default=None)
     date = models.DateField()
     quantity = models.FloatField()
     buy = models.BooleanField()
@@ -382,11 +382,9 @@ class LogAnonInvestments(models.Model):
 class Investments(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     # one to one?
-    investment_id = models.CharField(max_length=255)
-    deposit = models.ForeignKey(RobinhoodCashbackDeposit, on_delete=models.SET_NULL)
+    deposit = models.ForeignKey(Deposits, on_delete=models.SET_NULL, null=True)
     rh = models.ForeignKey(RobinhoodStockOrder, on_delete=models.CASCADE, null=True, default=None)
-    symbol = models.CharField(choices=SYMBOL_CHOICES, max_length=255, null=True, default=None)
-    brokerage = models.CharField(choices=BROKERAGE_CHOICES, max_length=255, null=True, default=None)
+    symbol = models.CharField(max_length=255, null=True, default=None)
     quantity = models.FloatField()
     cumulative_quantities = models.JSONField(default=dict)
     date = models.DateTimeField()
@@ -395,13 +393,12 @@ class Investments(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'investment_id', 'brokerage', 'buy'], 
+                fields=['deposit', 'buy'], 
                 name='unique_investment'
             )
         ]
         ordering = ['user', 'date']
         indexes = [
-            models.Index(fields=['investment_id']),
             models.Index(fields=['user', 'date'])
         ]
     

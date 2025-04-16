@@ -1,6 +1,6 @@
 # from django.contrib.auth.models import User
 from rest_framework import serializers
-from ..models import WaitlistEmail, User, BROKERAGE_CHOICES, SYMBOL_CHOICES
+from ..models import WaitlistEmail, User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, \
     TokenRefreshSerializer
 from django.core.validators import validate_email
@@ -106,8 +106,8 @@ class VerificationCodeResponseSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     phone_number = serializers.CharField(required=False, validators=[e164_phone_number_validator])
     full_name = serializers.CharField(required=False)
-    brokerage = serializers.ChoiceField(required=False, choices=BROKERAGE_CHOICES)
-    symbol = serializers.ChoiceField(required=False, choices=SYMBOL_CHOICES)
+    brokerage = serializers.CharField(required=False)
+    symbol = serializers.CharField(required=False)
     password = serializers.RegexField(
         regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
         required=False,
@@ -143,8 +143,8 @@ class VerificationCodeRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     phone_number = serializers.CharField(required=False, validators=[e164_phone_number_validator])
     full_name = serializers.CharField(required=False)
-    brokerage = serializers.ChoiceField(required=False, choices=BROKERAGE_CHOICES)
-    symbol = serializers.ChoiceField(required=False, choices=SYMBOL_CHOICES)
+    brokerage = serializers.CharField(required=False)
+    symbol = serializers.CharField(required=False)
     password = serializers.RegexField(
         regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
         required=False,
@@ -178,7 +178,6 @@ class VerificationCodeRequestSerializer(serializers.Serializer):
             raise ValidationError(f"No {attrs['field']} was submitted")
         return attrs
 
-        
 class SendEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
@@ -189,7 +188,6 @@ class DeleteAccountVerifySerializer(serializers.Serializer):
         write_only=True,
         error_messages={"invalid": "The code must consist of 6 digits"}
     )
-
 
 class WaitlistEmailSerializer(serializers.ModelSerializer):
 
@@ -208,5 +206,5 @@ class WaitlistEmailSerializer(serializers.ModelSerializer):
             raise ValidationError()
         
 class UserBrokerageInfoSerializer(serializers.Serializer):
-    brokerage = serializers.ChoiceField(choices=BROKERAGE_CHOICES, required=False)
-    symbol = serializers.ChoiceField(choices=SYMBOL_CHOICES, required=False)
+    brokerage = serializers.CharField(required=False)
+    symbol = serializers.CharField(required=False)
