@@ -274,8 +274,24 @@ def initial_verification_flow(session, uid, device_token:str, mfa_code:str,
     # takes user machine id, returns challenge id and challenge type
     inquiries_url = f"https://api.robinhood.com/pathfinder/inquiries/{user_machine_response['id']}/user_view/"
     inquiries_response = request_get(inquiries_url, session)
-    challenge_id = inquiries_response['type_context']["context"]["sheriff_challenge"]["id"]
-    challenge_type = inquiries_response['type_context']["context"]["sheriff_challenge"]["type"]
+    try:
+        challenge_id = inquiries_response['type_context']["context"]["sheriff_challenge"]["id"]
+        challenge_type = inquiries_response['type_context']["context"]["sheriff_challenge"]["type"]
+    except:
+        if "state_name" in inquiries_response and "Plaid" in inquiries_response["state_name"]:
+            response_format = inquiries_response["state_name"]
+            error_message = "An internal error occurred. If your account is new, " + \
+                "you may need to finish connecting to your bank and uploading " + \
+                "documents. \n\nIf you already have, try waiting a few days or contact Buul."
+        else:
+            response_format = "Unkown response format"
+            error_message = "An internal error occurred. Please log in again or contact Buul."
+        save_error_to_cache(uid, error_message)
+        return {
+            "error": "error", 
+            "success": None,
+            "message": f"{response_format} from pathfinder/inquiries: {inquiries_response}"
+        } 
     # if challenge type is sms, exit now so user can give us the sms code
     if challenge_type == 'sms':
         save_sms_challenge_to_cache(
@@ -308,60 +324,13 @@ def initial_verification_flow(session, uid, device_token:str, mfa_code:str,
     else:
         save_error_to_cache(
             uid, 
-            "An internal error occurred. Please log in again."
+            "An internal error occurred. Please log in again or contact Buul."
         )
         return {
             "error": "error", 
             "success": None,
-            "message": f"Unkown response format from pathfinder/inquiries"
+            "message": f"Unkown response format from pathfinder/inquiries: {inquiries_response}"
         }
-    
-    # respond to challenge
-    challenge_url = f"https://api.robinhood.com/challenge/{challenge_id}/respond/"
-    challenge_response = request_post(challenge_url, session, payload=challenge_payload, json=True)
-
-    # check if challenge response was successful
-    sms_or_app_validated = 'status' in challenge_response and challenge_response["status"] == "validated"
-    if sms_or_app_validated:
-        inquiries_payload = {"sequence":0,"user_input":{"status":"continue"}}
-        inquiries_response = request_post(inquiries_url, session, payload=inquiries_payload, json=True)
-        if inquiries_response["type_context"]["result"] == "workflow_status_approved":
-            return {
-                "error": None,
-                "success": "workflow_status_approved",
-                "message": "workflow_status_approved"
-            }
-        else:
-            save_error_to_cache(
-                uid,
-                "An internal error occurred. Please log in again."
-            )
-            return {
-                "error": "workflow status not approved", 
-                "success": None,
-                "message": "workflow status not approved despite challenge response status validated"
-            }   
-    else:
-        if challenge_type == 'app':
-            save_mfa_challenge_to_cache(
-                uid, 
-                "That MFA code was not correct or expired. Please enter another one."
-            )
-            return {
-                "error": "mfa", 
-                "success": None,
-                "message": "mfa incorrect or missing, response cached"
-            }
-        else:
-            save_error_to_cache(
-                uid,
-                "challenge failed with unexpected challenge_type"
-            )
-            return {
-                "error": f"challenge failed with unexpected challenge_type: {challenge_type}",
-                "success": None,
-                "message": f"challenge failed with unexpected challenge_type: {challenge_type}"
-            }   
 
 def response_verification_flow(session, uid, device_token:str, mfa_code:str, 
                                challenge_code:str):
@@ -449,8 +418,8 @@ def response_verification_flow(session, uid, device_token:str, mfa_code:str,
                 return {
                     "error": "prompt", 
                     "success": None,
-                    "message": "prompt not yet completed"
-                }
+                    "message": "prompt not yet completed" 
+                } 
             else:
                 save_error_to_cache(
                     uid,

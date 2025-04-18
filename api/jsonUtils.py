@@ -6,8 +6,11 @@ def filter_jsons(jsons, eq={}, gt={}, lt={}, lte={}, gte={}, metric_to_return_by
     import pdb
     breakpoint()
 
+    # create pairings of ops, 
+    # and filtersets which describe the attribute and value for the op 
     filter_sets = [eq, gt, lt, lte, gte]
     operations = ["eq", "gt", "lt", "lte", "gte"]
+    # add and validate the custom filters
     for kwarg in kwargs:
         filter = kwargs[kwarg]
         if isinstance(filter, dict) and \
@@ -15,7 +18,7 @@ def filter_jsons(jsons, eq={}, gt={}, lt={}, lte={}, gte={}, metric_to_return_by
             "filter_set" in filter and isinstance(filter["filter_set"], dict) and \
             all((isinstance(key, str) for key in filter["filter_set"].keys())) and \
             all((isinstance(val, list) for val in filter["filter_set"].values())):
-            operations.append(filter["func"])
+            operations.append(filter["func"]) 
             filter_sets.append(filter["filter_set"])
         else:
             return {"error": "kwargs must each be a dict with a function 'func' " + \
@@ -27,21 +30,25 @@ def filter_jsons(jsons, eq={}, gt={}, lt={}, lte={}, gte={}, metric_to_return_by
         filtered_jsons = []
     
     for json in jsons:
-        match = True
+        match = True # use the first match found from BFS
         for filter_set, op in zip(filter_sets, operations):
             for metric in filter_set:
+                # BFS for the desired metric
                 filter_vals = filter_set[metric]
                 try:
                     metric_val = get_nested(json, metric)
                 except Exception as e:
                     return {"error": f"key {metric} not found: {str(e)}"}
+                # check if op(metric, ) matches all of the provided vals
                 for filter_val in filter_vals:
                     try:
-                        if not comparison_operation(metric_val, filter_val, op):
+                        # ALL must match
+                        if not comparison_operation(metric_val, filter_val, op): 
                             match = False
                             break
                     except Exception as e:
                         return {"error": f"comparison operation failed: {str(e)}"}
+                
                 if not match:
                     break
             if not match:

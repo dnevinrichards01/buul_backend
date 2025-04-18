@@ -24,16 +24,10 @@ def refresh_robinhood():
 def login_robinhood(**kwargs):
     import robin_stocks.robinhood as r
     kwargs['session'] = r.create_session()
-    try:
-        res = r.login(**kwargs)
-        if 'access_token' in res:
-            return "access token recieved, result cached"
-        else: 
-            return res
-    except Exception as e:
-        try:
-            return e.args[0]
-        except Exception as e2:
-            return f"{type(e)}: {e.__str__()}"
+    res = r.login(**kwargs)
+    if 'access_token' in res:
+        return "access token recieved, result cached"
+    else: 
+        return res
 
 
