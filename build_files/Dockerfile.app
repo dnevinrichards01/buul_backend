@@ -51,5 +51,9 @@ RUN chmod 775 /var/run/ /run
 RUN chown :www-data /var/run/ /run/
 RUN chown -R www-data: /code/
 RUN setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx
+
+RUN mkdir /var/www/html/.well-known/
+COPY ./conf_files/apple-app-site-association.json /var/www/html/.well-known/apple-app-site-assocation.json
+
 USER www-data
 CMD ["./build_files/entrypoint_app.sh"] 

@@ -520,10 +520,11 @@ class PlaidLinkTokenCreate(APIView):
                 "email_address": user.email
             },
             "client_name": "Buul",
-            "products": ["transactions"],
+            "products": ["transactions", "statements"],
             "transactions": {
                 "days_requested": 100
             },
+            "redirect_uri": f"https://{LOAD_BALANCER_ENDPOINT}/" + "plaid/link/redirect/oauth/",
             "webhook": f"https://{LOAD_BALANCER_ENDPOINT}/" + "api/plaid/itemwebhook/",
             "country_codes": ["US"],
             "language": "en",

@@ -1,0 +1,18 @@
+{
+    "applinks": {
+        "details": [
+            {
+                "appIDs": ["P3LZC9D98G.com.buul.buul"],
+                "components": [
+                    {
+                        "/": "/plaid/link/redirect/*",
+                        "comment": "Redirect OAuth links for Plaid link"
+                    }
+                ]
+            }
+        ]
+    },
+    "webcredentials": {
+        "apps": ["P3LZC9D98G.com.buul.buul"]
+    }
+}

@@ -181,7 +181,6 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
 
 
 
-
 def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
     lt = {"amount": [0]}
@@ -253,7 +252,6 @@ def find_cashback_removed(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}
         except:
             continue
 
-
 def update_transactions(item_id):
     uid = PlaidItem.objects.get(itemId = item_id).user.id
     added, modified, removed = transactions_sync(item_ids={item_id}, 
@@ -269,7 +267,7 @@ def update_transactions(item_id):
     except Exception as e:
         return e
         # some sort of CTE / view made from celery logs
-        
+
 
 def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):

@@ -129,24 +129,25 @@ def plaid_link_token_create(**kwargs):
             products=[Products(val) for val in kwargs['products']], 
             transactions={"days_requested": 100},
             enable_multi_item_link=True,
-            webhook=kwargs["webhook"],
-            account_filters=LinkTokenAccountFilters(
-                depository=DepositoryFilter(
-                    account_subtypes=DepositoryAccountSubtypes(
-                        [
-                            DepositoryAccountSubtype("checking"), 
-                            DepositoryAccountSubtype("savings")
-                        ]
-                    )
-                ),
-                credit=CreditFilter(
-                    account_subtypes=CreditAccountSubtypes(
-                        [
-                            CreditAccountSubtype("credit card")
-                        ]
-                    )
-                )
-            )
+            # redirect_uri=kwargs['redirect_uri'], 
+            webhook=kwargs["webhook"]#,
+            # account_filters=LinkTokenAccountFilters(
+            #     depository=DepositoryFilter(
+            #         account_subtypes=DepositoryAccountSubtypes(
+            #             [
+            #                 DepositoryAccountSubtype("checking"), 
+            #                 DepositoryAccountSubtype("savings")
+            #             ]
+            #         )
+            #     ),
+            #     credit=CreditFilter(
+            #         account_subtypes=CreditAccountSubtypes(
+            #             [
+            #                 CreditAccountSubtype("credit card")
+            #             ]
+            #         )
+            #     )
+            # )
         )
         
         exchange_response = plaid_client.link_token_create(exchange_request)
@@ -451,16 +452,28 @@ def send_forgot_email(**kwargs):
 
 @shared_task(name="send_waitlist_email")
 def send_waitlist_email(**kwargs):
-    send_mail(
-        "You're on the Accumate waitlist!",
-        "We look forward to working with you to maximize your cashback " \
-        "and grow your wealth! Stay tuned for updates. \nIf you would like " \
-        "to unsubscribe, respond to this email address requesting to be taken " \
-        "off. \n\nThank you, \nthe Accumate team",
-        "accumate-verify@accumatewealth.com",
-        [kwargs["sendTo"]],
-        fail_silently=False,
-    )
+    if kwargs["useEmail"]:
+        message = Mail(
+            from_email=NOTIFICATIONS_EMAIL,
+            to_emails=kwargs["sendTo"],
+            subject="You're on the Buul waitlist!",
+            html_content=f"We look forward to working with you to maximize your cashback " \
+                "and grow your wealth! Stay tuned for updates. \nIf you would like " \
+                "to unsubscribe, respond to this email address requesting to be taken " \
+                "off. \n\nThank you, \nthe Accumate team",
+        )
+        try:
+            response = sendgrid_client.send(message)
+            return response.status_code
+        except Exception as e:
+            return f"error: {str(e)}"
+    else:
+        return
+        # twilio_client.messages.create(
+        #     to = kwargs["sendTo"],
+        #     from_ = TWILIO_PHONE_NUMBER,
+        #     body = f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}"
+        # )
 
 
 def format_task_result_kwargs(text):
@@ -481,7 +494,6 @@ def format_task_result_kwargs(text):
         cleaned_text = text
 
     return extracted_uuid, cleaned_text
-
 
 @receiver(pre_save, sender=TaskResult)
 def modify_task_result(sender, instance, **kwargs):
@@ -511,7 +523,6 @@ def modify_task_result(sender, instance, **kwargs):
         instance.task_args = f'{{"uid": UUID({uuid}), ' + json.dumps(task_args)[1:]
     except:
         instance.task_args = instance.task_args
-
 
 
 @shared_task(name="plaid_access_token_refresh")

@@ -54,7 +54,7 @@ def refresh_stock_data_by_interval(symbols=["VOO", "VOOG", "QQQ", "IBIT"],
     else:
         # if this is our first time
         start_date_rounded = FPMUtils.round_date_down(
-            timezone.now() - FPMUtils.get_maximum_range(interval), 
+            timezone.now() - relativedelta(years=5), 
             granularity=interval
         )
 
