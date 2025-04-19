@@ -518,7 +518,7 @@ class PlaidLinkTokenCreate(APIView):
                 "email_address": user.email
             },
             "client_name": "Buul",
-            "products": ["transactions", "statements"],
+            "products": ["transactions"],#, "statements"],
             "transactions": {
                 "days_requested": 100
             },
@@ -538,7 +538,7 @@ class PlaidLinkTokenCreate(APIView):
             error_messages = {}
             for field in e.detail:
                 if len(e.detail[field]) >= 1:
-                    error_messages[field] = e.detail[field][0]
+                    error_messages[field] = e.detail[field]#[0]
             status = 400 
             log(Log, self, status, LogState.ERR_NO_MESSAGE, errors = error_messages)
             return JsonResponse(
