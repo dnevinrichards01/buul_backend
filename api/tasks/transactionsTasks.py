@@ -23,7 +23,8 @@ from plaid.exceptions import ApiException
 
 from..serializers.PlaidSerializers.transactionSerializers import TransactionsSyncResponseSerializer, \
     TransactionsGetResponseSerializer
-from ..models import PlaidItem, User, RobinhoodStockOrder, PlaidCashbackTransaction
+from ..models import PlaidItem, User, RobinhoodStockOrder, PlaidCashbackTransaction, \
+    LogAnonPlaid, PlaidPersonalFinanceCategories
 
 from django.utils import timezone
 from zoneinfo import ZoneInfo

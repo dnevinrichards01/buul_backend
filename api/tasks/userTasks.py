@@ -116,39 +116,55 @@ def plaid_link_token_create(**kwargs):
     uid = kwargs.pop('uid')
     try:
         plaidUser = PlaidUser.objects.get(user__id=uid)
-        exchange_request = LinkTokenCreateRequest(
-            client_name=kwargs["client_name"],
-            language=kwargs['language'],
-            country_codes=[CountryCode(code) for code in kwargs["country_codes"]], 
-            user=LinkTokenCreateRequestUser(
-                client_user_id=plaidUser.clientUserId,  
-                phone_number=kwargs['user']['phone_number'],
-                email_address=kwargs['user']['email_address']
-            ),
-            user_token=plaidUser.userToken,
-            products=[Products(val) for val in kwargs['products']], 
-            transactions={"days_requested": 100},
-            enable_multi_item_link=True,
-            # redirect_uri=kwargs['redirect_uri'], 
-            webhook=kwargs["webhook"]#,
-            # account_filters=LinkTokenAccountFilters(
-            #     depository=DepositoryFilter(
-            #         account_subtypes=DepositoryAccountSubtypes(
-            #             [
-            #                 DepositoryAccountSubtype("checking"), 
-            #                 DepositoryAccountSubtype("savings")
-            #             ]
-            #         )
-            #     ),
-            #     credit=CreditFilter(
-            #         account_subtypes=CreditAccountSubtypes(
-            #             [
-            #                 CreditAccountSubtype("credit card")
-            #             ]
-            #         )
-            #     )
-            # )
-        )
+        exchange_request = {
+            "client_name": kwargs["client_name"],
+            "language": kwargs['language'],
+            "country_codes": [code for code in kwargs["country_codes"]], 
+            "user":  {
+                "client_user_id": plaidUser.clientUserId,  
+                "phone_number": kwargs['user']['phone_number'],
+                "email_address": kwargs['user']['email_address']
+            },
+            "user_token": plaidUser.userToken,
+            "products": [val for val in kwargs['products']], 
+            "transactions": {"days_requested": 100},
+            "enable_multi_item_link": True,
+            "redirect_uri": kwargs['redirect_uri'], 
+            "webhook": kwargs["webhook"]#,
+        }
+        # exchange_request = LinkTokenCreateRequest(
+        #     client_name=kwargs["client_name"],
+        #     language=kwargs['language'],
+        #     country_codes=[CountryCode(code) for code in kwargs["country_codes"]], 
+        #     user=LinkTokenCreateRequestUser(
+        #         client_user_id=plaidUser.clientUserId,  
+        #         phone_number=kwargs['user']['phone_number'],
+        #         email_address=kwargs['user']['email_address']
+        #     ),
+        #     user_token=plaidUser.userToken,
+        #     products=[Products(val) for val in kwargs['products']], 
+        #     transactions={"days_requested": 100},
+        #     enable_multi_item_link=True,
+        #     # redirect_uri=kwargs['redirect_uri'], 
+        #     webhook=kwargs["webhook"]#,
+        #     # account_filters=LinkTokenAccountFilters(
+        #     #     depository=DepositoryFilter(
+        #     #         account_subtypes=DepositoryAccountSubtypes(
+        #     #             [
+        #     #                 DepositoryAccountSubtype("checking"), 
+        #     #                 DepositoryAccountSubtype("savings")
+        #     #             ]
+        #     #         )
+        #     #     ),
+        #     #     credit=CreditFilter(
+        #     #         account_subtypes=CreditAccountSubtypes(
+        #     #             [
+        #     #                 CreditAccountSubtype("credit card")
+        #     #             ]
+        #     #         )
+        #     #     )
+        #     # )
+        # )
         
         exchange_response = plaid_client.link_token_create(exchange_request)
         serializer = LinkTokenCreateResponseSerializer(data={

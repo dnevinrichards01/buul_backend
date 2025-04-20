@@ -81,12 +81,12 @@ class FPMUtils:
             return relativedelta(months=3)
         elif unit == "d":
             return relativedelta(years=1)
-        elif unit == "w":
-            return relativedelta(years=5)
-        elif unit == "M":
-            return relativedelta(years=100)
+        # elif unit == "w":
+        #     return relativedelta(years=5)
+        # elif unit == "M":
+        #     return relativedelta(years=100)
         else:
-            raise ValueError("unit must be from ['m', 'h', 'd', 'w', 'M']")
+            raise ValueError("unit must be from ['m', 'h', 'd']") #"unit must be from ['m', 'h', 'd', 'w', 'M']"
     
     @classmethod
     def no_timezone_to_with_timezone(cls, date_str, interval):

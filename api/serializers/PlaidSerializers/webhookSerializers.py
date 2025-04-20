@@ -3,6 +3,37 @@ from rest_framework import serializers
 from .errorSerializer import ErrorSerializer
 
 # Plaid Webhook Serializer
+
+
+class PlaidSessionFinishedSerializer(serializers.Serializer):
+    webhook_type = serializers.ChoiceField(required=True, choices=["LINK"])
+    webhook_code = serializers.ChoiceField(required=True, choices=["SESSION_FINISHED"])
+    status = serializers.ChoiceField(required=True, choices=["success", "exited"])
+    link_session_id = serializers.CharField(required=True)
+    link_token = serializers.CharField(required=True)
+    public_tokens = serializers.ListField(
+        required=True,
+        child=serializers.CharField(required=True),
+    )
+    environment = serializers.ChoiceField(required=True, choices=["sandbox", "production"])
+
+    def validate(self, attrs):
+        if attrs['status'] not in ["SUCCESS", "success"]:
+            raise serializers.ValidationError("status must be 'SUCCESS' or 'success'")
+        return attrs
+
+class PlaidTransactionSyncUpdatesAvailable(serializers.Serializer):
+    webhook_type = serializers.ChoiceField(required=True, choices=["TRANSACTION"])
+    webhook_code = serializers.ChoiceField(required=True, choices=["SYNC_UPDATES_AVAILABLE"])
+    item_id = serializers.CharField(required=True)
+    initial_update_complete = serializers.BooleanField(required=True)
+    historical_update_complete = serializers.BooleanField(required=True)
+    environment = serializers.ChoiceField(required=True, choices=["sandbox", "production"])
+
+    def validate(self, attrs):
+        return attrs
+    
+
 class WebhookSerializer(serializers.Serializer):
     """
     Serializer for Plaid link webhooks.
@@ -10,24 +41,24 @@ class WebhookSerializer(serializers.Serializer):
     WEBHOOK_TYPES = (
         ('ITEM', 'ITEM'),
         ('TRANSACTIONS', 'TRANSACTIONS'),
-        ('INVESTMENTS_TRANSACTIONS', 'INVESTMENTS_TRANSACTIONS'),
-        ('ASSETS', 'ASSETS'),
-        ('AUTH', 'AUTH'),
-        ('HOLDINGS', 'HOLDINGS'),
-        ('IDENTITY', 'IDENTITY'),
-        ('INCOME', 'INCOME'),
-        ('LIABILITIES', 'LIABILITIES'),
-        ('PAYMENT_INITIATION', 'PAYMENT_INITIATION'),
-        ('TRANSFERS', 'TRANSFERS'),
+        ('LINK', 'LINK')
+    )
+    WEBHOOK_CODES = (
+        ('SESSION_FINISHED', 'SESSION_FINISHED'),
+        ('SYNC_UPDATES_AVAILABLE', 'SYNC_UPDATES_AVAILABLE')
     )
 
     webhook_type = serializers.ChoiceField(
         choices=WEBHOOK_TYPES,
+        required=True,
         help_text="The type of webhook."
     )
-    webhook_code = serializers.CharField(
+    webhook_code = serializers.ChoiceField(
+        choices=WEBHOOK_CODES,
+        required=True,
         help_text="The code representing the webhook event."
     )
+    environment = serializers.ChoiceField(required=True, choices=["sandbox", "production"])
     item_id = serializers.CharField(
         help_text="The ID of the Item associated with the webhook."
     )
@@ -36,34 +67,14 @@ class WebhookSerializer(serializers.Serializer):
         allow_null=True,
         help_text="Error object containing error details, if any."
     )
-    account_ids = serializers.ListField(
-        child=serializers.CharField(),
-        required=False,
-        allow_null=True,
-        help_text="List of account IDs affected by the webhook."
-    )
-    new_transactions = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-        help_text="Number of new transactions available."
-    )
-    removed_transactions = serializers.ListField(
-        child=serializers.CharField(),
-        required=False,
-        allow_null=True,
-        help_text="List of transaction IDs that have been removed."
-    )
-    reset_transactions = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-        help_text="Indicates a reset of transactions."
-    )
-    # Additional fields can be added as needed based on webhook_code
 
     def validate(self, data):
         """
         Custom validation to ensure required fields are present based on webhook_code.
         """
+        webhook_type = data.get('webhook_type')
         webhook_code = data.get('webhook_code')
-        # Add validation logic based on webhook_code if necessary
+        if not (webhook_type == "LINK" and webhook_code == "SESSION_FINISHED") and \
+            not (webhook_type == "TRANSACTION" and webhook_code == "SYNC_UPDATES_AVAILABLE"):
+            raise ValidationError(f"unsupported webhook of type {webhook_type} and code {webhook_code}")
         return data

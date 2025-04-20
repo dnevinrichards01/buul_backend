@@ -15,7 +15,7 @@ from plaid.model.accounts_balance_get_request import AccountsBalanceGetRequest
 from plaid.exceptions import ApiException
 
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \
-    RobinhoodCashbackDeposit, Investments, SYMBOL_CHOICES
+    RobinhoodCashbackDeposit, Investments
 from ..serializers.rhSerializers import GetLinkedBankAccountsResponseSerializer, \
     DepositSerializer, RobinhoodAccountListSerializer
 from ..serializers.PlaidSerializers.balanceSerializers import \
