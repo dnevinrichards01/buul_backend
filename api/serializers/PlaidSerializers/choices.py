@@ -116,7 +116,7 @@ class ProductChoices(Enum):
     RECURRING_TRANSACTIONS = 'recurring_transactions'
     TRANSACTIONS_REFRESH = 'transactions_refresh'
     SIGNAL = 'signal'
-    STATEMENTS = 'statements'
+    # STATEMENTS = 'statements'
     PROCESSOR_PAYMENTS = 'processor_payments'
     PROCESSOR_IDENTITY = 'processor_identity'
     PROFILE = 'profile'

@@ -520,7 +520,7 @@ class PlaidLinkTokenCreate(APIView):
                 "email_address": user.email
             },
             "client_name": "Buul",
-            "products": ["transactions", "statements"],
+            "products": ["transactions"],#, "statements"],
             "transactions": {
                 "days_requested": 100
             },

@@ -309,7 +309,7 @@ class PlaidCashbackTransaction(models.Model):
     amount = models.FloatField()
     pending = models.BooleanField()
     iso_currency_code = models.CharField(max_length=10)
-    authorized_date =  models.DateField()
+    date =  models.DateField()
     authorized_datetime =  models.DateTimeField()
     deposit = models.ForeignKey(Deposits, on_delete=models.SET_NULL, 
                                 default=None, null=True)
