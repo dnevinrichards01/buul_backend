@@ -290,14 +290,16 @@ def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount, force=F
             created_at__gt=timezone.now()-relativedelta(months=1)
         ).aggregate(cumulative_amount=Sum('amount'))
         cumulative_amount = cumulative_amount_query.get('cumulative_amount') or 0
-        if cumulative_amount + amount > 50:
+        if cumulative_amount + amount > limit:
             raise Exception(
                 "Cumulative amount deposited would be > 50. " + \
                 "Set force=True to override this message."
             )
 
     try:
-        result = r.deposit_funds_to_robinhood_account(session, ach_relationship, amount)
+        result = r.deposit_funds_to_robinhood_account(
+            session, ach_relationship, round(amount, 4)
+        )
         serializer = DepositSerializer(data=result)
         serializer.is_valid(raise_exception=True)
     except Exception as e:
@@ -495,12 +497,10 @@ def rhdeposit_to_deposit(sender, instance, **kwargs):
             mask = instance.mask,
             state = instance.state,
             amount = instance.amount,
-            created_at = instance.created_at,
-            investment = instance.investment
+            created_at = instance.created_at
         )
         deposit.save()
     except:
         deposit = Deposit.objects.get(user = instance.user, rh = instance)
-        deposit.investment = instance.investment
         deposit.state = instance.state
         deposit.save()
