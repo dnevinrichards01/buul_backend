@@ -54,7 +54,7 @@ class AccountBalancesSerializer(serializers.Serializer):
     limit = serializers.FloatField(
         allow_null=True,
         help_text="For credit-type accounts, the credit limit.",
-        required=False
+        required=False,
     )
     iso_currency_code = serializers.CharField(
         allow_null=True,

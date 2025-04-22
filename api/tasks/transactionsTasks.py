@@ -45,13 +45,14 @@ def transactions_sync(uid=None, item_ids={}, update_cursor=False, page_size=100)
     # breakpoint()
 
     if item_ids:
-        plaidItems = PlaidItem.objects.filter(id__in=item_ids)
+        plaidItems = PlaidItem.objects.filter(itemId__in=item_ids)
     elif uid:
         plaidItems = PlaidItem.objects.filter(user__id=uid)
     else:
         raise Exception("Must enter at least one of uid and item_ids")
         
     try:
+        # eventually both prevent duplicate items, and filter out duplicate accounts here
         transactions_sync_by_item = {}
         for plaidItem in plaidItems:
             hasMore = True
@@ -120,16 +121,19 @@ def is_cashback(name):
     pattern = '|'.join(map(re.escape, cashback_names + cashback_keywords))  # Escape substrings to handle special characters
     return re.search(pattern, name) is not None
 
+@shared_task(name="find_cashback_added")
 def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
     lt = {"amount": [0]}
-    is_cashback_name = {
-        "func": lambda name, bool: is_cashback(name) == bool,
-        "filter_set": {"name" : [True]}
-    }
+    # is_cashback_name = {
+    #     "func": lambda name, bool: is_cashback(name) == bool,
+    #     "filter_set": {"name" : [True]}
+    # }
     cashback_candidates = filter_jsons(transactions, eq=eq, gt=gt, lt=lt, lte=lte, 
-                        gte=gte, metric_to_return_by=metric_to_return_by, 
-                        is_cashback=is_cashback_name)
+                        gte=gte, metric_to_return_by=metric_to_return_by)#, 
+                        # is_cashback=is_cashback_name)
+    if isinstance(cashback_candidates, str):
+        raise Exception(cashback_candidates)
     all_cashback = []
     for cashback in cashback_candidates:
         plaidCashbackTransaction = PlaidCashbackTransaction(
@@ -139,7 +143,9 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
             amount = cashback["amount"],
             pending = cashback["pending"],
             authorized_date = cashback["authorized_date"],
-            authorized_datetime = cashback["date"], 
+            authorized_datetime = cashback["authorized_datetime"], 
+            date = cashback["date"],
+            name = cashback["name"],
             iso_currency_code = cashback["iso_currency_code"]
         )
         all_cashback.append(plaidCashbackTransaction)
@@ -158,7 +164,9 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
                     amount = cashback["amount"],
                     pending = cashback["pending"],
                     authorized_date = cashback["authorized_date"],
-                    authorized_datetime = cashback["date"], 
+                    authorized_datetime = cashback["authorized_datetime"], 
+                    date = cashback["date"],
+                    name = cashback["name"],
                     iso_currency_code = cashback["iso_currency_code"]
                 )
                 plaidCashbackTransaction.save()
@@ -172,25 +180,26 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
                 plaidCashbackTransaction.amount = cashback["amount"]
                 plaidCashbackTransaction.pending = cashback["pending"]
                 plaidCashbackTransaction.authorized_date = cashback["authorized_date"]
-                plaidCashbackTransaction.authorized_datetime = cashback["date"]
+                plaidCashbackTransaction.authorized_datetime = cashback["authorized_datetime"]
+                plaidCashbackTransaction.date = cashback["date"]
+                plaidCashbackTransaction.name = cashback["name"]
                 plaidCashbackTransaction.iso_currency_code = cashback["iso_currency_code"]
                 plaidCashbackTransaction.save()
 
                 # xact x deposit, deposit connected to investment
                 # something to mark any deposits or investments 
 
-
-
+@shared_task(name="find_cashback_modified")
 def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
     lt = {"amount": [0]}
-    is_cashback_name = {
-        "func": lambda name, bool: is_cashback(name) == bool,
-        "filter_set": {"name" : [True]}
-    }
+    # is_cashback_name = {
+    #     "func": lambda name, bool: is_cashback(name) == bool,
+    #     "filter_set": {"name" : [True]}
+    # }
     cashback_candidates = filter_jsons(transactions, eq=eq, gt=gt, lt=lt, lte=lte, 
-                        gte=gte, metric_to_return_by=metric_to_return_by, 
-                        is_cashback=is_cashback_name)
+                        gte=gte, metric_to_return_by=metric_to_return_by)#, 
+                        # is_cashback=is_cashback_name)
     to_create = []
     to_update = []
     for cashback in cashback_candidates:
@@ -203,7 +212,8 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
             plaidCashbackTransaction.amount = cashback["amount"]
             plaidCashbackTransaction.pending = cashback["pending"]
             plaidCashbackTransaction.authorized_date = cashback["authorized_date"]
-            plaidCashbackTransaction.authorized_datetime = cashback["date"]
+            plaidCashbackTransaction.authorized_datetime = cashback["authorized_datetime"]
+            plaidCashbackTransaction.date = cashback["date"]
             plaidCashbackTransaction.iso_currency_code = cashback["iso_currency_code"]
             to_create.append(plaidCashbackTransaction)
 
@@ -216,8 +226,10 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
                 account_id = cashback["account_id"],
                 amount = cashback["amount"],
                 pending = cashback["pending"],
+                date = cashback["date"],
                 authorized_date = cashback["authorized_date"],
-                authorized_datetime = cashback["date"], 
+                authorized_datetime = cashback["datetime"], 
+                name = cashback["name"],
                 iso_currency_code = cashback["iso_currency_code"]
             )
             to_update.append(plaidCashbackTransaction)
@@ -229,16 +241,17 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
          batch_size=100
     )
 
+@shared_task(name="find_cashback_removed")
 def find_cashback_removed(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
     lt = {"amount": [0]}
-    is_cashback_name = {
-        "func": lambda name, bool: is_cashback(name) == bool,
-        "filter_set": {"name" : [True]}
-    }
+    # is_cashback_name = {
+    #     "func": lambda name, bool: is_cashback(name) == bool,
+    #     "filter_set": {"name" : [True]}
+    # }
     cashback_candidates = filter_jsons(transactions, eq=eq, gt=gt, lt=lt, lte=lte, 
-                        gte=gte, metric_to_return_by=metric_to_return_by, 
-                        is_cashback=is_cashback_name)
+                        gte=gte, metric_to_return_by=metric_to_return_by)#, 
+                        # is_cashback=is_cashback_name)
     for cashback in cashback_candidates:
         try:
             plaidCashbackTransaction = PlaidCashbackTransaction.objects.get(
@@ -246,79 +259,29 @@ def find_cashback_removed(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}
                 transaction_id = cashback["transaction_id"],
                 account_id = cashback["account_id"]
             )
-            plaidCashbackTransaction.delete()
-
-            # something to mark any deposits or investments 
+            if not plaidCashbackTransaction.deposit:
+                plaidCashbackTransaction.delete()
+            # else: 
+                # something to mark any deposits or investments 
         except:
             continue
 
+@shared_task(name="update_transactions")
 def update_transactions(item_id):
-    uid = PlaidItem.objects.get(itemId = item_id).user.id
-    added, modified, removed = transactions_sync(item_ids={item_id}, 
-                                                 update_cursor=True)
+    item = PlaidItem.objects.get(itemId = item_id)
+    uid = item.user.id
+    cursor = item.transactionsCursor
     try:
-        chain(
-            find_cashback_added.s(uid, added),
-            group(
-                find_cashback_modified.s(uid, modified),
-                find_cashback_removed.s(uid, removed)
-            )
-        )()
+        added, modified, removed = transactions_sync(
+            item_ids={item_id}, update_cursor=True
+        )
+        find_cashback_added(uid, added)
+        find_cashback_modified(uid, modified)
+        find_cashback_removed(uid, removed)
     except Exception as e:
+        item.transactionsCursor = cursor
         return e
         # some sort of CTE / view made from celery logs
-
-
-def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
-                        metric_to_return_by=None):
-    lt = {"amount": [0]}
-    is_cashback_name = {
-        "func": lambda name, bool: is_cashback(name) == bool,
-        "filter_set": {"name" : [True]}
-    }
-    cashback_candidates = filter_jsons(transactions, eq=eq, gt=gt, lt=lt, lte=lte, 
-                        gte=gte, metric_to_return_by=metric_to_return_by, 
-                        is_cashback=is_cashback_name)
-    to_create = []
-    to_update = []
-    for cashback in cashback_candidates:
-        try:
-            plaidCashbackTransaction = PlaidCashbackTransaction(
-                user = User.objects.get(id=uid),
-                transaction_id = cashback["transaction_id"],
-                account_id = cashback["account_id"],
-                amount = cashback["amount"],
-                pending = cashback["pending"],
-                authorized_date = cashback["authorized_date"],
-                authorized_datetime = cashback["date"], 
-                iso_currency_code = cashback["iso_currency_code"]
-            )
-            to_update.append(plaidCashbackTransaction)
-
-            
-        except:
-            plaidCashbackTransaction = PlaidCashbackTransaction.objects.get(
-                user = User.objects.get(id=uid),
-                transaction_id = cashback["transaction_id"],
-                account_id = cashback["account_id"]
-            )
-            plaidCashbackTransaction.amount = cashback["amount"]
-            plaidCashbackTransaction.pending = cashback["pending"]
-            plaidCashbackTransaction.authorized_date = cashback["authorized_date"]
-            plaidCashbackTransaction.authorized_datetime = cashback["date"]
-            plaidCashbackTransaction.iso_currency_code = cashback["iso_currency_code"]
-            to_create.append(plaidCashbackTransaction)
-
-            # xact x deposit, deposit connected to investment
-            # something to mark any deposits or investments 
-            
-    PlaidCashbackTransaction.objects.bulk_create(to_create, batch_size=100)
-    PlaidCashbackTransaction.objects.bulk_update(
-        to_update, 
-        ["amount", "iso_currency_code", "pending", "authorized_date", 
-         "authorized_datetime", "date"],
-         batch_size=100
-    )
 
 
 # spending by category

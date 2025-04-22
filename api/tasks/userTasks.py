@@ -286,14 +286,14 @@ def plaid_user_create(**kwargs):
             timeout=120
         )
         return f"cached plaid user create error: {error.get("error_code")}"
-    except Exception as e:
-        cache.delete(f"uid_{uid}_plaid_user_create")
-        cache.set(
-            f"uid_{uid}_plaid_user_create",
-            json.dumps({"success": None, "error": str(type(e))}), 
-            timeout=120
-        )
-        return f"cached plaid user create error: {str(type(e))}"
+    # except Exception as e:
+    #     cache.delete(f"uid_{uid}_plaid_user_create")
+    #     cache.set(
+    #         f"uid_{uid}_plaid_user_create",
+    #         json.dumps({"success": None, "error": str(type(e))}), 
+    #         timeout=120
+    #     )
+    #     return f"cached plaid user create error: {str(e)}"
 
 @shared_task(name="plaid_user_remove")
 def plaid_user_remove(uid, code):
@@ -466,6 +466,7 @@ def send_forgot_email(**kwargs):
         #     body = f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}"
         # )
 
+
 @shared_task(name="send_waitlist_email")
 def send_waitlist_email(**kwargs):
     if kwargs["useEmail"]:
@@ -511,6 +512,7 @@ def format_task_result_kwargs(text):
 
     return extracted_uuid, cleaned_text
 
+
 @receiver(pre_save, sender=TaskResult)
 def modify_task_result(sender, instance, **kwargs):
     """ Nullify task_args and task_kwargs before saving """
@@ -543,6 +545,8 @@ def modify_task_result(sender, instance, **kwargs):
 
 @shared_task(name="plaid_access_token_refresh")
 def plaid_access_token_refresh(plaid_item_id):
+    import pdb
+    breakpoint()
     #ApiException, ValidationError
     try:
         plaidItem = PlaidItem.objects.get(id=plaid_item_id)
@@ -564,6 +568,7 @@ def plaid_access_token_refresh(plaid_item_id):
     except Exception as e:
         plaidItem = PlaidItem.objects.get(id=plaid_item_id)
         plaidItem.previousRefreshSuccess = False
+
 
 @shared_task(name="plaid_access_token_refresh_all")
 def plaid_access_token_refresh_all():

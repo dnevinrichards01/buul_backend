@@ -23,9 +23,9 @@ class ConnectRobinhoodView(APIView):
         # breakpoint() 
         serializer = ConnectRobinhoodLoginSerializer(data=request.data)
         validation_error_response = validate(
-            Log, serializer, self, 
-            fields_to_correct=["username", "password", "sms", "prompt", "app", "by_sms"], 
-            fields_to_fail=["non_field_errors"],
+            Log, serializer, self,  
+            fields_to_fail=["non_field_errors", "default_to_sms"] + \
+                ["username", "password", "sms", "prompt", "app", "by_sms"],
             rename_field=lambda x: "email" if x == "username" else x
         )
         if validation_error_response:
@@ -38,7 +38,8 @@ class ConnectRobinhoodView(APIView):
                 "password": serializer.validated_data["password"],
                 "mfa_code": serializer.validated_data.get("app", None),
                 "device_approval": serializer.validated_data.get("prompt", None),
-                "challenge_code": serializer.validated_data.get("sms", None)
+                "challenge_code": serializer.validated_data.get("sms", None),
+                "default_to_sms": serializer.validated_data.get("default_to_sms", None)
             }
         )
 

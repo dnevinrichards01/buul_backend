@@ -1,6 +1,6 @@
 # from django.contrib.auth.models import User
 from .models import User, WaitlistEmail, PlaidUser, UserBrokerageInfo, PlaidItem, \
-    UserInvestmentGraph, Log
+    UserInvestmentGraph, Log, PlaidPersonalFinanceCategories
 from rest_framework.views import APIView
 from .serializers.accumateAccountSerializers import WaitlistEmailSerializer, \
     UserBrokerageInfoSerializer, NamePasswordValidationSerializer, \
@@ -10,8 +10,9 @@ from .serializers.accumateAccountSerializers import UserSerializer, \
     WaitlistEmailSerializer, GraphDataRequestSerializer
 from .serializers.PlaidSerializers.itemSerializers import ItemPublicTokenExchangeRequestSerializer
 from .serializers.PlaidSerializers.linkSerializers import \
-    LinkTokenCreateRequestTransactionsSerializer, LinkTokenCreateRequestSerializer, \
-    PlaidSessionFinishedSerializer
+    LinkTokenCreateRequestTransactionsSerializer, LinkTokenCreateRequestSerializer
+from .serializers.PlaidSerializers.webhookSerializers import \
+    PlaidSessionFinishedSerializer, WebhookSerializer, PlaidTransactionSyncUpdatesAvailable
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -26,6 +27,7 @@ from .tasks.userTasks import plaid_item_public_tokens_exchange, \
     plaid_link_token_create, plaid_user_create, accumate_user_remove, \
     plaid_user_remove, send_verification_code, send_waitlist_email, send_forgot_email
 from .tasks.graphTasks import refresh_stock_data_by_interval, get_graph_data
+from .tasks.transactionsTasks import update_transactions
 from robin_stocks.models import UserRobinhoodInfo
 
 import secrets 
@@ -522,6 +524,7 @@ class PlaidLinkTokenCreate(APIView):
             "transactions": {
                 "days_requested": 100
             },
+            "redirect_uri": f"https://{LOAD_BALANCER_ENDPOINT}/" + "plaid/link/redirect/oauth/",
             "webhook": f"https://{LOAD_BALANCER_ENDPOINT}/" + "api/plaid/itemwebhook/",
             "country_codes": ["US"],
             "language": "en",
@@ -538,7 +541,7 @@ class PlaidLinkTokenCreate(APIView):
             error_messages = {}
             for field in e.detail:
                 if len(e.detail[field]) >= 1:
-                    error_messages[field] = e.detail[field]#[0]
+                    error_messages[field] = e.detail[field][0]
             status = 400 
             log(Log, self, status, LogState.ERR_NO_MESSAGE, errors = error_messages)
             return JsonResponse(
@@ -1446,3 +1449,35 @@ class AddToWaitlist(APIView):
                 status = status
             )
 
+class GetSpendingRecommendations(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        "Get verification code if the email matches an account"
+        user = request.user
+        try:
+            result = {}
+            spending_by_category = PlaidPersonalFinanceCategories.get(user=user)
+            for field in PlaidPersonalFinanceCategories._meta.get_fields():
+                if field.concrete and not field.many_to_many:
+                    result[field.name] = spending_by_category[field.name]
+
+            status = 200
+            log(Log, self, status, LogState.SUCCESS)
+            return JsonResponse( 
+                {
+                    "success": result,
+                    "error": None
+                },
+                status = status
+            )
+        except:
+            status = 400
+            log(Log, self, status, LogState.ERR_NO_MESSAGE)
+            return JsonResponse( 
+                {
+                    "success": None,
+                    "error": "not yet calculated"
+                },
+                status = status
+            )

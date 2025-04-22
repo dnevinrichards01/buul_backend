@@ -35,10 +35,9 @@ def filter_jsons(jsons, eq={}, gt={}, lt={}, lte={}, gte={}, metric_to_return_by
             for metric in filter_set:
                 # BFS for the desired metric
                 filter_vals = filter_set[metric]
-                try:
-                    metric_val = get_nested(json, metric)
-                except Exception as e:
-                    return {"error": f"key {metric} not found: {str(e)}"}
+                metric_val = get_nested(json, metric)
+                if metric_val is None:
+                    continue
                 # check if op(metric, ) matches all of the provided vals
                 for filter_val in filter_vals:
                     try:
@@ -104,4 +103,4 @@ def get_nested(json, key):
                 return current[key]
             if isinstance(current[key_], dict):
                 queue.put(current[key_])
-    raise Exception(f"{key} not found")
+    return

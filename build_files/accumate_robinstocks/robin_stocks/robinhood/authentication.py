@@ -111,7 +111,7 @@ def save_cred(data, payload, uid, session):
 
 def login(session=None, uid=None, username=None, password=None, expiresIn=86400, 
           scope='internal', by_sms=True, mfa_code=None, challenge_code=None,
-          device_approval=False):
+          device_approval=False, default_to_sms=False):
     """This function will effectively log the user into robinhood by getting an
     authentication token and saving it to the session header. By default, it
     will store the authentication token in a pickle file and load that value
@@ -228,7 +228,7 @@ def login(session=None, uid=None, username=None, password=None, expiresIn=86400,
     elif challenge_code is not None or device_approval:
         validation_output = response_verification_flow(
             session, uid, device_token=device_token, mfa_code=mfa_code, 
-            challenge_code=challenge_code
+            challenge_code=challenge_code, default_to_sms=default_to_sms
         )
         if validation_output['error']:
             return f"error: {validation_output['message']}"
@@ -332,8 +332,8 @@ def initial_verification_flow(session, uid, device_token:str, mfa_code:str,
             "message": f"Unkown response format from pathfinder/inquiries: {inquiries_response}"
         }
 
-def response_verification_flow(session, uid, device_token:str, mfa_code:str, 
-                               challenge_code:str):
+def response_verification_flow(session, uid, device_token, mfa_code, 
+                               challenge_code, default_to_sms):
 
     # retrieve challenge id and challenge type
     challenge_cached_values = cache.get(f"uid_{uid}_rh_challenge")
@@ -352,6 +352,8 @@ def response_verification_flow(session, uid, device_token:str, mfa_code:str,
     inquiries_url = challenge_values["inquiries_url"]
     challenge_id = challenge_values["challenge_id"]
     device_token = challenge_values["device_token"]
+    # for if we implement device approvals resend notification
+    sequence_num = challenge_values.get("sequence_num", 0) 
     
     # respond to the challenge 
     challenge_validated = False
@@ -365,13 +367,32 @@ def response_verification_flow(session, uid, device_token:str, mfa_code:str,
         challenge_response = request_post(challenge_url, session, payload=challenge_payload, json=True)
         challenge_validated = 'status' in challenge_response and challenge_response["status"] == "validated"
     else:
-        prompt_url = f"https://api.robinhood.com/push/{challenge_id}/get_prompts_status/"
-        prompt_response = request_get(prompt_url, session)
-        prompt_validated = 'challenge_status' in prompt_response and prompt_response["challenge_status"] == "validated"
+        if default_to_sms:
+            inquiries_payload = {
+                "sequence":sequence_num,
+                "user_input":{"status":"fallback"}
+            }
+            inquiries_response = request_post(inquiries_url, session, payload=inquiries_payload, json=True)
+            challenge_id = inquiries_response['type_context']["context"]["sheriff_challenge"]["id"]
+            challenge_type = inquiries_response['type_context']["context"]["sheriff_challenge"]["type"]
+            save_sms_challenge_to_cache(
+                uid, challenge_type, inquiries_url, challenge_id, device_token,
+                "Please enter the code sent to your phone by Robinhood.",
+                sequence_num=sequence_num
+            )
+            return {
+                "error": "sms", 
+                "success": None,
+                "message": "Please enter the code sent to your phone by Robinhood."
+            }
+        else:    
+            prompt_url = f"https://api.robinhood.com/push/{challenge_id}/get_prompts_status/"
+            prompt_response = request_get(prompt_url, session)
+            prompt_validated = 'challenge_status' in prompt_response and prompt_response["challenge_status"] == "validated"
 
     # check if challenge response was successful
     if challenge_validated or prompt_validated:
-        inquiries_payload = {"sequence":0,"user_input":{"status":"continue"}}
+        inquiries_payload = {"sequence":sequence_num,"user_input":{"status":"continue"}}
         inquiries_response = request_post(inquiries_url, session, payload=inquiries_payload, json=True)
         if inquiries_response and "type_context" in inquiries_response and \
             "result" in inquiries_response["type_context"] and \
@@ -394,8 +415,9 @@ def response_verification_flow(session, uid, device_token:str, mfa_code:str,
     else:
             if challenge_type == 'app':
                 save_mfa_challenge_to_cache(
-                    uid, 
-                    "That MFA code was not correct or expired. Please enter another one."
+                    uid, inquiries_url, challenge_id, device_token,
+                    "That MFA code was not correct or expired. Please enter another one.", 
+                    sequence_num=sequence_num
                 )
                 return {
                     "error": "mfa", 
@@ -404,8 +426,9 @@ def response_verification_flow(session, uid, device_token:str, mfa_code:str,
                 }
             elif challenge_type == 'sms':
                 save_sms_challenge_to_cache(
-                    uid, challenge_type, inquiries_url, challenge_id, device_token,
-                    "That code was not correct. Please type in the new code sent to your phone"
+                    uid, challenge_type, inquiries_url, challenge_id, device_token, 
+                    "That code was not correct. Please type in the new code sent to your phone", 
+                    sequence_num=sequence_num
                 )
                 return {
                     "error": "sms", 
@@ -413,8 +436,11 @@ def response_verification_flow(session, uid, device_token:str, mfa_code:str,
                     "message": "sms incorrect or missing, response cached"
                 }
             elif challenge_type == 'prompt':
-                save_device_approvals_challenge_to_cache(uid, inquiries_url, challenge_id, device_token,
-                                                         "Please try responding the new prompt in the Robinhood app again and then click continue.")
+                save_device_approvals_challenge_to_cache(
+                    uid, inquiries_url, challenge_id, device_token, 
+                    "Please try responding the new prompt in the Robinhood app again and then click continue.", 
+                    sequence_num=sequence_num
+                )
                 return {
                     "error": "prompt", 
                     "success": None,
@@ -435,7 +461,7 @@ def response_verification_flow(session, uid, device_token:str, mfa_code:str,
 # save log in information to cache
 
 def save_sms_challenge_to_cache(uid, challenge_type, inquiries_url, challenge_id, 
-                                device_token, message):
+                                device_token, message, sequence_num=0):
     cache.delete(f"uid_{uid}_rh_challenge",)
     cache.set(
         f"uid_{uid}_rh_challenge",
@@ -444,6 +470,7 @@ def save_sms_challenge_to_cache(uid, challenge_type, inquiries_url, challenge_id
             "inquiries_url": inquiries_url,
             "challenge_id": challenge_id,
             "device_token": device_token, 
+            "sequence_num": sequence_num,
             "success": None,
             "error": "enter otp sent to your phone"
         }), 
@@ -451,7 +478,7 @@ def save_sms_challenge_to_cache(uid, challenge_type, inquiries_url, challenge_id
     )
 
 def save_device_approvals_challenge_to_cache(uid, inquiries_url, challenge_id,
-                                             device_token, message):
+                                             device_token, message, sequence_num=0):
     cache.delete(f"uid_{uid}_rh_challenge")
     cache.set(
         f"uid_{uid}_rh_challenge",
@@ -460,6 +487,7 @@ def save_device_approvals_challenge_to_cache(uid, inquiries_url, challenge_id,
             "inquiries_url": inquiries_url,
             "challenge_id": challenge_id,
             "device_token": device_token, 
+            "sequence_num": sequence_num,
             "success": None,
             "error": message
         }), 
@@ -467,7 +495,7 @@ def save_device_approvals_challenge_to_cache(uid, inquiries_url, challenge_id,
     )
 
 def save_mfa_challenge_to_cache(uid, inquiries_url, challenge_id, device_token,
-                                error_message):
+                                error_message, sequence_num=0):
     cache.delete(f"uid_{uid}_rh_challenge",)
     cache.set(
         f"uid_{uid}_rh_challenge",
@@ -476,6 +504,7 @@ def save_mfa_challenge_to_cache(uid, inquiries_url, challenge_id, device_token,
             "inquiries_url": inquiries_url,
             "challenge_id": challenge_id,
             "device_token": device_token, 
+            "sequence_num": sequence_num,
             "success": None,
             "error": error_message
         }),

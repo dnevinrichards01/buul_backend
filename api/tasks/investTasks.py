@@ -5,6 +5,9 @@ from django.core.cache import cache
 from django.core.mail import send_mail
 from django.utils import timezone
 
+from django.dispatch import receiver
+from django.db.models.signals import post_save
+
 from ..plaid_client import plaid_client
 # from ..twilio_client import twilio_client
 from ..jsonUtils import filter_jsons
@@ -12,7 +15,7 @@ from ..jsonUtils import filter_jsons
 from datetime import datetime, timedelta
 import json
 
-from ..models import RobinhoodStockOrder, UserBrokerageInfo, User, Investments
+from ..models import RobinhoodStockOrder, UserBrokerageInfo, User, Investment
 from ..serializers.rhSerializers import StockOrderSerializer
 
 
@@ -266,24 +269,20 @@ def rh_find_stock_orders_custom(uid, amount=None, currency_code=None,
 
 # invest based on a deposit / cashback
 
-def rh_save_order_from_order_info(uid, deposit, order_id):
-    deposit.invested = True
-    deposit.save()
+def rh_save_order_from_order_info(uid, deposit, order_id, symbol):
+    import pdb; breakpoint()
+    order = rh_get_stock_order_info(uid, order_id)
 
-    orders = rh_get_stock_order_info(
-        uid, 
-        eq={"amount": [deposit.amount], "id": [order_id]}
-    )
-    if len(orders) == 0:
-        raise Exception(f"no deposit with id {order_id} found")
-    elif len(orders) > 1:
-        raise Exception(f"multiple deposits matching: {order_id}")
-    order = orders[0]
+    if order["executed_notional"]:
+        executed_amount = order["executed_notional"]["amount"]
+    else:
+        executed_amount = None
 
     robinhoodStockOrder = RobinhoodStockOrder(
+        user = User.objects.get(id=uid),
         order_id = order["id"],
         cancel = order["cancel"],
-        instrument_id = order["instrument_id"],
+        symbol = symbol,
         state = order["state"],
         side = order["side"],
         quantity = order["quantity"],
@@ -291,11 +290,12 @@ def rh_save_order_from_order_info(uid, deposit, order_id):
         updated_at = order["updated_at"],
         pending_cancel_open_agent = order["pending_cancel_open_agent"],
         requested_amount = order["total_notional"]["amount"], 
-        executed_amount = order["executed_notional"]["amount"], 
+        executed_amount = executed_amount, 
         user_cancel_request_state = order["user_cancel_request_state"]
     )
     robinhoodStockOrder.save()
-    deposit.invested = True
+    investment = Investment.objects.get(rh = robinhoodStockOrder)
+    deposit.investment = investment
     deposit.save()
 
 def rh_invest(uid, deposit, repeat_day_range=5):
@@ -403,7 +403,7 @@ def rh_order_to_investment(rh_order, investment=None):
     if rh_order.state != "filled":
         return
     
-    cumulative_quantities_query = Investments.objects.filter(
+    cumulative_quantities_query = Investment.objects.filter(
             user=rh_order.user, 
             date__lt=rh_order.updated_at
         )\
@@ -425,7 +425,7 @@ def rh_order_to_investment(rh_order, investment=None):
         investment.cumulative_quantities = cumulative_quantities
         investment.buy = True
     else:
-        investment = Investments(
+        investment = Investment(
             user = rh_order.user,
             deposit = rh_order.deposit,
             investment_id = rh_order.order_id,
@@ -440,3 +440,38 @@ def rh_order_to_investment(rh_order, investment=None):
 
     
 
+def rh_load_account_profile(uid):
+
+    import pdb
+    breakpoint()
+
+    try:
+        session, userRobinhtoodInfo = r.rh_create_session(uid)
+    except Exception as e:
+        return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
+    result = r.load_account_profile(session)
+
+    try:
+        serializer = RobinhoodAccountListSerializer(data=result, many=True)
+        serializer.is_valid(raise_exception=True)
+        return serializer.validate_data["portfolio_cash"], serializer.validate_data
+    except Exception as e:
+        return {"error": f"{str(e)}"}
+    
+
+
+@receiver(post_save, sender=RobinhoodStockOrder)
+def rhdorder_to_investment(sender, instance, **kwargs):
+    try:
+        investment = Investment(
+            user = instance.user,
+            rh = instance, 
+            symbol = instance.symbol,
+            quantity = instance.quantity,
+            buy = instance.side == "buy",
+            date = instance.created_at
+        )
+        investment.save()
+    except:
+        investment = Investment.objects.get(user = instance.user, rh = instance)
+        investment.save()

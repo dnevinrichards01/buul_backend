@@ -25,12 +25,18 @@ class ConnectRobinhoodLoginSerializer(serializers.Serializer):
         required=False,
         default=True
     )
-
+    default_to_sms = serializers.BooleanField(
+        required=False,
+        default=False
+    )
+    
     def validate(self, attrs):
         if sum([mfa in attrs for mfa in ['app', 'sms', 'prompt']]) > 1:
             raise ValidationError("You may only choose one mfa method.")
         if ('username' not in attrs) or ('password' not in attrs):
             raise ValidationError("You must submit both username and password")
+        if attrs.get("default_to_sms", None) and not attrs.get("prompt", None):
+            raise ValidationError("default_to_sms only works with prompt=True")
         return attrs
         
 
