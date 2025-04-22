@@ -75,6 +75,7 @@ class Migration(migrations.Migration):
                 ('email', models.EmailField(blank=True, max_length=254, unique=True)),
                 ('username', models.CharField(max_length=50, unique=True)),
                 ('groups', models.ManyToManyField(blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', related_name='user_set', related_query_name='user', to='auth.group', verbose_name='groups')),
+                ('user_permissions', models.ManyToManyField(to='auth.Permission', related_name='user_set', related_query_name='user', blank=True, help_text='Specific permissions for this user.', verbose_name='user permissions')),
             ],
             options={
                 'verbose_name': 'user',
