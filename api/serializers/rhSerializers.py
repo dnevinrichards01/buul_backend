@@ -54,13 +54,13 @@ class DepositSerializer(serializers.Serializer):
     ach_relationship = serializers.CharField() # the account
     id = serializers.CharField()
     url = serializers.CharField()
-    cancel = serializers.CharField() 
+    cancel = serializers.CharField(allow_null=True) 
     amount = serializers.FloatField()
-    direction = serializers.CharField()
-    status_description = serializers.CharField(allow_null=True) # ''
+    direction = serializers.CharField() # deposit
     state = serializers.CharField() # pending
-    rhs_state = serializers.CharField() # requested
+    rhs_state = serializers.CharField() # requested, completed
     created_at = serializers.DateTimeField() 
+    updated_at = serializers.DateTimeField(allow_null=True) 
     expected_landing_datetime = serializers.DateTimeField() 
 
     def validate_ach_relationship(self, relationship_url):
@@ -69,6 +69,8 @@ class DepositSerializer(serializers.Serializer):
         return relationship_url
 
     def validate_cancel(self, cancel_url):
+        if cancel_url is None:
+            return cancel_url
         if cancel_url[:40] != "https://api.robinhood.com/ach/transfers/" or \
             cancel_url[-8:] != "/cancel/":
             raise ValidationError("ach_relationship url")
@@ -91,7 +93,9 @@ class GetLinkedBankAccountsResponseSerializer(serializers.Serializer):
     account = serializers.CharField()
     bank_account_nickname = serializers.CharField()
     bank_account_type = serializers.CharField()
-    bank_account_number = serializers.CharField()
+    bank_account_number = serializers.RegexField(
+        regex=r'^\d{2,8}$', required=True
+    )
     verified = serializers.BooleanField() # True
     state = serializers.CharField() # approved
 

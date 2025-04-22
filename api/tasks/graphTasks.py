@@ -2,7 +2,7 @@ from celery import shared_task, chord
 from django.core.cache import cache 
 from django.utils import timezone
 import json
-from ..models import User, StockData, Investments, UserInvestmentGraph
+from ..models import User, StockData, Investment, UserInvestmentGraph
 
 from django.db.models import OuterRef, Subquery, JSONField, F, ExpressionWrapper, \
     DurationField, Window
@@ -181,7 +181,7 @@ def get_graph_data(uid, symbols=["VOO", "VOOG", "QQQ", "IBIT"]):
         # if they've never requested graph data, start from beginning
         else:
             # their first investment
-            first_investment_date_query = Investments.objects.filter(user=user)\
+            first_investment_date_query = Investment.objects.filter(user=user)\
                 .order_by("date")
             if first_investment_date_query.exists():
                 first_investment_date = first_investment_date_query.first().date
@@ -201,14 +201,14 @@ def get_graph_data(uid, symbols=["VOO", "VOOG", "QQQ", "IBIT"]):
                 start_date = min(first_investment_date, five_years_ago)
         
         cumulative_quantity_subquery = (
-            Investments.objects.filter(
+            Investment.objects.filter(
                 user=user,
                 date__lte=OuterRef("date")
             )
             .order_by("-date")
             .values("cumulative_quantities")[:1]
         )
-        # Annotate Investments with the JSON-aggregated cumulative quantities
+        # Annotate Investment with the JSON-aggregated cumulative quantities
         queryset = StockData.objects \
             .filter(date__gte=start_date) \
             .annotate(

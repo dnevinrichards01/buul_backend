@@ -613,7 +613,7 @@ class PlaidItemWebhook(APIView):
         validation_error_respose = validate(
             Log, serializer, self,
             fields_to_fail=["webhook_type", "webhook_code", "environment",
-                            "item_id", "error"]
+                            "error", "non_field_errors"]
         )
         if validation_error_respose:
             return JsonResponse(
@@ -624,25 +624,29 @@ class PlaidItemWebhook(APIView):
                 status = 400
             )
         
-        webhook_type = serializer["webhook_type"]
-        webhook_code = serializer["webhook_code"]
+        webhook_type = serializer.validated_data["webhook_type"]
+        webhook_code = serializer.validated_data["webhook_code"]
         
         if webhook_type == "LINK" and webhook_code == "SESSION_FINISHED":
             serializer = PlaidSessionFinishedSerializer(data=request.data)
             validation_error_respose = validate(
                 Log, serializer, self,
-                fields_to_fail=["webhook_type", "webhook_code", "environment",
-                                "status", "link_token", "link_session_id", 
-                                "public_tokens"]
+                fields_to_fail=["webhook_type", "webhook_code", "item_id",
+                                "environment", "status", "link_token", "link_session_id", 
+                                "public_tokens", "non_field_errors"]
             )
             if validation_error_respose:
+                status = 400
+                error_message = f"Invalid webhook of type {webhook_type} and code \
+                            {webhook_code}."
+                log(Log, self, status, LogState.ERR_NO_MESSAGE, 
+                    errors = {"error": error_message})
                 return JsonResponse(
                     {
                         "success": None, 
-                        "error": f"Invalid webhook of type {webhook_type} and code \
-                            {webhook_code}."
+                        "error": error_message
                     }, 
-                    status = 400
+                    status = status
                 )
 
             link_token = serializer.validated_data["link_token"]
@@ -693,22 +697,26 @@ class PlaidItemWebhook(APIView):
             validation_error_respose = validate(
                 Log, serializer, self,
                 fields_to_fail=["webhook_type", "webhook_code", "environment",
-                                "item_id", "initial_update_complete", \
-                                "historical_update_complete"]
+                                "item_id", "initial_update_complete",
+                                "historical_update_complete", "non_field_errors"]
             )
             if validation_error_respose:
+                status = 400
+                error_message = f"Invalid webhook of type {webhook_type} and code \
+                            {webhook_code}."
+                log(Log, self, status, LogState.ERR_NO_MESSAGE,
+                    erorrs = {"error": error_message})
                 return JsonResponse(
                     {
                         "success": None, 
-                        "error": f"Invalid webhook of type {webhook_type} and code \
-                            {webhook_code}."
+                        "error": error_message
                     }, 
-                    status = 400
+                    status = status
                 )
             
             item_id = serializer.validated_data["item_id"]
 
-            update_transactions.apply_async(kwargs = {"uid": uid})
+            update_transactions.apply_async(args = [item_id])
 
             status = 200
             log(Log, self, status, LogState.SUCCESS)
@@ -720,7 +728,19 @@ class PlaidItemWebhook(APIView):
                 status = status
             )
 
-
+        else:
+            status = 400
+            error_message = f"Invalid webhook of type {webhook_type} and code \
+                            {webhook_code}."
+            log(Log, self, status, LogState.ERR_NO_MESSAGE,
+                errors = error_message)
+            return JsonResponse(
+                {
+                    "success": None, 
+                    "error": error_message
+                }, 
+                status = status
+            )
 # fetch account info
 
 class GetUserInfo(APIView):

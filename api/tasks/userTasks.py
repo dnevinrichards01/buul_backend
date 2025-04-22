@@ -466,6 +466,7 @@ def send_forgot_email(**kwargs):
         #     body = f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}"
         # )
 
+
 @shared_task(name="send_waitlist_email")
 def send_waitlist_email(**kwargs):
     if kwargs["useEmail"]:
@@ -510,6 +511,7 @@ def format_task_result_kwargs(text):
         cleaned_text = text
 
     return extracted_uuid, cleaned_text
+
 
 @receiver(pre_save, sender=TaskResult)
 def modify_task_result(sender, instance, **kwargs):
@@ -566,6 +568,7 @@ def plaid_access_token_refresh(plaid_item_id):
     except Exception as e:
         plaidItem = PlaidItem.objects.get(id=plaid_item_id)
         plaidItem.previousRefreshSuccess = False
+
 
 @shared_task(name="plaid_access_token_refresh_all")
 def plaid_access_token_refresh_all():

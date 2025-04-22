@@ -22,6 +22,16 @@ class PlaidSessionFinishedSerializer(serializers.Serializer):
             raise serializers.ValidationError("status must be 'SUCCESS' or 'success'")
         return attrs
 
+class PlaidItemAddSerializer(serializers.Serializer):
+    webhook_type = serializers.ChoiceField(required=True, choices=["LINK"])
+    webhook_code = serializers.ChoiceField(required=True, choices=["ITEM_ADD_RESULT"])
+    link_session_id = serializers.CharField(required=True)
+    link_token = serializers.CharField(required=True)
+    public_token = serializers.CharField(required=True)
+    environment = serializers.ChoiceField(required=True, choices=["sandbox", "production"])
+
+# when we create the item, pull their transactions immediately. 
+# bc we only get this webhook after the initial sync call
 class PlaidTransactionSyncUpdatesAvailable(serializers.Serializer):
     webhook_type = serializers.ChoiceField(required=True, choices=["TRANSACTION"])
     webhook_code = serializers.ChoiceField(required=True, choices=["SYNC_UPDATES_AVAILABLE"])
@@ -45,6 +55,7 @@ class WebhookSerializer(serializers.Serializer):
     )
     WEBHOOK_CODES = (
         ('SESSION_FINISHED', 'SESSION_FINISHED'),
+        ('ITEM_ADD_RESULT', 'ITEM_ADD_RESULT'),
         ('SYNC_UPDATES_AVAILABLE', 'SYNC_UPDATES_AVAILABLE')
     )
 
@@ -59,9 +70,6 @@ class WebhookSerializer(serializers.Serializer):
         help_text="The code representing the webhook event."
     )
     environment = serializers.ChoiceField(required=True, choices=["sandbox", "production"])
-    item_id = serializers.CharField(
-        help_text="The ID of the Item associated with the webhook."
-    )
     error = ErrorSerializer(
         required=False,
         allow_null=True,

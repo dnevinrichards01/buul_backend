@@ -67,6 +67,7 @@ class LogAnon(models.Model):
             models.Index(fields=['date', 'status', 'state']),
             models.Index(fields=['user', 'date', 'status', 'state'])
         ]
+
 class Log(models.Model):
     name = models.CharField()
     method = models.CharField()
@@ -114,9 +115,6 @@ class Log(models.Model):
         )
         log_anonymized.save()
 
-
-
-
 class WaitlistEmail(models.Model):
     email = models.EmailField(primary_key=True)
     date_enrolled = models.DateTimeField(auto_now=True)
@@ -126,7 +124,6 @@ class UserBrokerageInfo(models.Model):
     brokerage = models.CharField(max_length=255, null=True, default=None)
     symbol = models.CharField(max_length=255, null=True, default=None)
 
-# need to create this sometime
 class UserInvestmentGraph(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateTimeField()
@@ -145,7 +142,6 @@ class UserInvestmentGraph(models.Model):
             )
         ]
 
-# need to create this sometime
 class StockData(models.Model):
     VOO = models.FloatField(null=True, default=None)
     VOOG = models.FloatField(null=True, default=None)
@@ -286,65 +282,9 @@ class PlaidPersonalFinanceCategories(models.Model):
         return super().__setattr__(name, value)
 
 
-
-class Deposits(models.Model):
-    deposit_id = models.CharField(max_length=255)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    mask = models.CharField(max_length=4)
-    state = models.CharField(max_length=255)
-    amount = models.FloatField()
-    created_at = models.DateTimeField()
-    invested = models.BooleanField(default=False)
-    # user canceled request state?
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'deposit_id'], name='unique_deposit')
-        ]
-
-class PlaidCashbackTransaction(models.Model):
-    user = models.ForeignKey(PlaidItem, on_delete=models.CASCADE)
-    account_id = models.CharField(max_length=255)
-    transaction_id = models.CharField(max_length=255)
-    amount = models.FloatField()
-    pending = models.BooleanField()
-    iso_currency_code = models.CharField(max_length=10)
-    date =  models.DateField()
-    authorized_datetime =  models.DateTimeField()
-    deposit = models.ForeignKey(Deposits, on_delete=models.SET_NULL, 
-                                default=None, null=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'transaction_id'], name='unique_plaid_transaction')
-        ]
-
-class RobinhoodCashbackDeposit(models.Model):
-    deposit_id = models.CharField(max_length=255)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    rh_account_id = models.CharField(max_length=255)
-    rh_account_ach = models.CharField(max_length=255)
-    mask = models.CharField(max_length=4)
-    state = models.CharField(max_length=255)
-    amount = models.FloatField()
-    created_at = models.DateTimeField()
-    updated_at = models.DateTimeField()
-    expected_landing_datetime = models.DateTimeField()
-    cancel = models.CharField(max_length=255, null=True)
-    invested = models.BooleanField(default=False)
-    # user canceled request state?
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'deposit_id'], name='unique_rh_deposit')
-        ]
-
-
-
+# investment models
 class RobinhoodStockOrder(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    deposit = models.ForeignKey(Deposits, on_delete=models.SET_NULL, 
-                                default=None, null=True)
     order_id = models.CharField(max_length=255)
     cancel = models.CharField(max_length=255, null=True)
     instrument_id = models.CharField(max_length=255) # uid for security!!!!!
@@ -369,21 +309,16 @@ class RobinhoodStockOrder(models.Model):
             models.Index(fields=['user', 'updated_at'])
         ]
 
-
-class LogAnonInvestments(models.Model):
+class LogAnonInvestment(models.Model):
     user = models.CharField()
     symbol = models.CharField(max_length=255, null=True, default=None)
-    brokerage = models.CharField(max_length=255, null=True, default=None)
     date = models.DateField()
     quantity = models.FloatField()
     buy = models.BooleanField()
 
-
-class Investments(models.Model):
+class Investment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    # one to one?
-    deposit = models.ForeignKey(Deposits, on_delete=models.SET_NULL, null=True)
-    rh = models.ForeignKey(RobinhoodStockOrder, on_delete=models.CASCADE, null=True, default=None)
+    rh = models.OneToOneField(RobinhoodStockOrder, on_delete=models.CASCADE, null=True, default=None)
     symbol = models.CharField(max_length=255, null=True, default=None)
     quantity = models.FloatField()
     cumulative_quantities = models.JSONField(default=dict)
@@ -393,7 +328,7 @@ class Investments(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['deposit', 'buy'], 
+                fields=['user', 'buy'], 
                 name='unique_investment'
             )
         ]
@@ -414,15 +349,78 @@ class Investments(models.Model):
             digestmod=hashlib.sha256
         ).hexdigest()
 
-        logAnonInvestments = LogAnonInvestments(
+        logAnonInvestment = LogAnonInvestment(
             user = user_hmac,
             symbol = self.symbol,
-            brokerage = self.brokerage,
             quantity = self.quantity,
             buy = self.buy,
             date = self.date.date()
         )
-        logAnonInvestments.save()
+        logAnonInvestment.save()
+
+
+
+class RobinhoodDeposit(models.Model):
+    deposit_id = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rh_account_id = models.CharField(max_length=255)
+    rh_account_ach = models.CharField(max_length=255)
+    plaid_account_id = models.CharField(max_length=255)
+    mask = models.CharField(max_length=4)
+    state = models.CharField(max_length=255)
+    amount = models.FloatField()
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+    expected_landing_datetime = models.DateTimeField()
+    cancel = models.CharField(max_length=255, null=True)
+    # user canceled request state?
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'deposit_id'], name='unique_rh_deposit')
+        ]
+
+class Deposit(models.Model):
+    id = models.UUIDField(
+        primary_key=True,  # Redefine id as primary key
+        default=uuid.uuid4,  # Assign UUID by default
+        editable=True,  # Allow manual assignment
+        unique=True
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rh = models.OneToOneField(RobinhoodDeposit, on_delete=models.CASCADE, 
+                           null=True, default=None)
+    mask = models.CharField(max_length=4)
+    state = models.CharField(max_length=255)
+    amount = models.FloatField()
+    created_at = models.DateTimeField()
+    investment = models.OneToOneField(Investment, on_delete=models.CASCADE,
+                                      null=True, default=None)
+
+    class Meta:
+        constraints = [
+            #models.UniqueConstraint(fields=['user', 'rh'], name='unique_deposit')
+        ]
+
+class PlaidCashbackTransaction(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    account_id = models.CharField(max_length=255)
+    transaction_id = models.CharField(max_length=255)
+    amount = models.FloatField()
+    pending = models.BooleanField()
+    iso_currency_code = models.CharField(max_length=10)
+    date =  models.DateField(null=True, default=None)
+    authorized_date = models.DateField(null=True, default=None)
+    authorized_datetime =  models.DateTimeField(null=True, default=None)
+    name = models.CharField()
+    deposit = models.ForeignKey(Deposit, on_delete=models.SET_NULL, 
+                                default=None, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'transaction_id'], name='unique_plaid_transaction')
+        ]
+
 
 
 
