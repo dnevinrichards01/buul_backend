@@ -328,7 +328,7 @@ class Investment(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'buy'], 
+                fields=['user', 'date', 'buy'], 
                 name='unique_investment'
             )
         ]
@@ -407,12 +407,12 @@ class PlaidCashbackTransaction(models.Model):
     account_id = models.CharField(max_length=255)
     transaction_id = models.CharField(max_length=255)
     amount = models.FloatField()
-    pending = models.BooleanField()
-    iso_currency_code = models.CharField(max_length=10)
+    pending = models.BooleanField() #
+    iso_currency_code = models.CharField(max_length=10) #
     date =  models.DateField(null=True, default=None)
     authorized_date = models.DateField(null=True, default=None)
     authorized_datetime =  models.DateTimeField(null=True, default=None)
-    name = models.CharField()
+    name = models.CharField() #
     deposit = models.ForeignKey(Deposit, on_delete=models.SET_NULL, 
                                 default=None, null=True)
 

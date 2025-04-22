@@ -376,6 +376,16 @@ def update_order(uid, order_id):
         raise Exception(f"multiple deposits matching: {order_id}")
     order = orders[0]
 
+    # add total notional to the model too
+    if order["executed_notional"]:
+        executed_amount = order["executed_notional"]["amount"]
+    else:
+        executed_amount = None
+    if order["total_notional"]:
+        requested_amount = order["total_notional"]["amount"]
+    else:
+        requested_amount = None
+    
     try:
         robinhoodStockOrder = RobinhoodStockOrder.objects.get(order_id=order_id)
     except Exception as e:
@@ -386,7 +396,7 @@ def update_order(uid, order_id):
     robinhoodStockOrder.state = order["state"],
     robinhoodStockOrder.updated_at = order["updated_at"],
     robinhoodStockOrder.pending_cancel_open_agent = order["pending_cancel_open_agent"],
-    robinhoodStockOrder.executed_amount = order["executed_notional"]["amount"], 
+    robinhoodStockOrder.executed_amount = executed_amount,
     robinhoodStockOrder.user_cancel_request_state = order["user_cancel_request_state"]
     robinhoodStockOrder.save()
     
