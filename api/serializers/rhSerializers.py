@@ -18,12 +18,12 @@ class StockOrderSerializer(serializers.Serializer):
     derived_state = serializers.CharField() # 'queued', filled
     side = serializers.CharField() # 'buy'
     # 'limit', 'gfd', 'immediate'
-    price = serializers.FloatField()
+    price = serializers.FloatField(allow_null=True)
     quantity = serializers.FloatField()
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField() # a bit after created_at. check if has changed to see if updated...
     pending_cancel_open_agent = serializers.CharField(allow_null=True)
-    total_notional = StockOrderTotalNotionalSerializer()
+    total_notional = StockOrderTotalNotionalSerializer(allow_null=True, required=False)
     executed_notional = StockOrderTotalNotionalSerializer(allow_null=True, required=False)
     user_cancel_request_state = serializers.CharField() # 'no_cancel_requested', 'order_finalized'
 

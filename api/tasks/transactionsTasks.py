@@ -115,8 +115,11 @@ def is_cashback(name):
         "CASHBACK",
         "REWARDS",
         "CASHREWARD", 
-        "CASH"
+        "\bCASH\b"
     ]
+
+    # add in terms to return false for. 
+    # use 'word boundaries' around CASH etc so it won't match "CASHIER" etc
 
     pattern = '|'.join(map(re.escape, cashback_names + cashback_keywords))  # Escape substrings to handle special characters
     return re.search(pattern, name) is not None
@@ -149,7 +152,6 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
             iso_currency_code = cashback["iso_currency_code"]
         )
         all_cashback.append(plaidCashbackTransaction)
-    
     try:
         PlaidCashbackTransaction.objects.bulk_create(all_cashback, batch_size=100)
     except:
