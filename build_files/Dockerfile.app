@@ -37,6 +37,7 @@ COPY conf_files/nginx.conf /etc/nginx/nginx.conf
 RUN mkdir /run/gunicorn/
 RUN chown www-data: /var/log/ /var/log/nginx /var/lib/nginx /var/www/
 RUN chown www-data: /etc/nginx /etc/nginx/conf.d /etc/nginx/nginx.conf
+
 RUN chmod 777 /etc
 RUN mkdir -p /etc/letsencrypt /etc/letsencrypt/live \
  /etc/letsencrypt/live/buul-load-balancer.link/ /var/lib/letsencrypt
@@ -44,6 +45,7 @@ COPY conf_files/fullchain.pem /etc/letsencrypt/live/buul-load-balancer.link/full
 COPY conf_files/privkey.pem /etc/letsencrypt/live/buul-load-balancer.link/privkey.pem
 RUN chown www-data: /etc/letsencrypt /var/lib/letsencrypt /etc/letsencrypt/live
 RUN chmod 744 /etc/letsencrypt /etc/letsencrypt/live
+
 RUN mkdir /run/nginx/
 RUN chown www-data: /run/nginx/ /run/gunicorn/
 RUN chmod 775 /var/run/ /run
@@ -52,7 +54,7 @@ RUN chown -R www-data: /code/
 RUN setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx
 
 RUN mkdir /var/www/html/.well-known/
-COPY ./conf_files/apple-app-site-association.json /var/www/html/.well-known/apple-app-site-assocation.json
+COPY ./conf_files/apple-app-site-association.json /var/www/html/.well-known/apple-app-site-association
 
 USER www-data
 CMD ["./build_files/entrypoint_app.sh"] 

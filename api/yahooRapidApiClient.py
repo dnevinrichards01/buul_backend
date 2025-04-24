@@ -80,13 +80,9 @@ class FPMUtils:
         elif unit == "h":
             return relativedelta(months=3)
         elif unit == "d":
-            return relativedelta(years=1)
-        # elif unit == "w":
-        #     return relativedelta(years=5)
-        # elif unit == "M":
-        #     return relativedelta(years=100)
+            return relativedelta(years=5)
         else:
-            raise ValueError("unit must be from ['m', 'h', 'd']") #"unit must be from ['m', 'h', 'd', 'w', 'M']"
+            raise ValueError("unit must be from ['m', 'h', 'd']")
     
     @classmethod
     def no_timezone_to_with_timezone(cls, date_str, interval):
@@ -125,7 +121,7 @@ class FPMUtils:
                 "date__month": OuterRef("date__month"),
                 "date__year": OuterRef("date__year")
             }
-
+        
         latest_date_subquery = StockData.objects.filter(**kwargs) \
             .order_by("-date").values("date")[:1]
         StockData.objects \

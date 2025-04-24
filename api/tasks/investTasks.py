@@ -15,7 +15,7 @@ from ..jsonUtils import filter_jsons
 from datetime import datetime, timedelta
 import json
 
-from ..models import RobinhoodStockOrder, UserBrokerageInfo, User, Investment
+from ..models import RobinhoodStockOrder, UserBrokerageInfo, User, Investment, Deposit
 from ..serializers.rhSerializers import StockOrderSerializer
 
 
@@ -278,29 +278,56 @@ def rh_save_order_from_order_info(uid, deposit, order_id, symbol):
     else:
         executed_amount = None
 
-    robinhoodStockOrder = RobinhoodStockOrder(
-        user = User.objects.get(id=uid),
-        order_id = order["id"],
-        cancel = order["cancel"],
-        symbol = symbol,
-        state = order["state"],
-        side = order["side"],
-        quantity = order["quantity"],
-        created_at = order["created_at"],
-        updated_at = order["updated_at"],
-        pending_cancel_open_agent = order["pending_cancel_open_agent"],
-        requested_amount = order["total_notional"]["amount"], 
-        executed_amount = executed_amount, 
-        user_cancel_request_state = order["user_cancel_request_state"]
-    )
+    user = User.objects.get(id=uid)
+    try:
+        robinhoodStockOrder = RobinhoodStockOrder.objects.get(
+            user = user,
+            order_id = order["id"],
+            side = order["side"]
+        )
+        robinhoodStockOrder.cancel = order["cancel"]
+        robinhoodStockOrder.state = order["state"]
+        robinhoodStockOrder.updated_at = order["updated_at"],
+        robinhoodStockOrder.pending_cancel_open_agent = order["pending_cancel_open_agent"],
+        robinhoodStockOrder.requested_amount = order["total_notional"]["amount"], 
+        robinhoodStockOrder.executed_amount = executed_amount, 
+        robinhoodStockOrder.user_cancel_request_state = order["user_cancel_request_state"]
+    except:
+        robinhoodStockOrder = RobinhoodStockOrder(
+            user = user,
+            order_id = order["id"],
+            cancel = order["cancel"],
+            symbol = symbol,
+            state = order["state"],
+            side = order["side"],
+            quantity = order["quantity"],
+            created_at = order["created_at"],
+            updated_at = order["updated_at"],
+            pending_cancel_open_agent = order["pending_cancel_open_agent"],
+            requested_amount = order["total_notional"]["amount"], 
+            executed_amount = executed_amount, 
+            user_cancel_request_state = order["user_cancel_request_state"]
+        )
     robinhoodStockOrder.save()
+
     investment = Investment.objects.get(rh = robinhoodStockOrder)
     deposit.investment = investment
     deposit.save()
 
+    recent_deposit_query = Deposit.objects\
+        .filter(user=user, created_at__lt=deposit.created_at)\
+        .order_by('-date')
+    if recent_deposit_query.exists():
+        cum_quant = recent_deposit_query.first().cumulative_quantities.copy()
+        cum_quant[symbol] += order["quantity"]
+    else:
+        cum_quant = {symbol: order["quantity"]}
+    investment.cumulative_quantities = cum_quant
+    investment.save()
+
 def rh_invest(uid, deposit, repeat_day_range=5):
     # check for duplicate deposits
-    if deposit.invested:
+    if deposit.investment:
         raise Exception(f"deposit already invested")
 
     if deposit.state != "completed":
@@ -324,11 +351,17 @@ def rh_invest(uid, deposit, repeat_day_range=5):
         userBrokerageInfo.symbol, 
         deposit.amount
     )
+    if order["executed_notional"]:
+        executed_amount = order["executed_notional"]["amount"]
+    else:
+        executed_amount = None
 
+    user = User.objects.get(id=uid)
     robinhoodStockOrder = RobinhoodStockOrder(
+        user = user,
         order_id = order["id"],
         cancel = order["cancel"],
-        instrument_id = order["instrument_id"],
+        symbol = userBrokerageInfo.symbol,
         state = order["state"],
         side = order["side"],
         quantity = order["quantity"],
@@ -336,12 +369,25 @@ def rh_invest(uid, deposit, repeat_day_range=5):
         updated_at = order["updated_at"],
         pending_cancel_open_agent = order["pending_cancel_open_agent"],
         requested_amount = order["total_notional"]["amount"], 
-        executed_amount = order["executed_notional"]["amount"], 
+        executed_amount = executed_amount, 
         user_cancel_request_state = order["user_cancel_request_state"]
     )
     robinhoodStockOrder.save()
-    deposit.invested = True
+
+    investment = Investment.objects.get(rh = robinhoodStockOrder)
+    deposit.investment = investment
     deposit.save()
+
+    recent_deposit_query = Deposit.objects\
+        .filter(user=user, created_at__lt=deposit.created_at)\
+        .order_by('-date')
+    if recent_deposit_query.exists():
+        cum_quant = recent_deposit_query.first().cumulative_quantities.copy()
+        cum_quant[userBrokerageInfo.symbol] += order["quantity"]
+    else:
+        cum_quant = {userBrokerageInfo.symbol: order["quantity"]}
+    investment.cumulative_quantities = cum_quant
+    investment.save()
 
 def check_repeat_order(uid, deposit, repeat_day_range):
     # check for duplicate deposit
@@ -358,116 +404,14 @@ def check_repeat_order(uid, deposit, repeat_day_range):
     
     potential_rh_repeats = rh_find_stock_orders_custom(
         uid, 
-        # how can i get only the requesed amount... 
-        # i need to change the json util bfs func
-        eq={"amount":[deposit.amount]}, 
-        gt={"updated_at":[timezone.now() - timedelta(days=5)]}
+        lt={"amount":[deposit.amount+0.05]}, 
+        gt={
+            "created_at":[timezone.now() - timedelta(days=repeat_day_range)],
+            "amount":[deposit.amount-0.05]
+        }
     )
     return potential_db_repeats, potential_rh_repeats
 
-def update_order(uid, order_id):
-    orders = rh_get_stock_order_info(
-        uid, 
-        eq={"id": [order_id]}
-    )
-    if len(orders) == 0:
-        raise Exception(f"no deposit with id {order_id} found")
-    elif len(orders) > 1:
-        raise Exception(f"multiple deposits matching: {order_id}")
-    order = orders[0]
-
-    # add total notional to the model too
-    if order["executed_notional"]:
-        executed_amount = order["executed_notional"]["amount"]
-    else:
-        executed_amount = None
-    if order["total_notional"]:
-        requested_amount = order["total_notional"]["amount"]
-    else:
-        requested_amount = None
-    
-    try:
-        robinhoodStockOrder = RobinhoodStockOrder.objects.get(order_id=order_id)
-    except Exception as e:
-        raise Exception(f"no object robinhoodStockOrder found " +
-                        "for user {uid}, order_id {order_id}")
-    
-    robinhoodStockOrder.cancel = order["cancel"],
-    robinhoodStockOrder.state = order["state"],
-    robinhoodStockOrder.updated_at = order["updated_at"],
-    robinhoodStockOrder.pending_cancel_open_agent = order["pending_cancel_open_agent"],
-    robinhoodStockOrder.executed_amount = executed_amount,
-    robinhoodStockOrder.user_cancel_request_state = order["user_cancel_request_state"]
-    robinhoodStockOrder.save()
-    
-    # if robinhoodStockOrder.state == canceled?:
-    #     deposit = robinhoodStockOrder.deposit
-    #     deposit.deposited = False
-    #     deposit.save()
-    #     return "updated and deposit canceled"
-    # if not canceled and not filled then pending
-    # if filled then done
-    return order["state"] # completed?
-
-def rh_order_to_investment(rh_order, investment=None):
-    if rh_order.state != "filled":
-        return
-    
-    cumulative_quantities_query = Investment.objects.filter(
-            user=rh_order.user, 
-            date__lt=rh_order.updated_at
-        )\
-            .order_by("-date")
-    if cumulative_quantities_query.exists():
-        cumulative_quantities = cumulative_quantities_query.first().cumulative_quantities
-    else:
-        cumulative_quantities = {symbol: 0 for symbol in SYMBOL_CHOICES}
-    cumulative_quantities[rh_order.symbol] += rh_order.quantity
-    
-    if investment:
-        investment.user = rh_order.user
-        investment.deposit = rh_order.deposit
-        investment.investment_id = rh_order.order_id
-        investment.brokerage = "robinhood"
-        investment.symbol = rh_order.symbol
-        investment.date = rh_order.updated_at
-        investment.quantity = rh_order.quantity
-        investment.cumulative_quantities = cumulative_quantities
-        investment.buy = True
-    else:
-        investment = Investment(
-            user = rh_order.user,
-            deposit = rh_order.deposit,
-            investment_id = rh_order.order_id,
-            brokerage = "robinhood",
-            symbol = rh_order.symbol,
-            date = rh_order.updated_at,
-            quantity = rh_order.quantity,
-            cumulative_quantities = cumulative_quantities,
-            buy = True
-        )
-    investment.save()
-
-    
-
-def rh_load_account_profile(uid):
-
-    import pdb
-    breakpoint()
-
-    try:
-        session, userRobinhtoodInfo = r.rh_create_session(uid)
-    except Exception as e:
-        return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
-    result = r.load_account_profile(session)
-
-    try:
-        serializer = RobinhoodAccountListSerializer(data=result, many=True)
-        serializer.is_valid(raise_exception=True)
-        return serializer.validate_data["portfolio_cash"], serializer.validate_data
-    except Exception as e:
-        return {"error": f"{str(e)}"}
-    
 
 
 @receiver(post_save, sender=RobinhoodStockOrder)

@@ -381,7 +381,6 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False, limit=50):
             _transaction.deposit = deposit
         PlaidCashbackTransaction.objects.bulk_update(transactions, ['deposit'])
 
-#untested
 def rh_update_deposit(uid, deposit_id, transactions, get_bank_info=True):
 
     import pdb; breakpoint()
@@ -452,39 +451,29 @@ def rh_update_deposit(uid, deposit_id, transactions, get_bank_info=True):
         transaction.deposit = deposit
     PlaidCashbackTransaction.objects.bulk_update(transactions, ['deposit'])
     return transfer_result["state"]
-        
-#untested
-def update_deposit(uid, deposit_id):
-    deposit = rh_get_bank_transfers(
-        uid, 
-        eq={"id": [deposit_id]}
-    )
-    if "error" in deposit:
-        return deposit
-    if len(deposit) == 0:
-        raise Exception(f"no deposit with id {deposit_id} found")
-    
 
-    try:
-        robinhoodCashbackDeposit = RobinhoodDeposit.objects.get(
-            deposit_id=deposit_id, user__id=uid
-        )
-    except Exception as e:
-        raise Exception(f"no object robinhoodCashbackDeposit found " +
-                        "for user {uid}, deposit_id {deposit_id}")
-    
-    robinhoodCashbackDeposit.state = deposit["state"]
-    robinhoodCashbackDeposit.cancel = deposit["cancel"] 
-    robinhoodCashbackDeposit.updated_at = deposit["updated_at"]
-    robinhoodCashbackDeposit.expected_landing_datetime = deposit["expected_landing_datetime"]
-    robinhoodCashbackDeposit.save()
 
-    # if robinhoodCashbackDeposit.state == "completed":
-    #     cashback_transaction = robinhoodCashbackDeposit.transaction
-    #     cashback_transaction.deposited = True
-    #     cashback_transaction.save()
-    #     return "updated and deposit completed"
-    return deposit["state"] # completed?
+# untested
+def group_cashback_transactions(uid, grouped=True, group_size=50):
+    to_deposit = PlaidCashbackTransaction.objects.filter(
+        user__id=uid, deposit=None
+    ).order_by('date')
+    if grouped:
+        curr_deposit_amount = 0
+        curr_deposit_transactions = []
+        grouped_transactions = []
+        for transaction in to_deposit:
+            if curr_deposit_amount < group_size:
+                curr_deposit_amount += abs(transaction.amount)
+                grouped_transactions.append(transaction)
+            else:
+                curr_deposit_amount = 0
+                curr_deposit_transactions.append(curr_deposit_transactions)
+        if len(curr_deposit_transactions) > 0:
+            grouped_transactions.append(curr_deposit_transactions)
+        return grouped_transactions
+    else:
+        return [transaction for transaction in to_deposit]
 
 
 
