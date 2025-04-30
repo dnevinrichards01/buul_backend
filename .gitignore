@@ -9,3 +9,5 @@ __pycache__/
 .AppleDouble  
 .LSOverride
 .env
+logs.txt
+logs_err.txt

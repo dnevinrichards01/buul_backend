@@ -1,12 +1,16 @@
-import requests
 from accumate_backend.settings import FMP_KEY
+
+from django.utils import timezone
+from django.db.models import OuterRef, Subquery
+
+from api.models import StockData, UserInvestmentGraph
+
+import requests
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from django.utils import timezone
 from zoneinfo import ZoneInfo
-from api.models import StockData, UserInvestmentGraph
 import json
-from django.db.models import OuterRef, Subquery, Max, F
+
 
 class FPMUtils:
     interval_char_to_str = {

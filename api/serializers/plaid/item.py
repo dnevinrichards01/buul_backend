@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
-from .errorSerializer import ErrorSerializer
+from .error import ErrorSerializer
 from .choices import ProductChoices, ItemUpdateType, ItemAuthMethod
 
 

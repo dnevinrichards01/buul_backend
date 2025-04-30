@@ -1,19 +1,18 @@
 from celery import shared_task, chord
+from django.apps import apps
 from django.core.cache import cache 
 from django.utils import timezone
-import json
+
 from ..models import User, StockData, Investment, UserInvestmentGraph
 
-from django.db.models import OuterRef, Subquery, JSONField, F, ExpressionWrapper, \
-    DurationField, Window
-from django.db.models.functions import Lead
-from django.contrib.postgres.aggregates import JSONBAgg
-from api.yahooRapidApiClient import fpm_client, FPMClient, FPMUtils
+from django.db.models import OuterRef, Subquery
+
+from api.apis.fmp import fpm_client, FPMUtils
+
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from zoneinfo import ZoneInfo
-
-from django.apps import apps
+import json
 
 
 @shared_task(name="refresh_stock_data_by_interval")

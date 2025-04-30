@@ -1,13 +1,13 @@
 from django.test import TestCase
 from .models import User, WaitlistEmail, PlaidUser, UserBrokerageInfo
 from rest_framework.views import APIView
-from .serializers.accumateAccountSerializers import WaitlistEmailSerializer, \
+from .serializers.buul import WaitlistEmailSerializer, \
     EmailPhoneSignUpValidationSerializer, UserBrokerageInfoSerializer, NamePasswordValidationSerializer, \
     VerificationCodeResponseSerializer, VerificationCodeRequestSerializer, SendEmailSerializer, \
     PasswordResetSerializer
-from .serializers.accumateAccountSerializers import UserSerializer, WaitlistEmailSerializer
-from .serializers.PlaidSerializers.itemSerializers import ItemPublicTokenExchangeRequestSerializer
-from .serializers.PlaidSerializers.linkSerializers import \
+from .serializers.buul import UserSerializer, WaitlistEmailSerializer
+from .serializers.plaid.item import ItemPublicTokenExchangeRequestSerializer
+from .serializers.plaid.link import \
     LinkTokenCreateRequestTransactionsSerializer, LinkTokenCreateRequestSerializer, \
     PlaidSessionFinishedSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -22,10 +22,10 @@ import phonenumbers
 from celery import current_app, chain
 from functools import partial
 from django.db import transaction
-from .tasks.userTasks import plaid_item_public_tokens_exchange, \
+from .tasks.user import plaid_item_public_tokens_exchange, \
     plaid_link_token_create, plaid_user_create, accumate_user_remove, \
     plaid_user_remove, send_verification_code, send_waitlist_email, send_forgot_email
-from .tasks.transactionsTasks import get_investment_graph_data
+from .tasks.identify import get_investment_graph_data
 
 import time
 from django.core.mail import send_mail

@@ -1,23 +1,17 @@
-from celery import shared_task, chain
-from accumate_backend.settings import TWILIO_PHONE_NUMBER
+from celery import shared_task
 import robin_stocks.robinhood as r
-from django.core.cache import cache 
-from django.core.mail import send_mail
 from django.utils import timezone
-
 from django.dispatch import receiver
 from django.db.models.signals import post_save
-
-from ..plaid_client import plaid_client
-# from ..twilio_client import twilio_client
-from ..jsonUtils import filter_jsons
 
 from datetime import datetime, timedelta
 import json
 
-from ..models import RobinhoodStockOrder, UserBrokerageInfo, User, Investment, Deposit
-from ..serializers.rhSerializers import StockOrderSerializer
+from ..jsonUtils import filter_jsons
 
+from ..models import RobinhoodStockOrder, UserBrokerageInfo, User, Investment, Deposit
+from ..serializers.rh import StockOrderSerializer, RobinhoodAccountListSerializer
+from .deposit import rh_update_deposit
 
 
 # transactions
@@ -316,9 +310,10 @@ def rh_save_order_from_order_info(uid, deposit, order_id, symbol):
 
     recent_deposit_query = Deposit.objects\
         .filter(user=user, created_at__lt=deposit.created_at)\
-        .order_by('-date')
+        .order_by('-created_at')
     if recent_deposit_query.exists():
         cum_quant = recent_deposit_query.first().cumulative_quantities.copy()
+        # check if symbol exists!
         cum_quant[symbol] += order["quantity"]
     else:
         cum_quant = {symbol: order["quantity"]}
@@ -326,12 +321,18 @@ def rh_save_order_from_order_info(uid, deposit, order_id, symbol):
     investment.save()
 
 def rh_invest(uid, deposit, repeat_day_range=5):
+
+    import pdb; breakpoint()
+
     # check for duplicate deposits
     if deposit.investment:
         raise Exception(f"deposit already invested")
-
-    if deposit.state != "completed":
-        raise Exception(f"deposit not yet completed. state: {deposit.state}")
+    
+    if deposit.flag:
+        raise Exception(f"deposit flagged")
+    
+    import pdb; breakpoint()
+    
     potential_db_repeats, potential_rh_repeats = check_repeat_order(
         uid,
         deposit, 
@@ -341,11 +342,33 @@ def rh_invest(uid, deposit, repeat_day_range=5):
         raise Exception("potential db repeats {potential_db_repeats} " + 
                         "potential rh repeats {potential_rh_repeats}")
     
+    import pdb; breakpoint()
+
+    # check if deposit went through 
+    deposit_status = rh_update_deposit(uid, deposit.deposit_id, get_bank_info=False)
+    if deposit_status != "completed":
+        raise Exception(f"deposit status is {deposit_status}")
+
+    import pdb; breakpoint()
+
+    # check if enough cash 
+    account_info = rh_load_account_profile(uid)
+    if "error" in account_info:
+        return account_info
+    if len(account_info) != 1:
+        raise Exception(f"we found {len(account_info)} accounts for this user")
+    if account_info[0]["buying_power"] < deposit.amount \
+         and account_info[0]["portfolio_cash"] < deposit.amount:
+        raise Exception(f"Buying power is {account_info[0]["buying_power"]} " +\
+                        f"and portfolio cash is {account_info[0]["portfolio_cash"]} " +\
+                        f"but investment requires {deposit.amount}")
+
     try:
         userBrokerageInfo = UserBrokerageInfo.objects.get(user__id=id)
     except Exception as e:
         raise Exception(f"no userBrokerageInfo for user {uid}")
     
+    import pdb; breakpoint()
     order = rh_order_buy_fractional_by_price(
         uid, 
         userBrokerageInfo.symbol, 
@@ -356,6 +379,8 @@ def rh_invest(uid, deposit, repeat_day_range=5):
     else:
         executed_amount = None
 
+    import pdb; breakpoint()
+    
     user = User.objects.get(id=uid)
     robinhoodStockOrder = RobinhoodStockOrder(
         user = user,
@@ -412,7 +437,23 @@ def check_repeat_order(uid, deposit, repeat_day_range):
     )
     return potential_db_repeats, potential_rh_repeats
 
+def rh_load_account_profile(uid):
 
+    import pdb
+    breakpoint()
+
+    try:
+        session, userRobinhoodInfo = r.rh_create_session(uid)
+    except Exception as e:
+        return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
+    result = r.load_account_profile(session)
+
+    try:
+        serializer = RobinhoodAccountListSerializer(data=result)
+        serializer.is_valid(raise_exception=True)
+        return serializer.validated_data
+    except Exception as e:
+        return {"error": f"{str(e)}"}
 
 @receiver(post_save, sender=RobinhoodStockOrder)
 def rhdorder_to_investment(sender, instance, **kwargs):

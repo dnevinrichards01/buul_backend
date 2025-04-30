@@ -1,55 +1,39 @@
-from celery import shared_task, chain
-import time
-from ..plaid_client import plaid_client
-# from ..twilio_client import twilio_client
+from celery import shared_task
 from django.core.cache import cache 
-from django.core.mail import send_mail
-from api.sendgrid_client import sendgrid_client
-from sendgrid.helpers.mail import Mail
-from accumate_backend.settings import NOTIFICATIONS_EMAIL
-import re
 from django.utils import timezone
-
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django_celery_results.models import TaskResult
 
-from accumate_backend.settings import TWILIO_PHONE_NUMBER
+from api.apis.plaid import plaid_client
+from api.apis.sendgrid import sendgrid_client
+from sendgrid.helpers.mail import Mail
+from accumate_backend.settings import NOTIFICATIONS_EMAIL
+
+import re
+import json
+import uuid
 
 from plaid.model.item_public_token_exchange_request import ItemPublicTokenExchangeRequest
-from plaid.model.link_token_create_request import LinkTokenCreateRequest
-from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
-from plaid.model.depository_filter import DepositoryFilter
-from plaid.model.credit_filter import CreditFilter
-from plaid.model.link_token_account_filters import LinkTokenAccountFilters
-from plaid.model.depository_account_subtypes import DepositoryAccountSubtypes
-from plaid.model.depository_account_subtype import DepositoryAccountSubtype
-from plaid.model.credit_account_subtypes import CreditAccountSubtypes
-from plaid.model.credit_account_subtype import CreditAccountSubtype
 from plaid.model.item_remove_request import ItemRemoveRequest
 from plaid.model.user_create_request import UserCreateRequest
 from plaid.model.user_remove_request import UserRemoveRequest
-from plaid.model.country_code import CountryCode
-from plaid.model.products import Products
 from plaid.exceptions import ApiException
 from rest_framework.exceptions import ValidationError
 
 from plaid.model.item_access_token_invalidate_request import ItemAccessTokenInvalidateRequest
 
-import boto3
-
-from ..serializers.PlaidSerializers.itemSerializers import ItemPublicTokenExchangeResponseSerializer, \
+from ..serializers.plaid.item import ItemPublicTokenExchangeResponseSerializer, \
     ItemRemoveResponseSerializer, ItemAccessTokenInvalidateResponseSerializer
-from ..serializers.PlaidSerializers.linkSerializers import LinkTokenCreateResponseSerializer
-from ..serializers.PlaidSerializers.userSerializers import UserRemoveResponseSerializer, \
+from ..serializers.plaid.link import LinkTokenCreateResponseSerializer
+from ..serializers.plaid.user import UserRemoveResponseSerializer, \
     UserCreateResponseSerializer
 from ..models import PlaidItem, PlaidUser, User
 
-import json
-import uuid
 
 
-# user creation and deletion
+
+# user and plaid management
 
 @shared_task(name="plaid_item_public_tokens_exchange")
 def plaid_item_public_tokens_exchange(**kwargs):
@@ -107,7 +91,6 @@ def plaid_item_public_tokens_exchange(**kwargs):
         )
         return f"cached plaid public token exchange error: {str(e)}"
 
-
 @shared_task(name="plaid_link_token_create")
 def plaid_link_token_create(**kwargs):
     # import pdb
@@ -132,6 +115,9 @@ def plaid_link_token_create(**kwargs):
             "redirect_uri": kwargs['redirect_uri'], 
             "webhook": kwargs["webhook"]#,
         }
+        # maybe add the filters back in?
+        # update flow
+        
         # exchange_request = LinkTokenCreateRequest(
         #     client_name=kwargs["client_name"],
         #     language=kwargs['language'],
@@ -411,7 +397,7 @@ def accumate_user_remove(uid, code, ignore_plaid_delete=False):
 
 
 
-
+# send notifications
 
 @shared_task(name="send_verification_code")
 def send_verification_code(**kwargs):
@@ -466,7 +452,6 @@ def send_forgot_email(**kwargs):
         #     body = f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}"
         # )
 
-
 @shared_task(name="send_waitlist_email")
 def send_waitlist_email(**kwargs):
     if kwargs["useEmail"]:
@@ -493,6 +478,44 @@ def send_waitlist_email(**kwargs):
         # )
 
 
+
+# refresh plaid tokens
+
+@shared_task(name="plaid_access_token_refresh")
+def plaid_access_token_refresh(plaid_item_id):
+    import pdb
+    breakpoint()
+    #ApiException, ValidationError
+    try:
+        plaidItem = PlaidItem.objects.get(id=plaid_item_id)
+        request = ItemAccessTokenInvalidateRequest(plaidItem.accessToken)
+        exchange_response = plaid_client.item_access_token_invalidate(request)
+        serializer = ItemAccessTokenInvalidateResponseSerializer(
+            data=exchange_response.to_dict()
+        )
+        serializer.is_valid(raise_exception=True)
+        plaidItem.accessToken = serializer.validated_data["new_access_token"]
+        plaidItem.previousRefresh = timezone.now()
+        plaidItem.previousRefreshSuccess = True
+        plaidItem.save()
+    # log this?
+    # except ApiException as e:
+    #     return 
+    # except ValidationError as e:
+    #     return
+    except Exception as e:
+        plaidItem = PlaidItem.objects.get(id=plaid_item_id)
+        plaidItem.previousRefreshSuccess = False
+
+@shared_task(name="plaid_access_token_refresh_all")
+def plaid_access_token_refresh_all():
+    plaidItems = PlaidItem.objects.all()
+    for plaidItem in plaidItems:
+        plaid_access_token_refresh(plaidItem.id)
+
+
+# censor celery task result logs
+
 def format_task_result_kwargs(text):
     # Regular expression to match `'uid': UUID('<uuid>')`
 
@@ -511,7 +534,6 @@ def format_task_result_kwargs(text):
         cleaned_text = text
 
     return extracted_uuid, cleaned_text
-
 
 @receiver(pre_save, sender=TaskResult)
 def modify_task_result(sender, instance, **kwargs):
@@ -541,41 +563,6 @@ def modify_task_result(sender, instance, **kwargs):
         instance.task_args = f'{{"uid": UUID({uuid}), ' + json.dumps(task_args)[1:]
     except:
         instance.task_args = instance.task_args
-
-
-@shared_task(name="plaid_access_token_refresh")
-def plaid_access_token_refresh(plaid_item_id):
-    import pdb
-    breakpoint()
-    #ApiException, ValidationError
-    try:
-        plaidItem = PlaidItem.objects.get(id=plaid_item_id)
-        request = ItemAccessTokenInvalidateRequest(plaidItem.accessToken)
-        exchange_response = plaid_client.item_access_token_invalidate(request)
-        serializer = ItemAccessTokenInvalidateResponseSerializer(
-            data=exchange_response.to_dict()
-        )
-        serializer.is_valid(raise_exception=True)
-        plaidItem.accessToken = serializer.validated_data["new_access_token"]
-        plaidItem.previousRefresh = timezone.now()
-        plaidItem.previousRefreshSuccess = True
-        plaidItem.save()
-    # log this?
-    # except ApiException as e:
-    #     return 
-    # except ValidationError as e:
-    #     return
-    except Exception as e:
-        plaidItem = PlaidItem.objects.get(id=plaid_item_id)
-        plaidItem.previousRefreshSuccess = False
-
-
-@shared_task(name="plaid_access_token_refresh_all")
-def plaid_access_token_refresh_all():
-    plaidItems = PlaidItem.objects.all()
-    for plaidItem in plaidItems:
-        plaid_access_token_refresh(plaidItem.id)
-
 
 
 

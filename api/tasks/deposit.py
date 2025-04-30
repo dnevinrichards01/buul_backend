@@ -1,20 +1,20 @@
 from celery import shared_task, chain
-from accumate_backend.settings import TWILIO_PHONE_NUMBER
+
 import robin_stocks.robinhood as r
+
 from django.utils import timezone
 from django.db.models import Q
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 from django.db.models import Sum
-from ..plaid_client import plaid_client
-# from ..twilio_client import twilio_client
-from ..jsonUtils import filter_jsons
 from django.db import transaction
+
+from api.apis.plaid import plaid_client
+from ..jsonUtils import filter_jsons
 
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import json
-
 import functools
 
 from plaid.model.accounts_get_request import AccountsGetRequest
@@ -22,23 +22,11 @@ from plaid.model.accounts_balance_get_request import AccountsBalanceGetRequest
 from plaid.exceptions import ApiException
 
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \
-    RobinhoodDeposit, Investment, Deposit
-from ..serializers.rhSerializers import GetLinkedBankAccountsResponseSerializer, \
+    RobinhoodDeposit, Investment, Deposit, UserBrokerageInfo
+from ..serializers.rh import GetLinkedBankAccountsResponseSerializer, \
     DepositSerializer, RobinhoodAccountListSerializer
-from ..serializers.PlaidSerializers.balanceSerializers import \
+from ..serializers.plaid.balance import \
     BalanceGetResponseSerializer, AccountsGetResponseSerializer
-# retry all of these bc sometimes you get 
-# {'detail': 'Incorrect authentication credentials.'} when you just 
-# refreshed access token but are using the old one here. 
-# but not this one, retry the whole chain - for idempotency... 
-
-
-# maybe form a group of cashback if it is more than 3 dollars and over a month old
-# or if it is over 30
-# and if
-
-# get their cash holdings to know if you can invest...
-
 
 # plaid balance
 
@@ -170,6 +158,13 @@ def comparator(account1, account2):
     rh1 = account1["rh_account"]
     rh2 = account2["rh_account"]
 
+    account1_matches = plaid1["mask"] == rh1["bank_account_number"]
+    account2_matches = plaid2["mask"] == rh2["bank_account_number"]
+    if account1_matches:
+        return -1
+    elif account2_matches:
+        return 1
+
     if plaid1["subtype"] == "checking" and plaid2["subtype"] == "savings":
         return -1
     elif plaid1["subtype"] == "savings" and plaid2["subtype"] == "checking":
@@ -192,8 +187,19 @@ def comparator(account1, account2):
     
     return 0
 
+@shared_task(name="match_brokerage_plaid_accounts")
+def match_brokerage_plaid_accounts(uid):
+    plaid_accounts = plaid_balance_get_process(uid, use_balance=False)
+    rh_accounts = rh_get_linked_bank_accounts(uid)
+    for p in plaid_accounts:
+        for r in rh_accounts:
+            if p["mask"] == r["bank_account_number"]:
+                return True
+    return False
+
+
 def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_account_id, plaid_accounts,
-                            rh_accounts):
+                            rh_accounts, brokerage_plaid_match_required=True):
     # find candidate accounts
     candidate_accounts = {}
     for plaid_account in plaid_accounts:
@@ -202,9 +208,8 @@ def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_acc
             if plaid_account["balances"]["iso_currency_code"] != "USD":
                 raise Exception("not USD")
             # if we find an account both in plaid and in rh, add to candidate list
-            if plaid_account["mask"] == rh_account["bank_account_number"] and \
-                plaid_account["balances"]["available"] >= amount:
-                if plaid_account["mask"] not in candidate_accounts:
+            if plaid_account["balances"]["available"] >= amount:
+                if not brokerage_plaid_match_required or plaid_account["mask"] == rh_account["bank_account_number"]:
                     match = {
                         "rh_account": rh_account,
                         "plaid_account": plaid_account,
@@ -212,8 +217,6 @@ def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_acc
                         "is_cashback_source": plaid_account["account_id"] in cashback_account_ids
                     }
                     candidate_accounts[plaid_account["mask"]] = match
-                else:
-                    raise Exception("matching account id mask")
     if len(candidate_accounts) == 0:
         raise Exception("no matching accounts")
     
@@ -287,6 +290,7 @@ def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount, force=F
     
     if not force:
         cumulative_amount_query = Deposit.objects.filter(
+            user__id=uid,
             created_at__gt=timezone.now()-relativedelta(months=1)
         ).aggregate(cumulative_amount=Sum('amount'))
         cumulative_amount = cumulative_amount_query.get('cumulative_amount') or 0
@@ -317,7 +321,8 @@ def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount, force=F
                 "recent_transfers": transfers}
     return serializer.validated_data
 
-def rh_deposit(uid, transactions, repeat_day_range=5, force=False, limit=50):
+def rh_deposit(uid, transactions, repeat_day_range=5, force=False, 
+               limit=50):
     import pdb; breakpoint()
     # get previous deposit to help decide which account to use
     old_deposits = RobinhoodDeposit.objects.filter(user__id=uid)\
@@ -334,7 +339,7 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False, limit=50):
     potential_db_repeats, potential_rh_repeats = check_repeat_deposit(
         uid, cashback_amount, repeat_day_range
     )
-    if potential_db_repeats or potential_rh_repeats:
+    if not force and (potential_db_repeats or potential_rh_repeats):
         raise Exception("potential db repeats {potential_db_repeats} " +  
                         "potential rh repeats {potential_rh_repeats}")
     
@@ -342,13 +347,15 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False, limit=50):
     plaid_accounts = plaid_balance_get_process(uid)
     rh_accounts = rh_get_linked_bank_accounts(uid)
     import pdb; breakpoint()
+    overdraft_protection = UserBrokerageInfo.objects.get(user_id=uid).overdraft_protection
     rh_account, plaid_account = select_deposit_account(
-        uid, 
+        uid,
         cashback_amount,
         cashback_account_ids,
         latest_deposit,
-        plaid_accounts, 
-        rh_accounts
+        plaid_accounts,
+        rh_accounts,
+        brokerage_plaid_match_required = overdraft_protection
     )
 
     # make the deposit
@@ -370,6 +377,7 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False, limit=50):
             mask = plaid_account["mask"],
             state = deposit["state"],
             amount = deposit["amount"],
+            early_access_amount = deposit["early_access_amount"],
             created_at = deposit["created_at"],
             updated_at = deposit["updated_at"],
             expected_landing_datetime = deposit["expected_landing_datetime"],
@@ -381,7 +389,7 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False, limit=50):
             _transaction.deposit = deposit
         PlaidCashbackTransaction.objects.bulk_update(transactions, ['deposit'])
 
-def rh_update_deposit(uid, deposit_id, transactions, get_bank_info=True):
+def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True):
 
     import pdb; breakpoint()
 
@@ -409,7 +417,8 @@ def rh_update_deposit(uid, deposit_id, transactions, get_bank_info=True):
     
         plaid_accounts = plaid_balance_get_process(
             uid, 
-            eq={"mask": [rh_account["bank_account_number"]]}
+            eq={"mask": [rh_account["bank_account_number"]]},
+            use_balance=False
         )
         if len(plaid_accounts) != 1:
             raise Exception(f"could not find rh account associated with " + 
@@ -422,6 +431,7 @@ def rh_update_deposit(uid, deposit_id, transactions, get_bank_info=True):
         )
         robinhoodCashbackDeposit.state = transfer_result["state"]
         robinhoodCashbackDeposit.amount = transfer_result["amount"]
+        robinhoodCashbackDeposit.early_access_amount = transfer_result["early_access_amount"]
         robinhoodCashbackDeposit.created_at = transfer_result["created_at"]
         robinhoodCashbackDeposit.updated_at = transfer_result["updated_at"]
         robinhoodCashbackDeposit.expected_landing_datetime = transfer_result["expected_landing_datetime"]
@@ -437,6 +447,7 @@ def rh_update_deposit(uid, deposit_id, transactions, get_bank_info=True):
                 mask = plaid_account["mask"],
                 state = transfer_result["state"], 
                 amount = transfer_result["amount"],
+                early_access_amount = transfer_result["early_access_amount"],
                 created_at = transfer_result["created_at"],
                 updated_at = transfer_result["updated_at"],
                 expected_landing_datetime = transfer_result["expected_landing_datetime"],
@@ -447,9 +458,10 @@ def rh_update_deposit(uid, deposit_id, transactions, get_bank_info=True):
                             "enable get_bank_info to create deposit record")
     robinhoodCashbackDeposit.save()
     deposit = Deposit.objects.get(rh=robinhoodCashbackDeposit)
-    for transaction in transactions:
-        transaction.deposit = deposit
-    PlaidCashbackTransaction.objects.bulk_update(transactions, ['deposit'])
+    if transactions:
+        for transaction in transactions:
+            transaction.deposit = deposit
+        PlaidCashbackTransaction.objects.bulk_update(transactions, ['deposit'])
     return transfer_result["state"]
 
 
@@ -465,7 +477,7 @@ def group_cashback_transactions(uid, grouped=True, group_size=50):
         for transaction in to_deposit:
             if curr_deposit_amount < group_size:
                 curr_deposit_amount += abs(transaction.amount)
-                grouped_transactions.append(transaction)
+                curr_deposit_transactions.append(transaction)
             else:
                 curr_deposit_amount = 0
                 curr_deposit_transactions.append(curr_deposit_transactions)
@@ -486,6 +498,7 @@ def rhdeposit_to_deposit(sender, instance, **kwargs):
             mask = instance.mask,
             state = instance.state,
             amount = instance.amount,
+            available_funds = instance.early_access_amount,
             created_at = instance.created_at
         )
         deposit.save()

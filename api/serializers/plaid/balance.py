@@ -1,7 +1,6 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
-from .errorSerializer import ErrorSerializer
-from .itemSerializers import ItemSerializer
+from .item import ItemSerializer
 from .choices import ACCOUNT_SUBTYPES, ACCOUNT_TYPES, ACCOUNT_VERIFICATION_STATUSES
 
 # /accounts/balance/get request 

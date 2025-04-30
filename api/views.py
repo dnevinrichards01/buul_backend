@@ -2,16 +2,16 @@
 from .models import User, WaitlistEmail, PlaidUser, UserBrokerageInfo, PlaidItem, \
     UserInvestmentGraph, Log, PlaidPersonalFinanceCategories
 from rest_framework.views import APIView
-from .serializers.accumateAccountSerializers import WaitlistEmailSerializer, \
+from .serializers.buul import WaitlistEmailSerializer, \
     UserBrokerageInfoSerializer, NamePasswordValidationSerializer, \
     VerificationCodeResponseSerializer, VerificationCodeRequestSerializer, SendEmailSerializer, \
     DeleteAccountVerifySerializer, MyTokenRefreshSerializer
-from .serializers.accumateAccountSerializers import UserSerializer, \
+from .serializers.buul import UserSerializer, \
     WaitlistEmailSerializer, GraphDataRequestSerializer
-from .serializers.PlaidSerializers.itemSerializers import ItemPublicTokenExchangeRequestSerializer
-from .serializers.PlaidSerializers.linkSerializers import \
+from .serializers.plaid.item import ItemPublicTokenExchangeRequestSerializer
+from .serializers.plaid.link import \
     LinkTokenCreateRequestTransactionsSerializer, LinkTokenCreateRequestSerializer
-from .serializers.PlaidSerializers.webhookSerializers import \
+from .serializers.plaid.webhook import \
     PlaidSessionFinishedSerializer, WebhookSerializer, PlaidTransactionSyncUpdatesAvailable
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -21,13 +21,14 @@ from django.http import JsonResponse
 from rest_framework.exceptions import ValidationError
 from django.core.cache import cache
 import json
-from api.yahooRapidApiClient import FPMUtils
+from api.apis.fmp import FPMUtils
 from celery import current_app, chain, chord
-from .tasks.userTasks import plaid_item_public_tokens_exchange, \
+from .tasks.user import plaid_item_public_tokens_exchange, \
     plaid_link_token_create, plaid_user_create, accumate_user_remove, \
     plaid_user_remove, send_verification_code, send_waitlist_email, send_forgot_email
-from .tasks.graphTasks import refresh_stock_data_by_interval, get_graph_data
-from .tasks.transactionsTasks import update_transactions
+from .tasks.graph import refresh_stock_data_by_interval, get_graph_data
+from .tasks.identify import update_transactions
+from .tasks.deposit import match_brokerage_plaid_accounts
 from robin_stocks.models import UserRobinhoodInfo
 
 import secrets 
@@ -35,7 +36,7 @@ import secrets
 from accumate_backend.settings import LOAD_BALANCER_ENDPOINT
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .serializers.accumateAccountSerializers import MyTokenObtainPairSerializer
+from .serializers.buul import MyTokenObtainPairSerializer
 import bcrypt 
 
 from accumate_backend.viewHelper import LogState, log, validate, \
@@ -378,7 +379,8 @@ class SetBrokerageInvestment(APIView):
         # breakpoint()
         serializer = UserBrokerageInfoSerializer(data=request.data)
         validation_error_respose = validate(
-            Log, serializer, self, fields_to_correct=["brokerage", "symbol"],
+            Log, serializer, self, 
+            fields_to_correct=["brokerage", "symbol", "overdraft_protection"],
             fields_to_fail=["non_field_errors"]
         )
         if validation_error_respose:
@@ -392,6 +394,8 @@ class SetBrokerageInvestment(APIView):
                 userBrokerageInfo.brokerage = serializer.validated_data["brokerage"]
             if "symbol" in serializer.validated_data:
                 userBrokerageInfo.symbol = serializer.validated_data["symbol"]
+            if "overdraft_protection" in serializer.validated_data:
+                userBrokerageInfo.overdraft_protection = serializer.validated_data["overdraft_protection"]
         except:
             if "brokerage" in serializer.validated_data:
                 brokerage = serializer.validated_data["brokerage"]
@@ -401,10 +405,15 @@ class SetBrokerageInvestment(APIView):
                 symbol = serializer.validated_data["symbol"]
             else: 
                 symbol = None
+            if "overdraft_protection" in serializer.validated_data:
+                overdraft_protection = serializer.validated_data["overdraft_protection"]
+            else: 
+                overdraft_protection = True
             userBrokerageInfo = UserBrokerageInfo(
                 user = User.objects.get(id=uid),
                 brokerage = brokerage,
-                symbol = symbol
+                symbol = symbol,
+                overdraft_protection = overdraft_protection
             )
         userBrokerageInfo.save()
 
@@ -743,6 +752,53 @@ class PlaidItemWebhook(APIView):
             )
 # fetch account info
 
+class PlaidItemsSubmit(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        uid = request.user.id
+        match_brokerage_plaid_accounts.apply_async(args = [uid])
+        cache.delete(f"uid_{uid}_check_plaid_brokerage_match")
+        cache.set(
+            f"uid_{uid}_check_plaid_brokerage_match".
+            json.dumps({"success": None, "error": None}),
+            timeout=120
+        )
+        status = 200
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
+            {
+                "success": "recieved", 
+                "error": None
+            }, 
+            status = status
+        )
+    
+    def get(self, request, *args, **kwargs):
+        uid = request.user.id
+        task_status = cache.get(f"uid_{uid}_check_plaid_brokerage_match")
+        if task_status:
+            status, log_state, errors = cached_task_logging_info(task_status)
+            log(Log, self, status, log_state, errors = errors)
+            return JsonResponse(
+                json.loads(task_status), 
+                status = status
+            )
+        else:
+            status = 200
+            error_message = "no cache value found"
+            response = JsonResponse(
+                {
+                    "success": None, 
+                    "error": error_message
+                }, 
+                status=status
+            )
+            log(Log, self, status, LogState.BACKGROUND_TASK_NO_CACHE, errors = {"error": error_message})
+            return response
+
+
+
 class GetUserInfo(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -750,7 +806,9 @@ class GetUserInfo(APIView):
         user = self.request.user
         try:
             userBrokerageInfo = UserBrokerageInfo.objects.get(user__id=user.id)
-            brokerage, etf = userBrokerageInfo.brokerage, userBrokerageInfo.symbol
+            brokerage = userBrokerageInfo.brokerage
+            etf = userBrokerageInfo.symbol
+            overdraft_protection = userBrokerageInfo.overdraft_protection
             if brokerage == "robinhood":
                 brokerage_completed = UserRobinhoodInfo.objects.filter(user=user).exists()
             else:
@@ -767,6 +825,7 @@ class GetUserInfo(APIView):
                 "phone_number": user.phone_number,
                 "brokerage": brokerage,
                 "etf": etf,
+                "overdraft_protection": overdraft_protection,
                 "brokerage_completed": brokerage_completed,
                 "link_completed": PlaidItem.objects.filter(user=user).exists()
             }, 

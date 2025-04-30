@@ -1,11 +1,10 @@
 # from django.contrib.auth.models import User
 from rest_framework import serializers
 from ..models import WaitlistEmail, User
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, \
-    TokenRefreshSerializer
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from .PlaidSerializers.linkSerializers import e164_phone_number_validator
+from .plaid.link import e164_phone_number_validator
 from api.models import User
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -78,6 +77,11 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['phone_number', 'full_name', 'password', 'email', 'pre_account_id']
         extra_kwargs = {'password': {'write_only': True}}
     
+    def validate(self, attrs):
+        # also run query to make all emails lower case (practice on local first)
+        attrs['email'] = attrs['email'].lower()
+        return attrs
+
     def create(self, validated_data):
         validated_data.pop('pre_account_id', None)
         user = User(**validated_data)
@@ -208,3 +212,4 @@ class WaitlistEmailSerializer(serializers.ModelSerializer):
 class UserBrokerageInfoSerializer(serializers.Serializer):
     brokerage = serializers.CharField(required=False)
     symbol = serializers.CharField(required=False)
+    overdraft_protection = serializers.BooleanField(required=False)

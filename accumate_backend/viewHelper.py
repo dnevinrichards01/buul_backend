@@ -72,7 +72,7 @@ def validate(logger, serializer, instance, fields_to_correct=[], fields_to_fail=
             return JsonResponse(
                 {
                     "success": None,
-                    "error": f"error '{field}': {e.detail[field][0]}"
+                    "error": error_messages
                 }, 
                 status = status
             )

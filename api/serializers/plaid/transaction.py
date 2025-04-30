@@ -1,9 +1,8 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
-from .errorSerializer import ErrorSerializer
 from .choices import PaymentChannelChoices, TransactionTypeChoices
-from .balanceSerializers import AccountSerializer
-from .itemSerializers import ItemSerializer
+from .balance import AccountSerializer
+from .item import ItemSerializer
 
 # /transactions/sync request
 
