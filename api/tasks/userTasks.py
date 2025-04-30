@@ -129,7 +129,7 @@ def plaid_link_token_create(**kwargs):
             "products": [val for val in kwargs['products']], 
             "transactions": {"days_requested": 100},
             "enable_multi_item_link": True,
-            # "redirect_uri": kwargs['redirect_uri'], 
+            "redirect_uri": kwargs['redirect_uri'], 
             "webhook": kwargs["webhook"]#,
         }
         # exchange_request = LinkTokenCreateRequest(
