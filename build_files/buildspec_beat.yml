@@ -27,7 +27,7 @@ phases:
       - echo pushing ${IMAGE} image in to docker ECR...
       - ACCOUNT_ID=$(cat account_id.txt)
       - |
-        PREV_TAG=${INITIAL_REGION}
+        PREV_TAG="${ACCOUNT_ID}.dkr.ecr.${INITIAL_REGION}.amazonaws.com/${ENV_NAME}-${IMAGE}:latest"
         for REGION in ${REGION_LIST}; do
           aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
           IMAGE_TAG="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ENV_NAME}-${IMAGE}:latest"
