@@ -9,41 +9,41 @@ class ItemSerializer(serializers.Serializer):
     Serializer for the 'item' field in Plaid responses.
     """
     # Define fields as per Plaid's Item object
-    auth_method = serializers.ChoiceField(
-        choices=ItemAuthMethod.choices(),
-        help_text="The method used to populate Auth data for the Item",
-        allow_null=True,
-        required=False
-    )
-    available_products = serializers.ListField(
-        child=serializers.ChoiceField(choices=ProductChoices.choices()),
-        help_text="Products available for the Item.",
-        allow_null=True,
-        required=False
-    )
-    billed_products = serializers.ListField(
-        child=serializers.ChoiceField(choices=ProductChoices.choices()),
-        help_text="Products billed for the Item.",
-        allow_null=True,
-        required=False
-    )
-    products = serializers.ListField(
-        child=serializers.ChoiceField(choices=ProductChoices.choices()),
-        help_text="Products added to the Item.",
-        allow_null=True,
-        required=False
-    )
-    consented_products = serializers.ListField(
-        child=serializers.ChoiceField(choices=ProductChoices.choices()),
-        help_text="Products that the user has consented to via Data Transparency Messaging.",
-        allow_null=True,
-        required=False
-    )
-    consent_expiration_time = serializers.DateTimeField(
-        allow_null=True,
-        help_text="Time when the Item's consent will expire.",
-        required=False
-    )
+    # auth_method = serializers.ChoiceField(
+    #     choices=ItemAuthMethod.choices(),
+    #     help_text="The method used to populate Auth data for the Item",
+    #     allow_null=True,
+    #     required=False
+    # )
+    # available_products = serializers.ListField(
+    #     child=serializers.ChoiceField(choices=ProductChoices.choices()),
+    #     help_text="Products available for the Item.",
+    #     allow_null=True,
+    #     required=False
+    # )
+    # billed_products = serializers.ListField(
+    #     child=serializers.ChoiceField(choices=ProductChoices.choices()),
+    #     help_text="Products billed for the Item.",
+    #     allow_null=True,
+    #     required=False
+    # )
+    # products = serializers.ListField(
+    #     child=serializers.ChoiceField(choices=ProductChoices.choices()),
+    #     help_text="Products added to the Item.",
+    #     allow_null=True,
+    #     required=False
+    # )
+    # consented_products = serializers.ListField(
+    #     child=serializers.ChoiceField(choices=ProductChoices.choices()),
+    #     help_text="Products that the user has consented to via Data Transparency Messaging.",
+    #     allow_null=True,
+    #     required=False
+    # )
+    # consent_expiration_time = serializers.DateTimeField(
+    #     allow_null=True,
+    #     help_text="Time when the Item's consent will expire.",
+    #     required=False
+    # )
     error = ErrorSerializer(
         allow_null=True,
         help_text="Error object containing error details, if any.",
@@ -69,12 +69,12 @@ class ItemSerializer(serializers.Serializer):
         allow_null=True,
         required=False
     )
-    update_type = serializers.ChoiceField(
-        choices=ItemUpdateType.choices(),
-        help_text="The type of update for the Item.",
-        allow_null=True,
-        required=False
-    )
+    # update_type = serializers.ChoiceField(
+    #     choices=ItemUpdateType.choices(),
+    #     help_text="The type of update for the Item.",
+    #     allow_null=True,
+    #     required=False
+    # )
     webhook = serializers.URLField(
         allow_null=True,
         help_text="The webhook URL associated with the Item.",
@@ -127,11 +127,11 @@ class ItemGetResponseSerializer(serializers.Serializer):
         allow_null=True,
         help_text="Metadata about the Item"
     )
-    status = ItemGetResponseStatusSerializer(
-        allow_null=True,
-        help_text="the last successful and failed transactions update for the Item"
-    )
-    requestId = serializers.CharField(
+    # status = ItemGetResponseStatusSerializer(
+    #     allow_null=True,
+    #     help_text="the last successful and failed transactions update for the Item"
+    # )
+    request_id = serializers.CharField(
         help_text = "unique identifier for the request"
     )
 

@@ -19,7 +19,7 @@ urlpatterns = [
     path('user/getuserinfo/', views.GetUserInfo.as_view(), name='get_user_info'),
     path('user/getstockgraphdata/', views.StockGraphData.as_view(), name='get_stock_graph_data'),
     path('user/getspendingrecommendations/', views.GetSpendingRecommendations.as_view(), name='get_spending_recommendations'),
-    
+    path('user/getplaiditems/', views.GetPlaidItems.as_view(), name='get_plaid_items'),
 
     # update info
     path('user/resetpassword/', views.ResetPassword.as_view(), name='reset_password'),

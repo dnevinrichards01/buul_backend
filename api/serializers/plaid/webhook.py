@@ -42,8 +42,21 @@ class PlaidTransactionSyncUpdatesAvailable(serializers.Serializer):
 
     def validate(self, attrs):
         return attrs
-    
 
+class PlaidItemWebhookSerializer(serializers.Serializer):
+    webhook_type = serializers.ChoiceField(required=True, choices=["ITEM"])
+    webhook_code = serializers.ChoiceField(required=True, choices=[
+        'WEBHOOK_UPDATE_ACKNOWLEDGED', 'USER_ACCOUNT_REVOKED', 
+        'USER_PERMISSION_REVOKED', 'PENDING_EXPIRATION', 'ERROR',
+        'LOGIN_REPAIRED'
+    ])
+    item_id = serializers.CharField(required=True)
+    error = ErrorSerializer(required=False, allow_null=True)
+    environment = serializers.ChoiceField(required=True, choices=["sandbox", "production"])
+
+    def validate(self, attrs):
+        return attrs
+    
 class WebhookSerializer(serializers.Serializer):
     """
     Serializer for Plaid link webhooks.
@@ -56,7 +69,12 @@ class WebhookSerializer(serializers.Serializer):
     WEBHOOK_CODES = (
         ('SESSION_FINISHED', 'SESSION_FINISHED'),
         ('ITEM_ADD_RESULT', 'ITEM_ADD_RESULT'),
-        ('SYNC_UPDATES_AVAILABLE', 'SYNC_UPDATES_AVAILABLE')
+        ('SYNC_UPDATES_AVAILABLE', 'SYNC_UPDATES_AVAILABLE'),
+        ('WEBHOOK_UPDATE_ACKNOWLEDGED', 'WEBHOOK_UPDATE_ACKNOWLEDGED'),
+        ('USER_ACCOUNT_REVOKED', 'USER_ACCOUNT_REVOKED'),
+        ('USER_PERMISSION_REVOKED', 'USER_PERMISSION_REVOKED'),
+        ('PENDING_EXPIRATION', 'PENDING_EXPIRATION'),
+        ('ERROR', 'ERROR')
     )
 
     webhook_type = serializers.ChoiceField(
@@ -83,6 +101,11 @@ class WebhookSerializer(serializers.Serializer):
         webhook_type = data.get('webhook_type')
         webhook_code = data.get('webhook_code')
         if not (webhook_type == "LINK" and webhook_code == "SESSION_FINISHED") and \
-            not (webhook_type == "TRANSACTION" and webhook_code == "SYNC_UPDATES_AVAILABLE"):
+            not (webhook_type == "TRANSACTION" and webhook_code == "SYNC_UPDATES_AVAILABLE") and \
+            not (webhook_type == "ITEM" and webhook_code in [
+                'WEBHOOK_UPDATE_ACKNOWLEDGED', 'USER_ACCOUNT_REVOKED', 
+                'USER_PERMISSION_REVOKED', 'PENDING_EXPIRATION', 'ERROR',
+                'LOGIN_REPAIRED'
+            ]):
             raise ValidationError(f"unsupported webhook of type {webhook_type} and code {webhook_code}")
         return data

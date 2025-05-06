@@ -205,6 +205,10 @@ class PlaidItem(models.Model):
     previousRefresh = models.DateTimeField(auto_now=True)
     previousRefreshSuccess = models.BooleanField(default=True)
     transactionsCursor = models.CharField(max_length=255, null=True, default=None)
+    plaid_item = models.CharField(max_length=255, null=True, default=None)
+    update_code = models.CharField(max_length=255, null=True, default=None)
+    institution_name = models.CharField(max_length=255, null=True, default=None)
+    institution_id = models.CharField(max_length=255, null=True, default=None)
 
     class Meta:
         constraints = [
@@ -259,23 +263,22 @@ class PlaidItem(models.Model):
 
 class PlaidPersonalFinanceCategories(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    income = models.FloatField(default=0)
-    transfer_in = models.FloatField(default=0)
-    transfer_out = models.FloatField(default=0)
-    loan_payments = models.FloatField(default=0)
-    bank_fees = models.FloatField(default=0)
+    # income = models.FloatField(default=0)
+    # transfer_in = models.FloatField(default=0)
+    # transfer_out = models.FloatField(default=0)
+    # loan_payments = models.FloatField(default=0)
+    # bank_fees = models.FloatField(default=0)
     entertainment = models.FloatField(default=0)
     food_and_drink = models.FloatField(default=0)
     general_merchandise = models.FloatField(default=0)
     home_improvement = models.FloatField(default=0)
-    medical = models.FloatField(default=0)
+    # medical = models.FloatField(default=0)
     personal_care = models.FloatField(default=0)
-    general_services = models.FloatField(default=0)
-    government_and_non_profit = models.FloatField(default=0)
+    # general_services = models.FloatField(default=0)
+    # government_and_non_profit = models.FloatField(default=0)
     transportation = models.FloatField(default=0)
     travel = models.FloatField(default=0)
     rent_and_utilities = models.FloatField(default=0)
-    income = models.FloatField(default=0)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
 

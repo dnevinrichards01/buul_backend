@@ -5,14 +5,15 @@ from rest_framework.views import APIView
 from .serializers.buul import WaitlistEmailSerializer, \
     UserBrokerageInfoSerializer, NamePasswordValidationSerializer, \
     VerificationCodeResponseSerializer, VerificationCodeRequestSerializer, SendEmailSerializer, \
-    DeleteAccountVerifySerializer, MyTokenRefreshSerializer
+    DeleteAccountVerifySerializer, MyTokenRefreshSerializer, RequestLinkTokenSerializer
 from .serializers.buul import UserSerializer, \
     WaitlistEmailSerializer, GraphDataRequestSerializer
 from .serializers.plaid.item import ItemPublicTokenExchangeRequestSerializer
 from .serializers.plaid.link import \
     LinkTokenCreateRequestTransactionsSerializer, LinkTokenCreateRequestSerializer
 from .serializers.plaid.webhook import \
-    PlaidSessionFinishedSerializer, WebhookSerializer, PlaidTransactionSyncUpdatesAvailable
+    PlaidSessionFinishedSerializer, WebhookSerializer, PlaidTransactionSyncUpdatesAvailable, \
+    PlaidItemWebhookSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -505,8 +506,15 @@ class PlaidLinkTokenCreate(APIView):
         # import pdb
         # breakpoint()
 
+        user_request_serializer = RequestLinkTokenSerializer(data=request.data)
+        validation_error_respose = validate(
+            Log, user_request_serializer, self, 
+            fields_to_fail=["update", "institution_name", "non_field_errors"]
+        )
+        if validation_error_respose:
+            return validation_error_respose
+        
         user = self.request.user
-
         try:
             PlaidUser.objects.get(user__id=user.id)
         except Exception:
@@ -522,14 +530,14 @@ class PlaidLinkTokenCreate(APIView):
             log(Log, self, status, LogState.ERR_NO_MESSAGE, 
                 errors = {"error": error_message})
             return response
-
+        
         data = {
             "user": {
                 "phone_number": user.phone_number,
                 "email_address": user.email
             },
             "client_name": "Buul",
-            "products": ["transactions"],#, "statements"],
+            "products": ["transactions"],
             "transactions": {
                 "days_requested": 100
             },
@@ -550,7 +558,7 @@ class PlaidLinkTokenCreate(APIView):
             error_messages = {}
             for field in e.detail:
                 if len(e.detail[field]) >= 1:
-                    error_messages[field] = e.detail[field][0]
+                    error_messages[field] = e.detail[field]
             status = 400 
             log(Log, self, status, LogState.ERR_NO_MESSAGE, errors = error_messages)
             return JsonResponse(
@@ -564,6 +572,8 @@ class PlaidLinkTokenCreate(APIView):
         validated_data = serializer.validated_data
         uid = user.id
         validated_data['uid'] = uid
+        validated_data['update'] = user_request_serializer.validated_data.get('update', False)
+        validated_data['institution_name'] = user_request_serializer.validated_data.get('institution_name', None)
 
         cache.delete(f"uid_{uid}_plaid_link_token_create")
         cache.set(
@@ -714,7 +724,7 @@ class PlaidItemWebhook(APIView):
                 error_message = f"Invalid webhook of type {webhook_type} and code \
                             {webhook_code}."
                 log(Log, self, status, LogState.ERR_NO_MESSAGE,
-                    erorrs = {"error": error_message})
+                    errors = {"error": error_message})
                 return JsonResponse(
                     {
                         "success": None, 
@@ -736,7 +746,70 @@ class PlaidItemWebhook(APIView):
                 }, 
                 status = status
             )
+        
+        elif webhook_type == "ITEM" and webhook_code in [
+                'WEBHOOK_UPDATE_ACKNOWLEDGED', 'USER_ACCOUNT_REVOKED', 
+                'USER_PERMISSION_REVOKED', 'PENDING_EXPIRATION', 'ERROR'
+            ]:
+            serializer = PlaidItemWebhookSerializer(data=request.data)
+            validation_error_respose = validate(
+                Log, serializer, self,
+                fields_to_fail=["webhook_type", "webhook_code", "item_id",
+                                "environment", "non_field_errors"]
+            )
+            if validation_error_respose:
+                status = 400
+                error_message = f"Invalid webhook of type {webhook_type} and code \
+                            {webhook_code}."
+                log(Log, self, status, LogState.ERR_NO_MESSAGE,
+                    errors = {"error": error_message})
+                return JsonResponse(
+                    {
+                        "success": None, 
+                        "error": error_message
+                    }, 
+                    status = status
+                )
+            
+            error = serializer.validated_data.get("error", None)
+            item_update_code = webhook_code
 
+            if error:
+                error_code = error["error_code"]
+                if not error_code == "ITEM_LOGIN_REQUIRED":
+                    status = 400
+                    error_message = f"Invalid webhook of type {webhook_type}, code \
+                                {webhook_code}, and error_code {error_code}."
+                    log(Log, self, status, LogState.ERR_NO_MESSAGE,
+                        errors = {"error": error_message})
+                    return JsonResponse(
+                        {
+                            "success": None, 
+                            "error": error_message
+                        }, 
+                        status = status
+                    )
+                item_update_code = error_code
+            
+            if webhook_code == 'LOGIN_REPAIRED':
+                item_update_code = None
+            
+            item_id = serializer.validated_data["item_id"]
+            plaid_item = PlaidItem.objects.get(item_id=item_id)
+            plaid_item.update_code = item_update_code
+            plaid_item.save()
+
+            status = 200
+            log(Log, self, status, webhook_code)#LogState.SUCCESS)
+            return JsonResponse(
+                {
+                    "success": "recieved", 
+                    "error": None
+                }, 
+                status = status
+            )
+
+        
         else:
             status = 400
             error_message = f"Invalid webhook of type {webhook_type} and code \
@@ -831,7 +904,26 @@ class GetUserInfo(APIView):
             }, 
             status = status
         )
-     
+
+class GetPlaidItems(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        plaid_items = PlaidItem.objects.filter(user=user)
+        institution_names = [i.institution_name for i in plaid_items if i.institution_name]
+        
+        status = 200
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
+            {
+                "institution_names": institution_names,
+                "error": None
+            }, 
+            status = status
+        )
+  
+
 class StockGraphData(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1561,9 +1653,20 @@ class GetSpendingRecommendations(APIView):
         try:
             result = {}
             spending_by_category = PlaidPersonalFinanceCategories.get(user=user)
+            total_amount = 0
             for field in PlaidPersonalFinanceCategories._meta.get_fields():
-                if field.concrete and not field.many_to_many:
+                if field.name in [    
+                    'entertainment', 'food_and_drink', 
+                    'home_improvement', 'personal_care', 'transportation', 
+                    'travel', 'rent_and_utilities'
+                ]:
                     result[field.name] = spending_by_category[field.name]
+                if field.name in ['start_date', 'end_date']:
+                    result[field.name] = spending_by_category[field.name].isoformat()
+                else:
+                    total_amount += spending_by_category[field.name].isoformat()
+            result["total_amount"] = total_amount
+                    
 
             status = 200
             log(Log, self, status, LogState.SUCCESS)

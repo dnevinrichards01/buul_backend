@@ -129,7 +129,8 @@ def rh_order_buy_fractional_by_price(uid, symbol, amount):
     except Exception as e:
         return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
 
-    result = r.order_buy_fractional_by_price(session, symbol, amount)
+    # result = r.order_buy_fractional_by_price(session, symbol, amount)
+    result = r.order(session, symbol, 0, "buy", amount=amount)
 
     try:
         serializer = StockOrderSerializer(data=result)

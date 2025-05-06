@@ -21,9 +21,16 @@ class LogState(Enum):
 def cached_task_logging_info(cached_string):
     cached_value = json.loads(cached_string)
     if cached_value["success"] is None and cached_value["error"] is not None:
-        status = 400
-        log_state = LogState.BACKGROUND_TASK_ERR
-        errors = {"error": cached_value["error"]}
+        if cached_value["error"] == "We could not find a connection between " + \
+            "you and this institution to update. Please create a new " + \
+            "connection or contact Buul.":
+            status = 200
+            log_state = LogState.ERR_MESSAGE
+            errors = {"error": cached_value["error"]}
+        else:
+            status = 400
+            log_state = LogState.BACKGROUND_TASK_ERR
+            errors = {"error": cached_value["error"]}
     elif cached_value["success"] is None and cached_value["error"] is None:
         status = 200
         log_state = LogState.BACKGROUND_TASK_WAITING
