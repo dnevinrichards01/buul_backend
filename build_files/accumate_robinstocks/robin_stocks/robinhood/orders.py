@@ -777,7 +777,7 @@ def order_trailing_stop(symbol, quantity, side, trailAmount, trailType='percenta
     return (data)
 
 @login_required
-def order(session, symbol, quantity, side, limitPrice=None, stopPrice=None, account_number=None, timeInForce='gtc', extendedHours=False, jsonify=True, market_hours='regular_hours'):
+def order(session, symbol, quantity, side, amount=None, limitPrice=None, stopPrice=None, account_number=None, timeInForce='gtc', extendedHours=False, jsonify=True, market_hours='regular_hours'):
     """A generic order function.
 
     :param symbol: The stock ticker of the stock to sell.
@@ -835,48 +835,83 @@ def order(session, symbol, quantity, side, limitPrice=None, stopPrice=None, acco
         trigger = "stop"
     else:
         price = round_price(next(iter(get_latest_price(session, symbol, priceType=priceType, includeExtendedHours=extendedHours)), 0.00))
-        
-    from datetime import datetime
-    payload = {
-        'account': load_account_profile(session, account_number=account_number, info='url'),
-        'instrument': get_instruments_by_symbols(session, symbol, info='url')[0],
-        'symbol': symbol,
-        'price': price,
-        'ask_price': round_price(next(iter(get_latest_price(session, symbol, "ask_price", extendedHours)), 0.00)),
-        'bid_ask_timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'),
-        'bid_price': round_price(next(iter(get_latest_price(session, symbol, "bid_price", extendedHours)), 0.00)),
-        'quantity': quantity,
-        'ref_id': str(uuid4()),
-        'type': orderType,
-        'stop_price': stopPrice,
-        'time_in_force': timeInForce,
-        'trigger': trigger,
-        'side': side,
-        'market_hours': market_hours, # choices are ['regular_hours', 'all_day_hours', 'extended_hours']
-        'extended_hours': extendedHours,
-        'order_form_version': 4
-    }
+    
+    if amount:
+        quantity = 0
+        ask_price = round_price(next(iter(get_latest_price(session, symbol, "ask_price", extendedHours)), 0.00))
+        bid_price = round_price(next(iter(get_latest_price(session, symbol, "bid_price", extendedHours)), 0.00))
+        payload = {
+            "account": load_account_profile(session, account_number=account_number, info='url'),
+            "ask_price": f"{ask_price:.6f}",
+            "bid_ask_timestamp": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            "bid_price": f"{bid_price:.6f}",
+            "instrument": get_instruments_by_symbols(session, symbol, info='url')[0],
+            "market_hours": market_hours,
+            "order_form_version": 6,
+            "ref_id":  str(uuid4()),
+            "side": side,
+            "symbol": symbol,
+            "time_in_force": 'gfd',#timeInForce,
+            "trigger": trigger,
+            "type": orderType,
+            # "check_overrides": [
+            #     "override_all_day_trading_fractional_order_promotion"
+            # ],
+            "dollar_based_amount": {
+                "amount": f"{amount:.2f}",
+                "currency_code": "USD"
+            }
+        }
+    else:
+        payload = {
+            'account': load_account_profile(session, account_number=account_number, info='url'),
+            'instrument': get_instruments_by_symbols(session, symbol, info='url')[0],
+            'symbol': symbol,
+            'price': price,
+            'ask_price': round_price(next(iter(get_latest_price(session, symbol, "ask_price", extendedHours)), 0.00)),
+            'bid_ask_timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'),
+            'bid_price': round_price(next(iter(get_latest_price(session, symbol, "bid_price", extendedHours)), 0.00)),
+            'quantity': quantity,
+            'ref_id': str(uuid4()),
+            'type': orderType,
+            'stop_price': stopPrice,
+            'time_in_force': timeInForce,
+            'trigger': trigger,
+            'side': side,
+            'market_hours': market_hours, # choices are ['regular_hours', 'all_day_hours', 'extended_hours']
+            'extended_hours': extendedHours,
+            'order_form_version': 4
+        }
+    # import pdb
+    # breakpoint()
+    
     # adjust market orders
     if orderType == 'market':
-        if trigger != "stop":
+        if trigger != "stop" and not amount:
             del payload['stop_price']
         # if market_hours == 'regular_hours': 
         #     del payload['extended_hours'] 
         
     if market_hours == 'regular_hours':
         if side == "buy":
-            payload['preset_percent_limit'] = "0.05"
-            payload['type'] = 'limit' 
+            if not amount:
+                payload['preset_percent_limit'] = "0.05"
+                payload['type'] = 'limit' 
+            else:
+                payload['type'] = 'market'
         # regular market sell
-        elif orderType == 'market' and side == 'sell':
+        elif not amount and orderType == 'market' and side == 'sell':
             del payload['price']   
     elif market_hours in ('extended_hours', 'all_day_hours'):
         payload['type'] = 'limit' 
-        payload['quantity']=int(payload['quantity']) # round to integer instead of fractional
+        if not amount:
+            payload['quantity']=int(payload['quantity']) # round to integer instead of fractional
         
     url = orders_url(account_number=account_number)
     # print(payload)
-    data = request_post(url, session, payload=payload, jsonify_data=jsonify)
+    # import pdb
+    # breakpoint()
+    data = request_post(url, session, payload=payload, json=bool(amount), jsonify_data=jsonify)
 
     return(data)
 

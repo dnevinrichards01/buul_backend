@@ -282,7 +282,7 @@ def initial_verification_flow(session, uid, device_token:str, mfa_code:str,
             response_format = inquiries_response["state_name"]
             error_message = "An internal error occurred. If your account is new, " + \
                 "you may need to finish connecting to your bank and uploading " + \
-                "documents. \n\nIf you already have, try waiting a few days or contact Buul."
+                "documents on the Robinhood website - not the app. \n\nIf you already have, try waiting a few days or contact Buul."
         else:
             response_format = "Unkown response format"
             error_message = "An internal error occurred. Please log in again or contact Buul."
