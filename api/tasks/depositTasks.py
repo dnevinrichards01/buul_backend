@@ -19,6 +19,7 @@ import functools
 
 from plaid.model.accounts_get_request import AccountsGetRequest
 from plaid.model.accounts_balance_get_request import AccountsBalanceGetRequest
+from plaid.model.accounts_balance_get_request_options import AccountsBalanceGetRequestOptions
 from plaid.exceptions import ApiException
 
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \
@@ -91,11 +92,17 @@ def plaid_balance_get(uid, item_id=None, account_ids_by_item_id={}):
             if plaidItem.itemId in account_ids_by_item_id:
                 exchange_request = AccountsBalanceGetRequest(
                     access_token=plaidItem.accessToken,
-                    options={"account_ids": account_ids_by_item_id[plaidItem.itemId]}
+                    options={
+                        "account_ids": account_ids_by_item_id[plaidItem.itemId],
+                        "min_last_updated_datetime": timezone.now().replace(hour=0, minute=0, second=0, microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ')
+                    }
                 )
             else:
                 exchange_request = AccountsBalanceGetRequest(
-                    access_token=plaidItem.accessToken
+                    access_token=plaidItem.accessToken,
+                    options=AccountsBalanceGetRequestOptions(
+                        min_last_updated_datetime=timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                    )
                 )
         
             exchange_response = plaid_client.accounts_balance_get(exchange_request)
