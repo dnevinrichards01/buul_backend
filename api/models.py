@@ -395,12 +395,6 @@ class Investment(models.Model):
                                       null=True, default=None)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'buy'], 
-                name='unique_investment'
-            )
-        ]
         ordering = ['user', 'date']
         indexes = [
             models.Index(fields=['user', 'date'])
