@@ -1,4 +1,4 @@
-from .buul import *
+from .user import *
 from .deposit import *
 from .graph import *
 from .identify import *
