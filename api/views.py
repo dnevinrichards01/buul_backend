@@ -702,7 +702,7 @@ class PlaidItemWebhook(APIView):
             )
 
             status = 200
-            log(Log, self, status, LogState.SUCCESS)
+            log(Log, self, status, webhook_code)#LogState.SUCCESS)
             return JsonResponse(
                 {
                     "success": "recieved", 
@@ -735,10 +735,10 @@ class PlaidItemWebhook(APIView):
             
             item_id = serializer.validated_data["item_id"]
 
-            update_transactions.apply_async(args = [item_id])
+            # update_transactions.apply_async(args = [item_id])
 
             status = 200
-            log(Log, self, status, LogState.SUCCESS)
+            log(Log, self, status, webhook_code)#LogState.SUCCESS)
             return JsonResponse(
                 {
                     "success": "recieved", 
