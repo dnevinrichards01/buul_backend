@@ -1,11 +1,10 @@
 # from django.contrib.auth.models import User
 from rest_framework import serializers
 from ..models import WaitlistEmail, User
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, \
-    TokenRefreshSerializer
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from .PlaidSerializers.linkSerializers import e164_phone_number_validator
+from .plaid.link import e164_phone_number_validator
 from api.models import User
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -24,10 +23,12 @@ FIELD_CHOICES = [
     ('delete_account', 'delete_account')
 ]
 
+PASSWORD_REGEX = r'^(?=.*[A-Z])(?=.*\d)(?=.*[\-@$!\.%*?&])[A-Za-z\d\-@$!\.%*?&]{8,}$'
+
 class MyTokenObtainPairSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     password = serializers.RegexField(
-        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
+        regex=PASSWORD_REGEX,
         required=False,
         write_only=True,
         error_messages={"invalid": invalid_password_error_message}
@@ -66,7 +67,7 @@ class GraphDataRequestSerializer(serializers.Serializer):
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.RegexField(
-        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
+        regex=PASSWORD_REGEX,
         required=False,
         write_only=True,
         error_messages={"invalid": invalid_password_error_message}
@@ -78,6 +79,11 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['phone_number', 'full_name', 'password', 'email', 'pre_account_id']
         extra_kwargs = {'password': {'write_only': True}}
     
+    def validate(self, attrs):
+        # also run query to make all emails lower case (practice on local first)
+        attrs['email'] = attrs['email'].lower()
+        return attrs
+
     def create(self, validated_data):
         validated_data.pop('pre_account_id', None)
         user = User(**validated_data)
@@ -88,7 +94,7 @@ class NamePasswordValidationSerializer(serializers.Serializer):
     pre_account_id = serializers.IntegerField(min_value=0, max_value=99999999, required=True)
     full_name = serializers.CharField(required=False)
     password = serializers.RegexField(
-        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
+        regex=PASSWORD_REGEX,
         required=False,
         write_only=True,
         error_messages={"invalid": invalid_password_error_message}
@@ -109,7 +115,7 @@ class VerificationCodeResponseSerializer(serializers.Serializer):
     brokerage = serializers.CharField(required=False)
     symbol = serializers.CharField(required=False)
     password = serializers.RegexField(
-        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
+        regex=PASSWORD_REGEX,
         required=False,
         write_only=True,
         error_messages={"invalid": invalid_password_error_message}
@@ -146,7 +152,7 @@ class VerificationCodeRequestSerializer(serializers.Serializer):
     brokerage = serializers.CharField(required=False)
     symbol = serializers.CharField(required=False)
     password = serializers.RegexField(
-        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!\.%*?&])[A-Za-z\d@$!\.%*?&]{8,}$',
+        regex=PASSWORD_REGEX,
         required=False,
         write_only=True,
         error_messages={"invalid": invalid_password_error_message}
@@ -190,7 +196,6 @@ class DeleteAccountVerifySerializer(serializers.Serializer):
     )
 
 class WaitlistEmailSerializer(serializers.ModelSerializer):
-
     email = serializers.EmailField()
 
     class Meta:
@@ -208,3 +213,13 @@ class WaitlistEmailSerializer(serializers.ModelSerializer):
 class UserBrokerageInfoSerializer(serializers.Serializer):
     brokerage = serializers.CharField(required=False)
     symbol = serializers.CharField(required=False)
+    overdraft_protection = serializers.BooleanField(required=False)
+
+class RequestLinkTokenSerializer(serializers.Serializer):
+    update = serializers.BooleanField(required=False)
+    institution_name = serializers.CharField(required=False)
+
+    def validate(self, attrs):
+        if len(attrs) != 0 and len(attrs) < 2:
+            raise ValidationError("Our update flow requires institution name")
+        return attrs

@@ -1,10 +1,10 @@
 from celery import shared_task, chain
 import time
-from ..plaid_client import plaid_client
+from ..apis.plaid import plaid_client
 # from ..twilio_client import twilio_client
 from django.core.cache import cache 
 from django.core.mail import send_mail
-from api.sendgrid_client import sendgrid_client
+from api.apis.sendgrid import sendgrid_client
 from sendgrid.helpers.mail import Mail
 from accumate_backend.settings import NOTIFICATIONS_EMAIL
 import re
@@ -38,10 +38,10 @@ from plaid.model.item_access_token_invalidate_request import ItemAccessTokenInva
 
 import boto3
 
-from ..serializers.PlaidSerializers.itemSerializers import ItemPublicTokenExchangeResponseSerializer, \
+from ..serializers.plaid.item import ItemPublicTokenExchangeResponseSerializer, \
     ItemRemoveResponseSerializer, ItemAccessTokenInvalidateResponseSerializer
-from ..serializers.PlaidSerializers.linkSerializers import LinkTokenCreateResponseSerializer
-from ..serializers.PlaidSerializers.userSerializers import UserRemoveResponseSerializer, \
+from ..serializers.plaid.link import LinkTokenCreateResponseSerializer
+from ..serializers.plaid.user import UserRemoveResponseSerializer, \
     UserCreateResponseSerializer
 from ..models import PlaidItem, PlaidUser, User
 

@@ -1,6 +1,5 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
-from .errorSerializer import ErrorSerializer
 from .choices import LanguageChoices, CountryCodes, LinkTokenProductChoices
 from phonenumbers import parse, is_valid_number, format_number, PhoneNumberFormat
 

@@ -2,17 +2,18 @@
 from .models import User, WaitlistEmail, PlaidUser, UserBrokerageInfo, PlaidItem, \
     UserInvestmentGraph, Log, PlaidPersonalFinanceCategories
 from rest_framework.views import APIView
-from .serializers.accumateAccountSerializers import WaitlistEmailSerializer, \
+from .serializers.buul import WaitlistEmailSerializer, \
     UserBrokerageInfoSerializer, NamePasswordValidationSerializer, \
     VerificationCodeResponseSerializer, VerificationCodeRequestSerializer, SendEmailSerializer, \
-    DeleteAccountVerifySerializer, MyTokenRefreshSerializer
-from .serializers.accumateAccountSerializers import UserSerializer, \
+    DeleteAccountVerifySerializer, MyTokenRefreshSerializer, RequestLinkTokenSerializer
+from .serializers.buul import UserSerializer, \
     WaitlistEmailSerializer, GraphDataRequestSerializer
-from .serializers.PlaidSerializers.itemSerializers import ItemPublicTokenExchangeRequestSerializer
-from .serializers.PlaidSerializers.linkSerializers import \
+from .serializers.plaid.item import ItemPublicTokenExchangeRequestSerializer
+from .serializers.plaid.link import \
     LinkTokenCreateRequestTransactionsSerializer, LinkTokenCreateRequestSerializer
-from .serializers.PlaidSerializers.webhookSerializers import \
-    PlaidSessionFinishedSerializer, WebhookSerializer, PlaidTransactionSyncUpdatesAvailable
+from .serializers.plaid.webhook import \
+    PlaidSessionFinishedSerializer, WebhookSerializer, PlaidTransactionSyncUpdatesAvailable, \
+    PlaidItemWebhookSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -21,13 +22,14 @@ from django.http import JsonResponse
 from rest_framework.exceptions import ValidationError
 from django.core.cache import cache
 import json
-from api.yahooRapidApiClient import FPMUtils
+from api.apis.fmp import FPMUtils
 from celery import current_app, chain, chord
-from .tasks.userTasks import plaid_item_public_tokens_exchange, \
+from .tasks.user import plaid_item_public_tokens_exchange, \
     plaid_link_token_create, plaid_user_create, accumate_user_remove, \
     plaid_user_remove, send_verification_code, send_waitlist_email, send_forgot_email
-from .tasks.graphTasks import refresh_stock_data_by_interval, get_graph_data
-from .tasks.transactionsTasks import update_transactions
+from .tasks.graph import refresh_stock_data_by_interval, get_graph_data
+from .tasks.identify import update_transactions
+from .tasks.deposit import match_brokerage_plaid_accounts
 from robin_stocks.models import UserRobinhoodInfo
 
 import secrets 
@@ -35,7 +37,7 @@ import secrets
 from accumate_backend.settings import LOAD_BALANCER_ENDPOINT
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .serializers.accumateAccountSerializers import MyTokenObtainPairSerializer
+from .serializers.buul import MyTokenObtainPairSerializer
 import bcrypt 
 
 from accumate_backend.viewHelper import LogState, log, validate, \
@@ -378,7 +380,8 @@ class SetBrokerageInvestment(APIView):
         # breakpoint()
         serializer = UserBrokerageInfoSerializer(data=request.data)
         validation_error_respose = validate(
-            Log, serializer, self, fields_to_correct=["brokerage", "symbol"],
+            Log, serializer, self, 
+            fields_to_correct=["brokerage", "symbol", "overdraft_protection"],
             fields_to_fail=["non_field_errors"]
         )
         if validation_error_respose:
@@ -392,6 +395,8 @@ class SetBrokerageInvestment(APIView):
                 userBrokerageInfo.brokerage = serializer.validated_data["brokerage"]
             if "symbol" in serializer.validated_data:
                 userBrokerageInfo.symbol = serializer.validated_data["symbol"]
+            if "overdraft_protection" in serializer.validated_data:
+                userBrokerageInfo.overdraft_protection = serializer.validated_data["overdraft_protection"]
         except:
             if "brokerage" in serializer.validated_data:
                 brokerage = serializer.validated_data["brokerage"]
@@ -401,10 +406,15 @@ class SetBrokerageInvestment(APIView):
                 symbol = serializer.validated_data["symbol"]
             else: 
                 symbol = None
+            if "overdraft_protection" in serializer.validated_data:
+                overdraft_protection = serializer.validated_data["overdraft_protection"]
+            else: 
+                overdraft_protection = True
             userBrokerageInfo = UserBrokerageInfo(
                 user = User.objects.get(id=uid),
                 brokerage = brokerage,
-                symbol = symbol
+                symbol = symbol,
+                overdraft_protection = overdraft_protection
             )
         userBrokerageInfo.save()
 
@@ -496,8 +506,15 @@ class PlaidLinkTokenCreate(APIView):
         # import pdb
         # breakpoint()
 
+        user_request_serializer = RequestLinkTokenSerializer(data=request.data)
+        validation_error_respose = validate(
+            Log, user_request_serializer, self, 
+            fields_to_fail=["update", "institution_name", "non_field_errors"]
+        )
+        if validation_error_respose:
+            return validation_error_respose
+        
         user = self.request.user
-
         try:
             PlaidUser.objects.get(user__id=user.id)
         except Exception:
@@ -513,14 +530,14 @@ class PlaidLinkTokenCreate(APIView):
             log(Log, self, status, LogState.ERR_NO_MESSAGE, 
                 errors = {"error": error_message})
             return response
-
+        
         data = {
             "user": {
                 "phone_number": user.phone_number,
                 "email_address": user.email
             },
             "client_name": "Buul",
-            "products": ["transactions"],#, "statements"],
+            "products": ["transactions"],
             "transactions": {
                 "days_requested": 100
             },
@@ -541,7 +558,7 @@ class PlaidLinkTokenCreate(APIView):
             error_messages = {}
             for field in e.detail:
                 if len(e.detail[field]) >= 1:
-                    error_messages[field] = e.detail[field][0]
+                    error_messages[field] = e.detail[field]
             status = 400 
             log(Log, self, status, LogState.ERR_NO_MESSAGE, errors = error_messages)
             return JsonResponse(
@@ -555,6 +572,8 @@ class PlaidLinkTokenCreate(APIView):
         validated_data = serializer.validated_data
         uid = user.id
         validated_data['uid'] = uid
+        validated_data['update'] = user_request_serializer.validated_data.get('update', False)
+        validated_data['institution_name'] = user_request_serializer.validated_data.get('institution_name', None)
 
         cache.delete(f"uid_{uid}_plaid_link_token_create")
         cache.set(
@@ -606,58 +625,218 @@ class PlaidItemWebhook(APIView):
     authentication_classes = []
 
     def post(self, request, *args, **kwargs):
-        serializer = PlaidSessionFinishedSerializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-        except ValidationError as e:
-            error_messages = {}
-            for field in e.detail:
-                if (e.detail[field]) >= 1:
-                    error_messages[field] = e.detail[field][0]
-            status = 400
-            log(Log, self, status, LogState.VAL_ERR_NO_MESSAGE, errors = error_messages)
+        user = self.request.user
+        uid = user.id
+        
+        serializer = WebhookSerializer(data=request.data)
+        validation_error_respose = validate(
+            Log, serializer, self,
+            fields_to_fail=["webhook_type", "webhook_code", "environment",
+                            "error", "non_field_errors"]
+        )
+        if validation_error_respose:
             return JsonResponse(
                 {
-                    "success": None,
-                    "error": error_messages
+                    "success": None, 
+                    "error": "This webhook is not supported"
+                }, 
+                status = 400
+            )
+        
+        webhook_type = serializer.validated_data["webhook_type"]
+        webhook_code = serializer.validated_data["webhook_code"]
+        
+        if webhook_type == "LINK" and webhook_code == "SESSION_FINISHED":
+            serializer = PlaidSessionFinishedSerializer(data=request.data)
+            validation_error_respose = validate(
+                Log, serializer, self,
+                fields_to_fail=["webhook_type", "webhook_code", "item_id",
+                                "environment", "status", "link_token", "link_session_id", 
+                                "public_tokens", "non_field_errors"]
+            )
+            if validation_error_respose:
+                status = 400
+                error_message = f"Invalid webhook of type {webhook_type} and code \
+                            {webhook_code}."
+                log(Log, self, status, LogState.ERR_NO_MESSAGE, 
+                    errors = {"error": error_message})
+                return JsonResponse(
+                    {
+                        "success": None, 
+                        "error": error_message
+                    }, 
+                    status = status
+                )
+
+            link_token = serializer.validated_data["link_token"]
+            cached_uid = cache.get(f"link_token_{link_token}_user")
+            if cached_uid:
+                # maybe change this to be in the db itself... so it cant expire
+                uid = json.loads(cached_uid)["uid"]
+                cache.delete(f"link_token_{link_token}_user")
+            else:
+                status = 400
+                error_message = "corresponding link token and user are no longer cached"
+                log(Log, self, status, LogState.ERR_NO_MESSAGE, 
+                    errors = {"error": error_message})
+                return JsonResponse(
+                    {
+                        "success": None,
+                        "error": error_message
+                    }, 
+                    status = status
+                )
+
+            cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
+            cache.set(
+                f"uid_{uid}_plaid_item_public_token_exchange",
+                json.dumps({"success": None, "error": None}),
+                timeout=120
+            )
+            plaid_item_public_tokens_exchange.apply_async(
+                kwargs = {
+                    "uid": uid,
+                    "public_tokens": serializer.validated_data["public_tokens"],
+                    "context": {}
+                }
+            )
+
+            status = 200
+            log(Log, self, status, webhook_code)#LogState.SUCCESS)
+            return JsonResponse(
+                {
+                    "success": "recieved", 
+                    "error": None
+                }, 
+                status = status
+            )
+    
+        elif webhook_type == "TRANSACTION" and webhook_code == "SYNC_UPDATES_AVAILABLE":
+            serializer = PlaidTransactionSyncUpdatesAvailable(data=request.data)
+            validation_error_respose = validate(
+                Log, serializer, self,
+                fields_to_fail=["webhook_type", "webhook_code", "environment",
+                                "item_id", "initial_update_complete",
+                                "historical_update_complete", "non_field_errors"]
+            )
+            if validation_error_respose:
+                status = 400
+                error_message = f"Invalid webhook of type {webhook_type} and code \
+                            {webhook_code}."
+                log(Log, self, status, LogState.ERR_NO_MESSAGE,
+                    errors = {"error": error_message})
+                return JsonResponse(
+                    {
+                        "success": None, 
+                        "error": error_message
+                    }, 
+                    status = status
+                )
+            
+            item_id = serializer.validated_data["item_id"]
+
+            # update_transactions.apply_async(args = [item_id])
+
+            status = 200
+            log(Log, self, status, webhook_code)#LogState.SUCCESS)
+            return JsonResponse(
+                {
+                    "success": "recieved", 
+                    "error": None
                 }, 
                 status = status
             )
         
-        user = self.request.user
-        uid = user.id
-        link_token = serializer.validated_data["link_token"]
-        cached_uid = cache.get(f"link_token_{link_token}_user")
-        if cached_uid:
-            uid = json.loads(cached_uid)["uid"]
-            cache.delete(f"link_token_{link_token}_user")
-        else:
-            status = 400
-            error_message = "corresponding link token and user are no longer cached"
-            log(Log, self, status, LogState.ERR_NO_MESSAGE, 
-                errors = {"error": error_message})
+        elif webhook_type == "ITEM" and webhook_code in [
+                'WEBHOOK_UPDATE_ACKNOWLEDGED', 'USER_ACCOUNT_REVOKED', 
+                'USER_PERMISSION_REVOKED', 'PENDING_EXPIRATION', 'ERROR'
+            ]:
+            serializer = PlaidItemWebhookSerializer(data=request.data)
+            validation_error_respose = validate(
+                Log, serializer, self,
+                fields_to_fail=["webhook_type", "webhook_code", "item_id",
+                                "environment", "non_field_errors"]
+            )
+            if validation_error_respose:
+                status = 400
+                error_message = f"Invalid webhook of type {webhook_type} and code \
+                            {webhook_code}."
+                log(Log, self, status, LogState.ERR_NO_MESSAGE,
+                    errors = {"error": error_message})
+                return JsonResponse(
+                    {
+                        "success": None, 
+                        "error": error_message
+                    }, 
+                    status = status
+                )
+            
+            error = serializer.validated_data.get("error", None)
+            item_update_code = webhook_code
+
+            if error:
+                error_code = error["error_code"]
+                if not error_code == "ITEM_LOGIN_REQUIRED":
+                    status = 400
+                    error_message = f"Invalid webhook of type {webhook_type}, code \
+                                {webhook_code}, and error_code {error_code}."
+                    log(Log, self, status, LogState.ERR_NO_MESSAGE,
+                        errors = {"error": error_message})
+                    return JsonResponse(
+                        {
+                            "success": None, 
+                            "error": error_message
+                        }, 
+                        status = status
+                    )
+                item_update_code = error_code
+            
+            if webhook_code == 'LOGIN_REPAIRED':
+                item_update_code = None
+            
+            item_id = serializer.validated_data["item_id"]
+            plaid_item = PlaidItem.objects.get(item_id=item_id)
+            plaid_item.update_code = item_update_code
+            plaid_item.save()
+
+            status = 200
+            log(Log, self, status, webhook_code)#LogState.SUCCESS)
             return JsonResponse(
                 {
-                    "success": None,
-                    "error": error_message
+                    "success": "recieved", 
+                    "error": None
                 }, 
                 status = status
             )
 
-        cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
+        
+        else:
+            status = 400
+            error_message = f"Invalid webhook of type {webhook_type} and code \
+                            {webhook_code}."
+            log(Log, self, status, LogState.ERR_NO_MESSAGE,
+                errors = error_message)
+            return JsonResponse(
+                {
+                    "success": None, 
+                    "error": error_message
+                }, 
+                status = status
+            )
+# fetch account info
+
+class PlaidItemsSubmit(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        uid = request.user.id
+        match_brokerage_plaid_accounts.apply_async(args = [uid])
+        cache.delete(f"uid_{uid}_check_plaid_brokerage_match")
         cache.set(
-            f"uid_{uid}_plaid_item_public_token_exchange",
+            f"uid_{uid}_check_plaid_brokerage_match".
             json.dumps({"success": None, "error": None}),
             timeout=120
         )
-        plaid_item_public_tokens_exchange.apply_async(
-            kwargs = {
-                "uid": uid,
-                "public_tokens": serializer.validated_data["public_tokens"],
-                "context": {}
-            }
-        )
-
         status = 200
         log(Log, self, status, LogState.SUCCESS)
         return JsonResponse(
@@ -667,37 +846,31 @@ class PlaidItemWebhook(APIView):
             }, 
             status = status
         )
-
+    
     def get(self, request, *args, **kwargs):
-        user = self.request.user
-        uid = user.id
-        cached_exchage_result = cache.get(f"uid_{uid}_plaid_item_public_token_exchange")
-        if exchage_result:
-            exchage_result = json.loads(cached_exchage_result)
-            if not exchage_result["success"] and not exchage_result["error"]:
-                cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
-            
-            status, log_state, errors = cached_task_logging_info(exchage_result)
+        uid = request.user.id
+        task_status = cache.get(f"uid_{uid}_check_plaid_brokerage_match")
+        if task_status:
+            status, log_state, errors = cached_task_logging_info(task_status)
             log(Log, self, status, log_state, errors = errors)
             return JsonResponse(
-                exchage_result,
+                json.loads(task_status), 
                 status = status
             )
         else:
-            status = 400
+            status = 200
             error_message = "no cache value found"
-            log(Log, self, status, LogState.BACKGROUND_TASK_NO_CACHE, 
-                errors = {"error": error_message})
-            return JsonResponse(
+            response = JsonResponse(
                 {
-                    "success": None,
+                    "success": None, 
                     "error": error_message
                 }, 
-                status = status 
+                status=status
             )
+            log(Log, self, status, LogState.BACKGROUND_TASK_NO_CACHE, errors = {"error": error_message})
+            return response
 
 
-# fetch account info
 
 class GetUserInfo(APIView):
     permission_classes = [IsAuthenticated]
@@ -706,7 +879,9 @@ class GetUserInfo(APIView):
         user = self.request.user
         try:
             userBrokerageInfo = UserBrokerageInfo.objects.get(user__id=user.id)
-            brokerage, etf = userBrokerageInfo.brokerage, userBrokerageInfo.symbol
+            brokerage = userBrokerageInfo.brokerage
+            etf = userBrokerageInfo.symbol
+            overdraft_protection = userBrokerageInfo.overdraft_protection
             if brokerage == "robinhood":
                 brokerage_completed = UserRobinhoodInfo.objects.filter(user=user).exists()
             else:
@@ -723,12 +898,32 @@ class GetUserInfo(APIView):
                 "phone_number": user.phone_number,
                 "brokerage": brokerage,
                 "etf": etf,
+                "overdraft_protection": overdraft_protection,
                 "brokerage_completed": brokerage_completed,
                 "link_completed": PlaidItem.objects.filter(user=user).exists()
             }, 
             status = status
         )
-     
+
+class GetPlaidItems(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        plaid_items = PlaidItem.objects.filter(user=user)
+        institution_names = [i.institution_name for i in plaid_items if i.institution_name]
+        
+        status = 200
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
+            {
+                "institution_names": institution_names,
+                "error": None
+            }, 
+            status = status
+        )
+  
+
 class StockGraphData(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1458,9 +1653,20 @@ class GetSpendingRecommendations(APIView):
         try:
             result = {}
             spending_by_category = PlaidPersonalFinanceCategories.get(user=user)
+            total_amount = 0
             for field in PlaidPersonalFinanceCategories._meta.get_fields():
-                if field.concrete and not field.many_to_many:
+                if field.name in [    
+                    'entertainment', 'food_and_drink', 
+                    'home_improvement', 'personal_care', 'transportation', 
+                    'travel', 'rent_and_utilities'
+                ]:
                     result[field.name] = spending_by_category[field.name]
+                if field.name in ['start_date', 'end_date']:
+                    result[field.name] = spending_by_category[field.name].isoformat()
+                else:
+                    total_amount += spending_by_category[field.name].isoformat()
+            result["total_amount"] = total_amount
+                    
 
             status = 200
             log(Log, self, status, LogState.SUCCESS)

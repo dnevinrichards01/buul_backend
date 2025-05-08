@@ -1,35 +1,26 @@
-from celery import shared_task, chain, group
-import robin_stocks.robinhood as r
-from django.core.cache import cache 
-from django.core.mail import send_mail
+from celery import shared_task
 from django.utils import timezone
-from django.db.models import Sum
+from django.apps import apps
 
-from ..plaid_client import plaid_client
+from api.apis.plaid import plaid_client
 from ..jsonUtils import filter_jsons
 
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-import numpy as np
+from django.utils import timezone
+from zoneinfo import ZoneInfo
 import json
 import re
-import yfinance as yf
-import math
 
 from plaid.model.transactions_get_request import TransactionsGetRequest
 from plaid.model.transactions_get_request_options import TransactionsGetRequestOptions
 from plaid.model.transactions_sync_request import TransactionsSyncRequest
 from plaid.exceptions import ApiException
 
-from..serializers.PlaidSerializers.transactionSerializers import TransactionsSyncResponseSerializer, \
+from..serializers.plaid.transaction import TransactionsSyncResponseSerializer, \
     TransactionsGetResponseSerializer
-from ..models import PlaidItem, User, RobinhoodStockOrder, PlaidCashbackTransaction, \
-    LogAnonPlaid, PlaidPersonalFinanceCategories
-
-from django.utils import timezone
-from zoneinfo import ZoneInfo
-
-from django.apps import apps
+from ..models import PlaidItem, User, PlaidCashbackTransaction, \
+    PlaidPersonalFinanceCategories
 
 # plaid transactions 
 
@@ -211,6 +202,11 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
                 transaction_id = cashback["transaction_id"],
                 account_id = cashback["account_id"]
             )
+            if plaidCashbackTransaction.deposit is not None and \
+                plaidCashbackTransaction.deposit.investment is None and \
+                cashback["amount"] != plaidCashbackTransaction.amount or \
+                cashback["iso_currency_code"] != plaidCashbackTransaction.iso_currency_code:
+                plaidCashbackTransaction.deposit.flag = True
             plaidCashbackTransaction.amount = cashback["amount"]
             plaidCashbackTransaction.pending = cashback["pending"]
             plaidCashbackTransaction.authorized_date = cashback["authorized_date"]
@@ -243,6 +239,8 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
          batch_size=100
     )
 
+# in future turn these into generators?
+# or in future make transactions ordered by dictionary (key=cashback?)
 @shared_task(name="find_cashback_removed")
 def find_cashback_removed(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
@@ -261,10 +259,12 @@ def find_cashback_removed(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}
                 transaction_id = cashback["transaction_id"],
                 account_id = cashback["account_id"]
             )
-            if not plaidCashbackTransaction.deposit:
+            if plaidCashbackTransaction.deposit is None:
                 plaidCashbackTransaction.delete()
-            # else: 
-                # something to mark any deposits or investments 
+            else: 
+                if plaidCashbackTransaction.deposit.investment is None:
+                    plaidCashbackTransaction.deposit.flag = True
+                    plaidCashbackTransaction.deposit.save()
         except:
             continue
 
