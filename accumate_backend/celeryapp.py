@@ -16,11 +16,11 @@ app = Celery(
 #django.setup() # imports those installed apps
 # app.autodiscover_tasks(['api', 'robin_stocks'], force=True)
 app.conf.imports = [
-    "api.tasks.userTasks",
-    "api.tasks.investTasks",
-    "api.tasks.depositTasks",
-    "api.tasks.transactionsTasks",
-    "api.tasks.graphTasks",
+    "api.tasks.user",
+    "api.tasks.invest",
+    "api.tasks.deposit",
+    "api.tasks.identify",
+    "api.tasks.graph",
     "robin_stocks.tasks",
 ]
 
