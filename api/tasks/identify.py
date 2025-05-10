@@ -125,20 +125,22 @@ def is_cashback(name):
 @shared_task(name="find_cashback_added")
 def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
+    user = User.objects.get(id=uid)
+
     lt = {"amount": [0]}
-    # is_cashback_name = {
-    #     "func": lambda name, bool: is_cashback(name) == bool,
-    #     "filter_set": {"name" : [True]}
-    # }
+    is_cashback_name = {
+        "func": lambda name, bool: is_cashback(name) == bool,
+        "filter_set": {"name" : [True]}
+    }
     cashback_candidates = filter_jsons(transactions, eq=eq, gt=gt, lt=lt, lte=lte, 
-                        gte=gte, metric_to_return_by=metric_to_return_by)#, 
-                        # is_cashback=is_cashback_name)
+                        gte=gte, metric_to_return_by=metric_to_return_by, 
+                        is_cashback=is_cashback_name)
     if isinstance(cashback_candidates, str):
         raise Exception(cashback_candidates)
     all_cashback = []
     for cashback in cashback_candidates:
         plaidCashbackTransaction = PlaidCashbackTransaction(
-            user = User.objects.get(id=uid),
+            user = user,
             transaction_id = cashback["transaction_id"],
             account_id = cashback["account_id"],
             amount = cashback["amount"],
@@ -147,7 +149,11 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
             authorized_datetime = cashback["authorized_datetime"], 
             date = cashback["date"],
             name = cashback["name"],
-            iso_currency_code = cashback["iso_currency_code"]
+            iso_currency_code = cashback["iso_currency_code"],
+            flag = user.date_joined < timezone.make_aware(
+                datetime.strptime(cashback["date"], "%Y-%m-%d"), 
+                timezone.get_current_timezone()
+            )
         )
         all_cashback.append(plaidCashbackTransaction)
     try:
@@ -155,6 +161,7 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
     except:
         # if bulk create fails
         for cashback in cashback_candidates:
+            # could use all_cashback instead
             try:
                 # try to create them individually 
                 plaidCashbackTransaction = PlaidCashbackTransaction(
@@ -167,7 +174,11 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
                     authorized_datetime = cashback["authorized_datetime"], 
                     date = cashback["date"],
                     name = cashback["name"],
-                    iso_currency_code = cashback["iso_currency_code"]
+                    iso_currency_code = cashback["iso_currency_code"],
+                    flag = user.date_joined < timezone.make_aware(
+                        datetime.strptime(cashback["date"], "%Y-%m-%d"), 
+                        timezone.get_current_timezone()
+                    )
                 )
                 plaidCashbackTransaction.save()
             except:
@@ -193,13 +204,13 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
 def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
     lt = {"amount": [0]}
-    # is_cashback_name = {
-    #     "func": lambda name, bool: is_cashback(name) == bool,
-    #     "filter_set": {"name" : [True]}
-    # }
+    is_cashback_name = {
+        "func": lambda name, bool: is_cashback(name) == bool,
+        "filter_set": {"name" : [True]}
+    }
     cashback_candidates = filter_jsons(transactions, eq=eq, gt=gt, lt=lt, lte=lte, 
-                        gte=gte, metric_to_return_by=metric_to_return_by)#, 
-                        # is_cashback=is_cashback_name)
+                        gte=gte, metric_to_return_by=metric_to_return_by, 
+                        is_cashback=is_cashback_name)
     to_create = []
     to_update = []
     for cashback in cashback_candidates:
@@ -252,13 +263,13 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
 def find_cashback_removed(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
     lt = {"amount": [0]}
-    # is_cashback_name = {
-    #     "func": lambda name, bool: is_cashback(name) == bool,
-    #     "filter_set": {"name" : [True]}
-    # }
+    is_cashback_name = {
+        "func": lambda name, bool: is_cashback(name) == bool,
+        "filter_set": {"name" : [True]}
+    }
     cashback_candidates = filter_jsons(transactions, eq=eq, gt=gt, lt=lt, lte=lte, 
-                        gte=gte, metric_to_return_by=metric_to_return_by)#, 
-                        # is_cashback=is_cashback_name)
+                        gte=gte, metric_to_return_by=metric_to_return_by, 
+                        is_cashback=is_cashback_name)
     for cashback in cashback_candidates:
         try:
             plaidCashbackTransaction = PlaidCashbackTransaction.objects.get(

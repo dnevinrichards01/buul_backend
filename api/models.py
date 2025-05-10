@@ -47,6 +47,7 @@ class User(AbstractUser):
     full_name = models.TextField(max_length=255)
     email = models.EmailField(blank=True, max_length=254, unique=True)
     username = models.CharField(unique=True, max_length=50)
+    date_joined = models.DateTimeField(null=True, default=None, auto_now_add=True)
 
     def save(self, *args, **kwargs):
         self.username = str(self.id)
