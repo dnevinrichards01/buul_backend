@@ -86,34 +86,41 @@ def transactions_sync(uid=None, item_ids={}, update_cursor=False, page_size=100)
         return f"transactions sync get error: {str(e)}"
 
 def is_cashback(name):
-    cashback_names = [
-        "CASH REWARD REDEMPTION",
-        "CASH REWARDS STATEMENT CREDIT",
-        "REWARDS DEPOSIT",
-        "CASHBACK BONUS",
-        "REWARDS DEPOSIT",
-        "CASHBACK REDEMPTION",
-        "REWARDS CREDIT",
-        "DISCOVER CASHBACK BONUS",
-        "CASHBACK REWARDS DEPOSIT",
-        "REWARDS REDEMPTION",
-        "CASHBACK REWARDS",
-        "STATEMENT CREDIT",
-        "REWARDS CREDIT",
-        "CASH REDEMPTION",
-    ]
-    cashback_keywords = [
+    keywords_include = [
         "CASHBACK",
-        "REWARDS",
+        "CASH BACK",
+        "CASH AWARD",
+        "CASH REWARD",
         "CASHREWARD", 
-        "\bCASH\b"
+        "CASH REDEMPTION",
+        "CASH AUTO REDEMPTION", # real name
+        "CASHBACK BONUS",
+        "CASHBACK REDEMPTION",
+        "CASHBACK REWARDS",
+        "REWARDS DEPOSIT",
+        "REWARDS CREDIT",
+        "REWARDS DEPOSIT",
+        "REWARDS REDEMPTION",
+        "STATEMENT CREDIT",
+        "CREDIT- REWARD", # real name
+        "CREDIT REWARD",
+        "WELLS FARGO REWARDS",
+        "CREDIT CRD DES:RWRD"
     ]
-
+    keywords_reject = [
+        "ZELLE",
+        "BILL",
+        "CITY",
+        "DIRECT DEP"
+    ]
     # add in terms to return false for. 
     # use 'word boundaries' around CASH etc so it won't match "CASHIER" etc
+    match_pattern = '|'.join(map(re.escape, keywords_include))
+    is_match = re.search(match_pattern, name) is not None
+    reject_pattern = '|'.join(map(re.escape, keywords_reject))
+    is_reject = re.search(reject_pattern, name) is not None 
+    return is_match and not is_reject
 
-    pattern = '|'.join(map(re.escape, cashback_names + cashback_keywords))  # Escape substrings to handle special characters
-    return re.search(pattern, name) is not None
 
 @shared_task(name="find_cashback_added")
 def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 

@@ -3,6 +3,7 @@ import robin_stocks.robinhood as r
 from django.utils import timezone
 from django.dispatch import receiver
 from django.db.models.signals import post_save
+from rest_framework.exceptions import ValidationError
 
 from datetime import datetime, timedelta
 import json
@@ -10,7 +11,8 @@ import json
 from ..jsonUtils import filter_jsons
 
 from ..models import RobinhoodStockOrder, UserBrokerageInfo, User, Investment, Deposit
-from ..serializers.rh import StockOrderSerializer, RobinhoodAccountListSerializer
+from ..serializers.rh import StockOrderSerializer, RobinhoodAccountListSerializer, \
+    RobinhoodAccountSerializer
 from .deposit import rh_update_deposit
 
 
@@ -306,8 +308,8 @@ def rh_save_order_from_order_info(uid, deposit, order_id, symbol):
     robinhoodStockOrder.save()
 
     investment = Investment.objects.get(rh = robinhoodStockOrder)
-    deposit.investment = investment
-    deposit.save()
+    investment.deposit = deposit
+    investment.save()
 
     recent_deposit_query = Deposit.objects\
         .filter(user=user, created_at__lt=deposit.created_at)\
@@ -321,16 +323,19 @@ def rh_save_order_from_order_info(uid, deposit, order_id, symbol):
     investment.cumulative_quantities = cum_quant
     investment.save()
 
-def rh_invest(uid, deposit, repeat_day_range=5):
-
+def rh_invest(uid, deposit, repeat_day_range=5, 
+              ignore_early_access_amount=False):
+    
     import pdb; breakpoint()
 
     # check for duplicate deposits
-    if deposit.investment:
-        raise Exception(f"deposit already invested")
     
     if deposit.flag:
         raise Exception(f"deposit flagged")
+    if deposit.early_access_amount < deposit.amount:
+        if not ignore_early_access_amount:
+            raise Exception(f"early_access_amount {deposit.early_access_amount} < {deposit.amount}")
+
     
     import pdb; breakpoint()
     
@@ -356,14 +361,15 @@ def rh_invest(uid, deposit, repeat_day_range=5):
     account_info = rh_load_account_profile(uid)
     if "error" in account_info:
         return account_info
-    if len(account_info) != 1:
-        raise Exception(f"we found {len(account_info)} accounts for this user")
-    if account_info[0]["buying_power"] < deposit.amount \
-         and account_info[0]["portfolio_cash"] < deposit.amount:
-        raise Exception(f"Buying power is {account_info[0]["buying_power"]} " +\
-                        f"and portfolio cash is {account_info[0]["portfolio_cash"]} " +\
-                        f"but investment requires {deposit.amount}")
-
+    elif isinstance(account_info, list):
+        if len(account_info) != 1:
+            raise Exception(f"we found {len(account_info)} accounts for this user")
+        if account_info[0]["buying_power"] < deposit.amount \
+            and account_info[0]["portfolio_cash"] < deposit.amount:
+            raise Exception(f"Buying power is {account_info[0]["buying_power"]} " +\
+                            f"and portfolio cash is {account_info[0]["portfolio_cash"]} " +\
+                            f"but investment requires {deposit.amount}")
+    
     try:
         userBrokerageInfo = UserBrokerageInfo.objects.get(user__id=id)
     except Exception as e:
@@ -453,6 +459,13 @@ def rh_load_account_profile(uid):
         serializer = RobinhoodAccountListSerializer(data=result)
         serializer.is_valid(raise_exception=True)
         return serializer.validated_data
+    except ValidationError as e:
+        try:
+            serializer = RobinhoodAccountSerializer(data=result)
+            serializer.is_valid(raise_exception=True)
+            return serializer.validated_data
+        except Exception as e:
+            return {"error": f"{str(e)}"}
     except Exception as e:
         return {"error": f"{str(e)}"}
 

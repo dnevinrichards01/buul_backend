@@ -292,7 +292,7 @@ class RobinhoodDeposit(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     rh_account_id = models.CharField(max_length=255)
     rh_account_ach = models.CharField(max_length=255)
-    plaid_account_id = models.CharField(max_length=255)
+    plaid_account_id = models.CharField(max_length=255, null=True)
     mask = models.CharField(max_length=4)
     state = models.CharField(max_length=255)
     early_access_amount = models.FloatField(null=True)
@@ -339,7 +339,7 @@ class PlaidCashbackTransaction(models.Model):
     iso_currency_code = models.CharField(max_length=10)
     date =  models.DateField(null=True, default=None)
     authorized_date = models.DateField(null=True, default=None)
-    authorized_datetime =  models.DateTimeField(null=True, default=None)
+    authorized_datetime = models.DateTimeField(null=True, default=None)
     name = models.CharField()
     deposit = models.ForeignKey(Deposit, on_delete=models.SET_NULL, 
                                 default=None, null=True)

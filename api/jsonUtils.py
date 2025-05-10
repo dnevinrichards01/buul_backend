@@ -1,15 +1,15 @@
 import types
 from queue import Queue
 
-def filter_jsons(jsons, eq={}, gt={}, lt={}, lte={}, gte={}, metric_to_return_by=None,
+def filter_jsons(jsons, eq={}, neq={}, gt={}, lt={}, lte={}, gte={}, metric_to_return_by=None,
                  **kwargs):
     import pdb
     breakpoint()
 
     # create pairings of ops, 
     # and filtersets which describe the attribute and value for the op 
-    filter_sets = [eq, gt, lt, lte, gte]
-    operations = ["eq", "gt", "lt", "lte", "gte"]
+    filter_sets = [eq, neq, gt, lt, lte, gte]
+    operations = ["eq", "neq", "gt", "lt", "lte", "gte"]
     # add and validate the custom filters
     for kwarg in kwargs:
         filter = kwargs[kwarg]
@@ -77,6 +77,8 @@ def append_json_to_filter_jsons(metric_to_return_by, filtered_jsons, json):
 def comparison_operation(arg1, arg2, op):        
     if op == "eq":
         return arg1 == arg2
+    if op == "neq":
+        return arg1 != arg2
     elif op == "gt":
         return arg1 > arg2
     elif op == "lt":

@@ -172,9 +172,9 @@ def comparator(account1, account2):
     elif account2_matches:
         return 1
 
-    if plaid1["subtype"] == "checking" and plaid2["subtype"] == "savings":
+    if rh1["bank_account_type"] == "checking" and rh2["bank_account_type"] == "savings":
         return -1
-    elif plaid1["subtype"] == "savings" and plaid2["subtype"] == "checking":
+    elif rh1["bank_account_type"] == "savings" and rh2["bank_account_type"] == "checking":
         return 1
     
     if account1["is_previous_choice"] and not account2["is_previous_choice"]:
@@ -216,7 +216,13 @@ def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_acc
                 raise Exception("not USD")
             # if we find an account both in plaid and in rh, add to candidate list
             if plaid_account["balances"]["available"] >= amount:
-                if not brokerage_plaid_match_required or plaid_account["mask"] == rh_account["bank_account_number"]:
+                if not brokerage_plaid_match_required or \
+                    plaid_account["mask"] == rh_account["bank_account_number"]:
+                    if not brokerage_plaid_match_required:
+                        plaid_account_copy = plaid_account.copy()
+                        for key in plaid_account_copy:
+                            plaid_account_copy[key] = None
+                        plaid_account = plaid_account_copy
                     match = {
                         "rh_account": rh_account,
                         "plaid_account": plaid_account,
@@ -238,7 +244,7 @@ def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_acc
 # check for repeats or overdrafting
 
 @shared_task(name="rh_get_bank_transfers")
-def rh_get_bank_transfers(uid, eq={}, gt={}, lt={}, lte={}, gte={}, 
+def rh_get_bank_transfers(uid, eq={}, neq={}, gt={}, lt={}, lte={}, gte={}, 
                           metric_to_return_by=None):
     import pdb
     breakpoint()
@@ -256,10 +262,10 @@ def rh_get_bank_transfers(uid, eq={}, gt={}, lt={}, lte={}, gte={},
     except Exception as e:
         return {"error": f"{str(e)}"}
     
-    return filter_jsons(serializer.validated_data, eq=eq, gt=gt, lt=lt, lte=lte, 
+    return filter_jsons(serializer.validated_data, eq=eq, neq=neq, gt=gt, lt=lt, lte=lte, 
                         gte=gte, metric_to_return_by=metric_to_return_by)
 
-def check_repeat_deposit(uid, amount, repeat_day_range):
+def check_repeat_deposit(uid, amount, repeat_day_range, return_failed=True):
     # check for duplicate deposit
     lower_limit = timezone.now() - timedelta(days=repeat_day_range)
     old_deposits = Deposit.objects.filter(
@@ -272,6 +278,8 @@ def check_repeat_deposit(uid, amount, repeat_day_range):
     # could add checking the transfer's account id?
     potential_rh_repeats = rh_get_bank_transfers(
         uid, 
+        eq={"direction": ["deposit"]},
+        neq= {} if return_failed else {"state": ["failed"]},
         lt={"amount":[amount+0.05]}, 
         gt={
             "created_at":[timezone.now() - timedelta(days=repeat_day_range)],
@@ -329,7 +337,7 @@ def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount, force=F
     return serializer.validated_data
 
 def rh_deposit(uid, transactions, repeat_day_range=5, force=False, 
-               limit=50):
+               limit=50, check_failed_deposits=True):
     import pdb; breakpoint()
     # get previous deposit to help decide which account to use
     old_deposits = RobinhoodDeposit.objects.filter(user__id=uid)\
@@ -344,11 +352,14 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
 
     # check for duplicate deposits
     potential_db_repeats, potential_rh_repeats = check_repeat_deposit(
-        uid, cashback_amount, repeat_day_range
+        uid, cashback_amount, repeat_day_range, 
+        return_failed=check_failed_deposits
     )
     if not force and (potential_db_repeats or potential_rh_repeats):
-        raise Exception("potential db repeats {potential_db_repeats} " +  
-                        "potential rh repeats {potential_rh_repeats}")
+        db_repeat_ids = [(f"{d.deposit_id}: {d.state}") for d in potential_db_repeats]
+        rh_repeat_ids = [(f"{d['id']}: {d['state']}") for d in potential_rh_repeats]
+        raise Exception(f"potential db repeats {db_repeat_ids} " +  
+                        f"potential rh repeats {rh_repeat_ids}")
     
     # find accounts matching in Plaid and RH
     plaid_accounts = plaid_balance_get_process(uid)
@@ -381,7 +392,7 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
             rh_account_id = rh_account["id"],
             rh_account_ach = deposit["ach_relationship"],
             plaid_account_id = plaid_account["account_id"],
-            mask = plaid_account["mask"],
+            mask = rh_account["bank_account_number"],
             state = deposit["state"],
             amount = deposit["amount"],
             early_access_amount = deposit["early_access_amount"],
@@ -396,7 +407,8 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
             _transaction.deposit = deposit
         PlaidCashbackTransaction.objects.bulk_update(transactions, ['deposit'])
 
-def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True):
+def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True,
+                      ignore_plaid=False):
 
     import pdb; breakpoint()
 
@@ -427,10 +439,10 @@ def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True):
             eq={"mask": [rh_account["bank_account_number"]]},
             use_balance=False
         )
-        if len(plaid_accounts) != 1:
+        if not ignore_plaid or len(plaid_accounts) != 1:
             raise Exception(f"could not find rh account associated with " + 
                             f"{rh_account["bank_account_number"]}")
-        plaid_account = plaid_accounts[0]
+        plaid_account = {} if ignore_plaid else plaid_accounts[0]
 
     try:
         robinhoodCashbackDeposit = RobinhoodDeposit.objects.get(
@@ -450,8 +462,8 @@ def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True):
                 user = User.objects.get(id=uid),
                 rh_account_id = rh_account["id"],
                 rh_account_ach = transfer_result["ach_relationship"],
-                plaid_account_id = plaid_account["account_id"], 
-                mask = plaid_account["mask"],
+                plaid_account_id = plaid_account.get("account_id", None),
+                mask = rh_account["bank_account_number"],
                 state = transfer_result["state"], 
                 amount = transfer_result["amount"],
                 early_access_amount = transfer_result["early_access_amount"],
@@ -505,7 +517,7 @@ def rhdeposit_to_deposit(sender, instance, **kwargs):
             mask = instance.mask,
             state = instance.state,
             amount = instance.amount,
-            available_funds = instance.early_access_amount,
+            early_access_amount = instance.early_access_amount,
             created_at = instance.created_at
         )
         deposit.save()
