@@ -360,8 +360,21 @@ def transactions_get(uid, start_date_str, end_date_str, item_ids={}, page_size=1
 @shared_task(name="transactions_categories_sum")
 def transactions_categories_sum(transactions_response, transactions_sync=True,
                                 personal_finance_categories=True):
+    plaid_category_detail_to_buul_categories = {
+        "FOOD_DRINK_AND_COFFEE": "dining",
+        "FOOD_DRINK_AND_FAST_FOOD": "dining",
+        "FOOD_AND_DRINK_RESTAURANT": "dining",
+        "FOOD_AND_DRINK_GROCERIES": "groceries",
+        "RENT_AND_UTILITIES_WATER": "utilities",
+        "RENT_AND_UTILITIES_TELEPHONE": "utilities",
+        "RENT_AND_UTILITIES_SEWAGE_AND_WASTE_TREATMENT": "utilities",
+        "RENT_AND_UTILITIES_INTERNET_AND_CABLE": "utilities",
+        "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY": "utilities",
+        "TRAVEL_FLIGHTS": "travel",
+        "TRAVEL_LODGING": "travel"
+    }
+
     counter_dict = {}
-    count = 0
     min_date = None
     max_date = None
     for item_id in transactions_response:
@@ -374,22 +387,22 @@ def transactions_categories_sum(transactions_response, transactions_sync=True,
                 if transaction['pending'] == True or amount < 0:
                     continue
 
-                if count == 0:
+                if min_date is None or max_date is None:
                     min_date = transaction["date"]
-                max_date = transaction["date"]
-                
-                if personal_finance_categories:
-                    personal_finance_category = transaction['personal_finance_category']['primary']
-                    if personal_finance_category in counter_dict:
-                        counter_dict[personal_finance_category] += amount
-                    else:
-                        counter_dict[personal_finance_category] = amount
-                else:
-                    for category in transaction['category']:
-                        if category in counter_dict:
-                            counter_dict[category] += amount
-                        else:
-                            counter_dict[category] = amount
+                    max_date = transaction["date"]
+                elif transaction["date"] < min_date:
+                    min_date = transaction["date"]
+                elif transaction["date"] > max_date:
+                    max_date = transaction["date"]
+
+                detailed = transaction['personal_finance_category']['detailed']
+                categ = plaid_category_detail_to_buul_categories.get(detailed, None)
+                if categ and categ in counter_dict:
+                    counter_dict[categ] += amount
+                elif categ and categ not in counter_dict:
+                    counter_dict[categ] = amount
+                else: 
+                    continue
     return counter_dict, min_date, max_date
 
 @shared_task(name="user_spending_by_category")
@@ -401,16 +414,17 @@ def user_spending_by_category(uid):
         transactions, transactions_sync=False
     )
 
-    categ_model, created = PlaidPersonalFinanceCategories.objects.get_or_create(
-        user__id=uid,
-        defaults = {
-            "min_date": min_date,
-            "max_date": max_date
-        }
-    )
+    category_model_query = PlaidPersonalFinanceCategories.objects.filter(user__id=uid)
+    if category_model_query.exists():
+        category_model = category_model_query.first()
+    else:
+        category_model = PlaidPersonalFinanceCategories(
+            user = User.objects.get(id=uid)
+        )
     for category in spending_by_category:
-        categ_model[category] = spending_by_category[category]
-    categ_model.save()
+        category_model[category] = spending_by_category[category]
+    category_model.save()
+    
 
 @shared_task(name="all_users_spending_by_category")
 def all_users_spending_by_category():
