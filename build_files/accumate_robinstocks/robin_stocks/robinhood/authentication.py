@@ -12,6 +12,7 @@ from django.utils.timezone import now
 from django.core.cache import cache
 import json
 
+from django.db.utils import OperationalError
 
 # helper methods
 
@@ -50,6 +51,8 @@ def refresh(session, uid, expiresIn=86400, scope='internal'):
     try:
         brokerageInfo = UserRobinhoodInfo.objects.get(user__id=uid)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         raise Exception(f"This user's brokerage info does not exist: {e}")
     device_token = brokerageInfo.device_token
     refresh_token = brokerageInfo.refresh_token
@@ -66,6 +69,8 @@ def refresh(session, uid, expiresIn=86400, scope='internal'):
             raise Exception("could not refresh token")
         data = data.json()
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         brokerageInfo.previousRefreshSuccess = False
         brokerageInfo.save()
         return
@@ -92,6 +97,8 @@ def save_cred(data, payload, uid, session):
             brokerageInfo.previousRefreshSuccess = True
             brokerageInfo.save()
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             User = apps.get_model("api", "User")
             user = User.objects.get(id=uid)
             brokerageInfo = UserRobinhoodInfo(

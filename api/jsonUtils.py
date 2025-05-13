@@ -1,5 +1,6 @@
 import types
 from queue import Queue
+from django.db.utils import OperationalError
 
 def filter_jsons(jsons, eq={}, neq={}, gt={}, lt={}, lte={}, gte={}, metric_to_return_by=None,
                  **kwargs):
@@ -46,6 +47,8 @@ def filter_jsons(jsons, eq={}, neq={}, gt={}, lt={}, lte={}, gte={}, metric_to_r
                             match = False
                             break
                     except Exception as e:
+                        if isinstance(e, OperationalError):
+                            raise e
                         return {"error": f"comparison operation failed: {str(e)}"}
                 
                 if not match:
@@ -57,6 +60,8 @@ def filter_jsons(jsons, eq={}, neq={}, gt={}, lt={}, lte={}, gte={}, metric_to_r
             try:
                 append_json_to_filter_jsons(metric_to_return_by, filtered_jsons, json)
             except Exception as e:
+                if isinstance(e, OperationalError):
+                    raise e
                 return {"error": f"couldn't append json to results: {str(e)}"}
 
     return filtered_jsons
@@ -70,6 +75,8 @@ def append_json_to_filter_jsons(metric_to_return_by, filtered_jsons, json):
             else:
                 filtered_jsons[key] = [json]
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             return {"error": f"key {metric_to_return_by} not found: {str(e)}"}
     else:
         filtered_jsons.append(json)
@@ -91,6 +98,8 @@ def comparison_operation(arg1, arg2, op):
         try:
             return op(arg1, arg2)
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             raise Exception(f"function {op} failed: {str(e)}")
     else:
         raise Exception(f"no such operation: {op}")

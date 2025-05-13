@@ -14,8 +14,10 @@ from dateutil.relativedelta import relativedelta
 from zoneinfo import ZoneInfo
 import json
 
+from accumate_backend.retry_db import retry_on_db_error
 
 @shared_task(name="refresh_stock_data_by_interval")
+@retry_on_db_error
 def refresh_stock_data_by_interval(symbols=["VOO", "VOOG", "QQQ", "IBIT"], 
                        interval="1d", refresh_all=False):
     # import pdb
@@ -144,6 +146,7 @@ def refresh_stock_data_by_interval(symbols=["VOO", "VOOG", "QQQ", "IBIT"],
 
     return "done"
 
+@retry_on_db_error
 def refresh_stock_data_all():
     for interval in ["1m", "1h", "1d"]:
         refresh_stock_data_by_interval(interval=interval, refresh_all=True)
@@ -151,6 +154,7 @@ def refresh_stock_data_all():
 
 # on a timer?
 @shared_task(name="delete_non_closing_times")
+@retry_on_db_error
 def delete_non_closing_times():
     for interval in ["1m", "1h", "1d", "1w", "1M"]:
         current_date_rounded = FPMUtils.round_date_down(
@@ -160,6 +164,7 @@ def delete_non_closing_times():
         FPMUtils.delete_non_closing_times(current_date_rounded, interval)
 
 @shared_task(name="get_graph_data")
+@retry_on_db_error
 def get_graph_data(uid, symbols=["VOO", "VOOG", "QQQ", "IBIT"]):
     try:
         # import pdb 

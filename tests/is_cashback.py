@@ -34,7 +34,7 @@ def get_all_transactions():
 	for user in User.objects.all():
 		try:
 			xacts_filtered, _ = user_xacts(user.id, (timezone.now() - relativedelta(years=1)).strftime("%Y-%m-%d"), (timezone.now() + relativedelta(years=1)).strftime("%Y-%m-%d"))
-		except Exception:
+		except Exception as e:
 			continue
 		for x in xacts_filtered:
 			x['user'] = user.id

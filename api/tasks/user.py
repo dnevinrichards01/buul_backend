@@ -33,14 +33,15 @@ from ..serializers.plaid.user import UserRemoveResponseSerializer, \
     UserCreateResponseSerializer
 from ..models import PlaidItem, PlaidUser, User
 
-f#rom accumate_backend.retry_db import retry_on_db_error
+from accumate_backend.retry_db import retry_on_db_error
 
+from django.db.utils import OperationalError
 
 
 # user and plaid management
 
 @shared_task(name="plaid_item_public_tokens_exchange")
-#@retry_on_db_error
+@retry_on_db_error
 def plaid_item_public_tokens_exchange(**kwargs):
     # import pdb
     # breakpoint()
@@ -120,6 +121,8 @@ def plaid_item_public_tokens_exchange(**kwargs):
         )
         return f"cached plaid public token exchange ApiException: {error.get("error_code")}"
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
         cache.set(
             f"uid_{uid}_plaid_item_public_token_exchange",
@@ -129,7 +132,7 @@ def plaid_item_public_tokens_exchange(**kwargs):
         return f"cached plaid public token exchange error: {str(e)}"
 
 # @shared_task(name="plaid_item_get")
-#@retry_on_db_error
+@retry_on_db_error
 def plaid_item_get(**kwargs):
     # import pdb
     # breakpoint()
@@ -160,6 +163,8 @@ def plaid_item_get(**kwargs):
             "success": None
         }
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {
             "error": f"item get error: {str(e)}",
             "success": None
@@ -167,7 +172,7 @@ def plaid_item_get(**kwargs):
 
 
 @shared_task(name="plaid_link_token_create")
-#@retry_on_db_error
+@retry_on_db_error
 def plaid_link_token_create(**kwargs):
     # import pdb
     # breakpoint()
@@ -266,6 +271,8 @@ def plaid_link_token_create(**kwargs):
         )
         return f"cached plaid link token create ApiException error: {error.get("error_code")}"
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         cache.delete(f"uid_{uid}_plaid_link_token_create")
         cache.set(
             f"uid_{uid}_plaid_link_token_create",
@@ -278,7 +285,7 @@ def plaid_link_token_create(**kwargs):
         return f"cached plaid link token create error: {str(e)}"
 
 @shared_task(name="plaid_item_remove")
-#@retry_on_db_error
+@retry_on_db_error
 def plaid_item_remove(uid, item_id):
     # import pdb
     # breakpoint()
@@ -302,13 +309,15 @@ def plaid_item_remove(uid, item_id):
             "success": None
         }
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {
             "error": f"item remove error: {str(e)}",
             "success": None
         }
 
 @shared_task(name="plaid_user_create")
-#@retry_on_db_error
+@retry_on_db_error
 def plaid_user_create(**kwargs):
     # import pdb
     # breakpoint()
@@ -358,6 +367,8 @@ def plaid_user_create(**kwargs):
         )
         return f"cached plaid user create error: {error.get("error_code")}"
     # except Exception as e:
+        # if isinstance(e, OperationalError):
+        #     raise e
     #     cache.delete(f"uid_{uid}_plaid_user_create")
     #     cache.set(
     #         f"uid_{uid}_plaid_user_create",
@@ -367,7 +378,7 @@ def plaid_user_create(**kwargs):
     #     return f"cached plaid user create error: {str(e)}"
 
 @shared_task(name="plaid_user_remove")
-#@retry_on_db_error
+@retry_on_db_error
 def plaid_user_remove(uid, code):
     # import pdb
     # breakpoint()
@@ -375,6 +386,8 @@ def plaid_user_remove(uid, code):
     try:
         plaidUser = PlaidUser.objects.get(user__id=uid)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         cache.delete(f"code_{code}_plaid_user_remove")
         cache.set(
             f"code_{code}_plaid_user_remove",
@@ -433,7 +446,7 @@ def plaid_user_remove(uid, code):
         return f"cached plaid user remove error: {str(e.detail)}"
 
 @shared_task(name="accumate_user_remove")
-#@retry_on_db_error
+@retry_on_db_error
 def accumate_user_remove(uid, code, ignore_plaid_delete=False):
     # import pdb
     # breakpoint()
@@ -472,6 +485,8 @@ def accumate_user_remove(uid, code, ignore_plaid_delete=False):
             timeout=120
         )
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         # import pdb 
         # breakpoint()
         cache.delete(f"code_{code}_accumate_user_remove")
@@ -487,7 +502,7 @@ def accumate_user_remove(uid, code, ignore_plaid_delete=False):
 # send notifications
 
 @shared_task(name="send_verification_code")
-#@retry_on_db_error
+@retry_on_db_error
 def send_verification_code(**kwargs):
     if kwargs["useEmail"]:
         message = Mail(
@@ -500,6 +515,8 @@ def send_verification_code(**kwargs):
             response = sendgrid_client.send(message)
             return response.status_code
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             return f"error: {str(e)}"
         # send_mail(
         #     "Accumate verification code",
@@ -517,7 +534,7 @@ def send_verification_code(**kwargs):
         # )
 
 @shared_task(name="send_forgot_email")
-#@retry_on_db_error
+@retry_on_db_error
 def send_forgot_email(**kwargs):
     if kwargs["useEmail"]:
         message = Mail(
@@ -532,6 +549,8 @@ def send_forgot_email(**kwargs):
             response = sendgrid_client.send(message)
             return response.status_code
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             return f"error: {str(e)}"
     else:
         return
@@ -542,7 +561,7 @@ def send_forgot_email(**kwargs):
         # )
 
 @shared_task(name="send_waitlist_email")
-#@retry_on_db_error
+@retry_on_db_error
 def send_waitlist_email(**kwargs):
     if kwargs["useEmail"]:
         message = Mail(
@@ -558,6 +577,8 @@ def send_waitlist_email(**kwargs):
             response = sendgrid_client.send(message)
             return response.status_code
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             return f"error: {str(e)}"
     else:
         return
@@ -572,7 +593,7 @@ def send_waitlist_email(**kwargs):
 # refresh plaid tokens
 
 @shared_task(name="plaid_access_token_refresh")
-#@retry_on_db_error
+@retry_on_db_error
 def plaid_access_token_refresh(plaid_item_id):
     # import pdb
     # breakpoint()
@@ -590,7 +611,7 @@ def plaid_access_token_refresh(plaid_item_id):
     plaidItem.save()
 
 @shared_task(name="plaid_access_token_refresh_all")
-#@retry_on_db_error
+@retry_on_db_error
 def plaid_access_token_refresh_all():
     plaidItems = PlaidItem.objects.filter(
         previousRefresh__lt=timezone.now() - relativedelta(days=3)
@@ -610,7 +631,7 @@ def plaid_access_token_refresh_all():
 
 # censor celery task result logs
 
-#@retry_on_db_error
+@retry_on_db_error
 def format_task_result_kwargs(text):
     # Regular expression to match `'uid': UUID('<uuid>')`
 
@@ -631,7 +652,7 @@ def format_task_result_kwargs(text):
     return extracted_uuid, cleaned_text
 
 @receiver(pre_save, sender=TaskResult)
-#@retry_on_db_error
+@retry_on_db_error
 def modify_task_result(sender, instance, **kwargs):
     """ Nullify task_args and task_kwargs before saving """
 

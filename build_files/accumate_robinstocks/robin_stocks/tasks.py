@@ -9,9 +9,11 @@ import json
 import robin_stocks.robinhood as r
 from django.core.cache import cache
 
+from accumate_backend.retry_db import retry_on_db_error
 
 
 @shared_task(name="refresh_robinhood")
+@retry_on_db_error
 def refresh_robinhood():
     UserRobinhoodInfo = apps.get_model("robin_stocks", "UserRobinhoodInfo")
     query_set = UserRobinhoodInfo.objects.all()
@@ -21,6 +23,7 @@ def refresh_robinhood():
     return "refreshed robinhood access tokens"
 
 @shared_task(name="login_robinhood")
+@retry_on_db_error
 def login_robinhood(**kwargs):
     import robin_stocks.robinhood as r
     kwargs['session'] = r.create_session()

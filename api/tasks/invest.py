@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 from rest_framework.exceptions import ValidationError
 
+from django.db.utils import OperationalError
 from datetime import datetime, timedelta
 import json
 
@@ -15,6 +16,7 @@ from ..serializers.rh import StockOrderSerializer, RobinhoodAccountListSerialize
     RobinhoodAccountSerializer
 from .deposit import rh_update_deposit
 
+from accumate_backend.retry_db import retry_on_db_error
 
 # transactions
 
@@ -120,6 +122,7 @@ from .deposit import rh_update_deposit
 
 # plaid get accounts / items???
 @shared_task(name="rh_order_buy_fractional_by_price")
+@retry_on_db_error
 def rh_order_buy_fractional_by_price(uid, symbol, amount):
     import pdb
     breakpoint()
@@ -129,6 +132,8 @@ def rh_order_buy_fractional_by_price(uid, symbol, amount):
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
 
     # result = r.order_buy_fractional_by_price(session, symbol, amount)
@@ -138,9 +143,13 @@ def rh_order_buy_fractional_by_price(uid, symbol, amount):
         serializer = StockOrderSerializer(data=result)
         serializer.is_valid(raise_exception=True)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         try:
             orders = rh_find_stock_orders_custom(uid, amount=amount, created_day_range=2)
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             orders = {"error": f"{str(e)}"}
         return {"error": f"robinhood response {result} caused {str(e)}",
                 "recent_orders": orders}
@@ -148,6 +157,7 @@ def rh_order_buy_fractional_by_price(uid, symbol, amount):
 
 # note that you must trade DURING hours
 @shared_task(name="rh_order_sell_fractional_by_price")
+@retry_on_db_error
 def rh_order_sell_fractional_by_price(uid, symbol, amount):
     import pdb
     breakpoint()
@@ -157,6 +167,8 @@ def rh_order_sell_fractional_by_price(uid, symbol, amount):
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
 
     result = r.order_sell_fractional_by_price(session, symbol, amount)
@@ -165,10 +177,13 @@ def rh_order_sell_fractional_by_price(uid, symbol, amount):
         serializer = StockOrderSerializer(data=result, many=True)
         serializer.is_valid(raise_exception=True)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"robinhood response {result} caused {str(e)}"}
     return serializer.validated_data
 
 @shared_task(name="rh_get_stock_order_info")
+@retry_on_db_error
 def rh_get_stock_order_info(uid, order_id):
     import pdb
     breakpoint()
@@ -178,6 +193,8 @@ def rh_get_stock_order_info(uid, order_id):
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
     
     result = r.get_stock_order_info(session, order_id)
@@ -186,11 +203,14 @@ def rh_get_stock_order_info(uid, order_id):
         serializer = StockOrderSerializer(data=result)
         serializer.is_valid(raise_exception=True)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"{str(e)}"}
     return serializer.validated_data
 
-#make something with improved search ability
+# make something with improved search ability
 @shared_task(name="rh_cancel_stock_order")
+@retry_on_db_error
 def rh_cancel_stock_order(uid, order_id):
     import pdb
     breakpoint()
@@ -200,6 +220,8 @@ def rh_cancel_stock_order(uid, order_id):
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
 
     result = r.cancel_stock_order(session, order_id)
@@ -212,6 +234,8 @@ def rh_cancel_stock_order(uid, order_id):
         serializer = StockOrderSerializer(data=check_if_canceled)
         serializer.is_valid(raise_exception=True)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"{str(e)}"}
     return serializer.validated_data
 
@@ -220,11 +244,14 @@ def rh_cancel_stock_order(uid, order_id):
     #     serializer = StockOrderSerializer(data=result)
     #     serializer.is_valid(raise_exception=True)
     # except Exception as e:
+        # if isinstance(e, OperationalError):
+        #     raise e
     #     return {"error": str(e)}
     # return serializer.validated_data
 
 # and another helper one which filters them by any given attribute
 @shared_task(name="rh_find_stock_orders_custom")
+@retry_on_db_error
 def rh_find_stock_orders_custom(uid, amount=None, currency_code=None, 
                                 instrument_id=None, created_day_range=None, 
                                 updated_day_range=None):
@@ -232,6 +259,8 @@ def rh_find_stock_orders_custom(uid, amount=None, currency_code=None,
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
 
     result = r.find_stock_orders(session)
@@ -240,6 +269,8 @@ def rh_find_stock_orders_custom(uid, amount=None, currency_code=None,
         serializer = StockOrderSerializer(data=result, many=True)
         serializer.is_valid(raise_exception=True)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"robinhood response {result} caused {str(e)}"}
     
     
@@ -266,6 +297,7 @@ def rh_find_stock_orders_custom(uid, amount=None, currency_code=None,
 
 # invest based on a deposit / cashback
 
+@retry_on_db_error
 def rh_save_order_from_order_info(uid, deposit, order_id, symbol):
     import pdb; breakpoint()
     order = rh_get_stock_order_info(uid, order_id)
@@ -323,6 +355,7 @@ def rh_save_order_from_order_info(uid, deposit, order_id, symbol):
     investment.cumulative_quantities = cum_quant
     investment.save()
 
+@retry_on_db_error
 def rh_invest(uid, deposit, repeat_day_range=5, 
               ignore_early_access_amount=False):
     
@@ -373,6 +406,8 @@ def rh_invest(uid, deposit, repeat_day_range=5,
     try:
         userBrokerageInfo = UserBrokerageInfo.objects.get(user__id=id)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         raise Exception(f"no userBrokerageInfo for user {uid}")
     
     import pdb; breakpoint()
@@ -421,6 +456,7 @@ def rh_invest(uid, deposit, repeat_day_range=5,
     investment.cumulative_quantities = cum_quant
     investment.save()
 
+@retry_on_db_error
 def check_repeat_order(uid, deposit, repeat_day_range):
     # check for duplicate deposit
     lower_limit = timezone.now() - timedelta(days=repeat_day_range)
@@ -444,6 +480,7 @@ def check_repeat_order(uid, deposit, repeat_day_range):
     )
     return potential_db_repeats, potential_rh_repeats
 
+@retry_on_db_error
 def rh_load_account_profile(uid):
 
     import pdb
@@ -452,6 +489,8 @@ def rh_load_account_profile(uid):
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
     result = r.load_account_profile(session)
 
@@ -465,11 +504,16 @@ def rh_load_account_profile(uid):
             serializer.is_valid(raise_exception=True)
             return serializer.validated_data
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             return {"error": f"{str(e)}"}
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"{str(e)}"}
 
 @receiver(post_save, sender=RobinhoodStockOrder)
+@retry_on_db_error
 def rhdorder_to_investment(sender, instance, **kwargs):
     try:
         investment = Investment(
@@ -484,3 +528,5 @@ def rhdorder_to_investment(sender, instance, **kwargs):
     except:
         investment = Investment.objects.get(user = instance.user, rh = instance)
         investment.save()
+
+

@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 import json
 import re
 
+from django.db.utils import OperationalError
 from plaid.model.transactions_get_request import TransactionsGetRequest
 from plaid.model.transactions_get_request_options import TransactionsGetRequestOptions
 from plaid.model.transactions_sync_request import TransactionsSyncRequest
@@ -22,6 +23,8 @@ from..serializers.plaid.transaction import TransactionsSyncResponseSerializer, \
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \
     PlaidPersonalFinanceCategories
 
+from accumate_backend.retry_db import retry_on_db_error
+
 # plaid transactions 
 
 
@@ -31,6 +34,7 @@ from ..models import PlaidItem, User, PlaidCashbackTransaction, \
 # find cashback 
 
 @shared_task(name="transactions_sync")
+@retry_on_db_error
 def transactions_sync(uid=None, item_ids={}, update_cursor=False, page_size=100):
     # import pdb
     # breakpoint()
@@ -83,8 +87,11 @@ def transactions_sync(uid=None, item_ids={}, update_cursor=False, page_size=100)
         error = json.loads(e.body)
         return f"transactions sync get error: {error.get("error_code")}"
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return f"transactions sync get error: {str(e)}"
 
+@retry_on_db_error
 def is_cashback(name):
     keywords_include = [
         "CASHBACK",
@@ -123,6 +130,7 @@ def is_cashback(name):
 
 
 @shared_task(name="find_cashback_added")
+@retry_on_db_error
 def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
     user = User.objects.get(id=uid)
@@ -201,6 +209,7 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
                 # something to mark any deposits or investments 
 
 @shared_task(name="find_cashback_modified")
+@retry_on_db_error
 def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
     lt = {"amount": [0]}
@@ -260,6 +269,7 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
 # in future turn these into generators?
 # or in future make transactions ordered by dictionary (key=cashback?)
 @shared_task(name="find_cashback_removed")
+@retry_on_db_error
 def find_cashback_removed(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
     lt = {"amount": [0]}
@@ -287,6 +297,7 @@ def find_cashback_removed(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}
             continue
 
 @shared_task(name="update_transactions")
+@retry_on_db_error
 def update_transactions(item_id):
     item = PlaidItem.objects.get(itemId = item_id)
     uid = item.user.id
@@ -299,6 +310,8 @@ def update_transactions(item_id):
         find_cashback_modified(uid, modified)
         find_cashback_removed(uid, removed)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         item.transactionsCursor = cursor
         return e
         # some sort of CTE / view made from celery logs
@@ -307,6 +320,7 @@ def update_transactions(item_id):
 # spending by category
 
 @shared_task(name="transactions_get")
+@retry_on_db_error
 def transactions_get(uid, start_date_str, end_date_str, item_ids={}, page_size=100):
     # import pdb
     # breakpoint()
@@ -355,9 +369,12 @@ def transactions_get(uid, start_date_str, end_date_str, item_ids={}, page_size=1
         error = json.loads(e.body)
         return f"transactions get error: {error.get("error_code")}"
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return f"transactions get error: {str(e)}"
 
 @shared_task(name="transactions_categories_sum")
+@retry_on_db_error
 def transactions_categories_sum(transactions_response, transactions_sync=True,
                                 personal_finance_categories=True):
     plaid_category_detail_to_buul_categories = {
@@ -406,6 +423,7 @@ def transactions_categories_sum(transactions_response, transactions_sync=True,
     return counter_dict, min_date, max_date
 
 @shared_task(name="user_spending_by_category")
+@retry_on_db_error
 def user_spending_by_category(uid):
     start_date_str = (timezone.now() - relativedelta(months=1)).strftime("%Y-%m-%d")
     end_date_str = timezone.now().strftime("%Y-%m-%d")
@@ -423,10 +441,13 @@ def user_spending_by_category(uid):
         )
     for category in spending_by_category:
         category_model[category] = spending_by_category[category]
+    category_model.start_date = start_date_str
+    category_model.end_date = end_date_str
     category_model.save()
     
 
 @shared_task(name="all_users_spending_by_category")
+@retry_on_db_error
 def all_users_spending_by_category():
     for user in User.objects.all():
         user_spending_by_category(user.id)
