@@ -159,7 +159,7 @@ class StockData(models.Model):
 
     def __setitem__(self, key, value):
         setattr(self, key, value)
-        self.save()
+        # self.save()
 
 class PlaidUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
@@ -204,7 +204,6 @@ class PlaidItem(models.Model):
     _accessToken = models.BinaryField()
     accessTokenDek = models.BinaryField()
     previousRefresh = models.DateTimeField(auto_now=True)
-    previousRefreshSuccess = models.BooleanField(default=True)
     transactionsCursor = models.CharField(max_length=255, null=True, default=None)
     update_code = models.CharField(max_length=255, null=True, default=None)
     institution_name = models.CharField(max_length=255, null=True, default=None)
@@ -270,8 +269,11 @@ class PlaidPersonalFinanceCategories(models.Model):
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
 
-    def __setattr__(self, name, value):
-        return super().__setattr__(name, value)
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
 
 
 # investment models
