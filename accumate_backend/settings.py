@@ -240,3 +240,5 @@ USER_PII_KMS_ALIAS = env("USER_PII_KMS_ALIAS", default="")
 
 anonymize_user_hmac_key_dict = json.loads(env("ANONYMIZE_USER_HMAC_KEY"))
 ANONYMIZE_USER_HMAC_KEY = anonymize_user_hmac_key_dict["ANONYMIZE_USER_HMAC_KEY"]
+
+ENVIRONMENT = env("ENVIRONMENT", default="")

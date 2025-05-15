@@ -3,6 +3,7 @@ import json
 from botocore.exceptions import ClientError
 from django.db import connections
 from django.conf import settings
+from .settings import ENVIRONMENT
 import threading
 import functools
 import psycopg2
@@ -62,7 +63,8 @@ def retry_on_db_error(func):
             return func(*args, **kwargs)
         except OperationalError as e:
             if "password authentication failed" in str(e):
-                refresh_db_credentials(get_secret("db"))
+                secret = get_secret(f"ecs/{ENVIRONMENT}/DB_CREDENTIALS")
+                refresh_db_credentials(secret)
                 return func(*args, **kwargs)
             raise
     return wrapper

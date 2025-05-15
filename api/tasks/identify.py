@@ -196,7 +196,14 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
                     transaction_id = cashback["transaction_id"],
                     account_id = cashback["account_id"]
                 )
-                plaidCashbackTransaction.amount = cashback["amount"]
+                if plaidCashbackTransaction.deposit is not None and \
+                plaidCashbackTransaction.deposit.investment is None and \
+                cashback["amount"] != plaidCashbackTransaction.amount or \
+                cashback["iso_currency_code"] != plaidCashbackTransaction.iso_currency_code:
+                    plaidCashbackTransaction.deposit.flag = True
+                if not plaidCashbackTransaction.deposit:
+                    plaidCashbackTransaction.amount = cashback["amount"]
+                    plaidCashbackTransaction.iso_currency_code = cashback["iso_currency_code"]
                 plaidCashbackTransaction.pending = cashback["pending"]
                 plaidCashbackTransaction.authorized_date = cashback["authorized_date"]
                 plaidCashbackTransaction.authorized_datetime = cashback["authorized_datetime"]
@@ -234,12 +241,13 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
                 cashback["amount"] != plaidCashbackTransaction.amount or \
                 cashback["iso_currency_code"] != plaidCashbackTransaction.iso_currency_code:
                 plaidCashbackTransaction.deposit.flag = True
-            plaidCashbackTransaction.amount = cashback["amount"]
+            if not plaidCashbackTransaction.deposit:
+                plaidCashbackTransaction.amount = cashback["amount"]
+                plaidCashbackTransaction.iso_currency_code = cashback["iso_currency_code"]
             plaidCashbackTransaction.pending = cashback["pending"]
             plaidCashbackTransaction.authorized_date = cashback["authorized_date"]
             plaidCashbackTransaction.authorized_datetime = cashback["authorized_datetime"]
             plaidCashbackTransaction.date = cashback["date"]
-            plaidCashbackTransaction.iso_currency_code = cashback["iso_currency_code"]
             to_create.append(plaidCashbackTransaction)
 
             # xact x deposit, deposit connected to investment
