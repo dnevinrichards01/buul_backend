@@ -257,7 +257,7 @@ def login(session=None, uid=None, username=None, password=None, expiresIn=86400,
 
 def initial_verification_flow(session, uid, device_token:str, mfa_code:str, 
                               workflow_id:str):
-
+    
     # takes verification workflow id, returns user machine id
     url = "https://api.robinhood.com/pathfinder/user_machine/"
     payload = {
