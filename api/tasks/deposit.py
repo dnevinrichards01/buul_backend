@@ -137,9 +137,11 @@ def plaid_balance_get_process(uid, item_id=None, account_ids_by_item_id={}, eq={
                               gt={}, lt={}, lte={}, gte={}, metric_to_return_by=None,
                               use_balance=True):
     if use_balance:
-        balance_get = plaid_balance_get(uid, item_id=None, account_ids_by_item_id={})
+        balance_get = plaid_balance_get(uid, item_id=None, 
+                                        account_ids_by_item_id=account_ids_by_item_id)
     else:
-        balance_get = plaid_accounts_get(uid, item_id=None, account_ids_by_item_id={})
+        balance_get = plaid_accounts_get(uid, item_id=None, 
+                                         balance_ids_by_item_id=account_ids_by_item_id)
     balance_processed = process_plaid_balance(balance_get, eq=eq, gt=gt, lt=lt, lte=lte, 
                                               gte=gte, metric_to_return_by=None)
     return balance_processed
@@ -458,6 +460,7 @@ def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True,
         raise Exception(f"multiple deposits matching: {transfers}")
     transfer_result = transfers[0]
 
+    # update for no checking
     if get_bank_info:
         rh_accounts = rh_get_linked_bank_accounts(
             uid, 
@@ -473,8 +476,8 @@ def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True,
             eq={"mask": [rh_account["bank_account_number"]]},
             use_balance=False
         )
-        if not ignore_plaid or len(plaid_accounts) != 1:
-            raise Exception(f"could not find rh account associated with " + 
+        if not ignore_plaid and len(plaid_accounts) != 1:
+            raise Exception(f"could not find plaid account associated with " + 
                             f"{rh_account["bank_account_number"]}")
         plaid_account = {} if ignore_plaid else plaid_accounts[0]
 
@@ -561,5 +564,6 @@ def rhdeposit_to_deposit(sender, instance, **kwargs):
     except:
         deposit = Deposit.objects.get(user = instance.user, rh = instance)
         deposit.state = instance.state
+        deposit.early_access_amount = instance.early_access_amount
         deposit.save()
 

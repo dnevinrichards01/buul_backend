@@ -326,6 +326,7 @@ class PlaidCashbackTransaction(models.Model):
     account_id = models.CharField(max_length=255)
     transaction_id = models.CharField(max_length=255)
     amount = models.FloatField()
+    # add mask? must prevent items from being deleted tbh... 
     pending = models.BooleanField() # must be false
     iso_currency_code = models.CharField(max_length=10)
     date =  models.DateField(null=True, default=None)
@@ -338,7 +339,8 @@ class PlaidCashbackTransaction(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['user', 'transaction_id'], name='unique_plaid_transaction')
+            # add mask?
+            models.UniqueConstraint(fields=['user', 'account_id', 'transaction_id'], name='unique_plaid_transaction')
         ]
 
 class RobinhoodStockOrder(models.Model):

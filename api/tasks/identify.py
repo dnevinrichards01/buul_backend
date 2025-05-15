@@ -158,8 +158,8 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
             date = cashback["date"],
             name = cashback["name"],
             iso_currency_code = cashback["iso_currency_code"],
-            flag = user.date_joined < timezone.make_aware(
-                datetime.strptime(cashback["date"], "%Y-%m-%d"), 
+            flag = user.date_joined > timezone.make_aware(
+                datetime.combine(cashback["date"], datetime.min.time()),
                 timezone.get_current_timezone()
             )
         )
@@ -183,8 +183,8 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
                     date = cashback["date"],
                     name = cashback["name"],
                     iso_currency_code = cashback["iso_currency_code"],
-                    flag = user.date_joined < timezone.make_aware(
-                        datetime.strptime(cashback["date"], "%Y-%m-%d"), 
+                    flag = user.date_joined > timezone.make_aware(
+                        datetime.combine(cashback["date"], datetime.min.time()),
                         timezone.get_current_timezone()
                     )
                 )
@@ -197,7 +197,6 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
                     account_id = cashback["account_id"]
                 )
                 if plaidCashbackTransaction.deposit is not None and \
-                plaidCashbackTransaction.deposit.investment is None and \
                 cashback["amount"] != plaidCashbackTransaction.amount or \
                 cashback["iso_currency_code"] != plaidCashbackTransaction.iso_currency_code:
                     plaidCashbackTransaction.deposit.flag = True
@@ -237,7 +236,6 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
                 account_id = cashback["account_id"]
             )
             if plaidCashbackTransaction.deposit is not None and \
-                plaidCashbackTransaction.deposit.investment is None and \
                 cashback["amount"] != plaidCashbackTransaction.amount or \
                 cashback["iso_currency_code"] != plaidCashbackTransaction.iso_currency_code:
                 plaidCashbackTransaction.deposit.flag = True
@@ -298,9 +296,8 @@ def find_cashback_removed(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}
             if plaidCashbackTransaction.deposit is None:
                 plaidCashbackTransaction.delete()
             else: 
-                if plaidCashbackTransaction.deposit.investment is None:
-                    plaidCashbackTransaction.deposit.flag = True
-                    plaidCashbackTransaction.deposit.save()
+                plaidCashbackTransaction.deposit.flag = True
+                plaidCashbackTransaction.deposit.save()
         except:
             continue
 
