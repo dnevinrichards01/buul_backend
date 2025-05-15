@@ -9,10 +9,7 @@ import functools
 import psycopg2
 from django.db.utils import OperationalError
 # from psycopg2 import OperationalError
-
-
-def get_db_credentials(environment="prod", region_name="us-west-1"):
-    return get_secret(f"ecs/{environment}/DB_CREDENTIALS",  region_name="us-west-1")
+from rest_framework.views import exception_handler
 
 def get_secret(secret_name, region_name="us-west-1"):
     client = boto3.client("secretsmanager", region_name=region_name)
@@ -28,16 +25,6 @@ def get_secret(secret_name, region_name="us-west-1"):
             return secret
     else:
         raise Exception("Secret binary not supported in this function.")
-
-
-# try:
-#     do_something()
-# except Exception as e:
-#     if isinstance(e, ValueError):
-#         raise  # re-raise ValueError, let it propagate
-#     # Handle all other exceptions here
-#     handle_other_errors(e)
-
 
 def refresh_db_credentials(new_creds, alias="default"):
     db_settings = settings.DATABASES[alias]
@@ -70,3 +57,11 @@ def retry_on_db_error(func):
     return wrapper
 
 
+def custom_exception_handler(exc, context):
+    if isinstance(exc, OperationalError) and "password authentication failed" in str(exc):
+        secret = get_secret(f"ecs/{ENVIRONMENT}/DB_CREDENTIALS")
+        refresh_db_credentials(secret)
+        # Retry manually here — might require calling the view again
+        # or returning a special response
+        # WARNING: this is tricky to retry safely here
+    return exception_handler(exc, context)
