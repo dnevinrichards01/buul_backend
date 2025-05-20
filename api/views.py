@@ -34,6 +34,8 @@ from robin_stocks.models import UserRobinhoodInfo
 
 import secrets 
 
+from django.db.utils import OperationalError
+
 from accumate_backend.settings import LOAD_BALANCER_ENDPOINT
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -86,6 +88,8 @@ class MyTokenObtainPairView(TokenObtainPairView):
             log(Log, self, status, LogState.VAL_ERR_NO_MESSAGE, errors = error_messages)
             return JsonResponse({}, status = status)
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             status = 401
             log(Log, self, status, LogState.VAL_ERR_UNKOWN, errors = {"error": str(type(e))})
             return JsonResponse({}, status = status)
@@ -118,6 +122,8 @@ class MyTokenRefreshView(TokenRefreshView):
             log(Log, self, status, LogState.VAL_ERR_NO_MESSAGE, errors = error_messages)
             return JsonResponse({}, status = status)
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             status = 401
             log(Log, self, status, LogState.VAL_ERR_INTERNAL, errors = {"error": str(type(e))})
             return JsonResponse({}, status = status)
@@ -222,6 +228,8 @@ class EmailPhoneSignUpValidation(APIView):
                 _ = User.objects.get(email=email)
                 user_exists = True
             except Exception as e:
+                if isinstance(e, OperationalError):
+                    raise e
                 user_exists = False
         elif field == "phone_number":
             email = None
@@ -230,6 +238,8 @@ class EmailPhoneSignUpValidation(APIView):
                 _ = User.objects.get(phone_number=phone_number)
                 user_exists = True
             except Exception as e:
+                if isinstance(e, OperationalError):
+                    raise e
                 user_exists = False
         if user_exists:
             status = 200
@@ -517,7 +527,9 @@ class PlaidLinkTokenCreate(APIView):
         user = self.request.user
         try:
             PlaidUser.objects.get(user__id=user.id)
-        except Exception:
+        except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             status = 400 
             error_message = "This user does not yet have a plaid user object"
             response = JsonResponse(
@@ -887,6 +899,8 @@ class GetUserInfo(APIView):
             else:
                 brokerage_completed = True
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             brokerage, etf, brokerage_completed = None, None, False
         
         status = 200
@@ -1046,6 +1060,8 @@ class ResetPassword(APIView):
                 user = User.objects.get(email=email)
                 user_exists = True
             except Exception as e:
+                if isinstance(e, OperationalError):
+                    raise e
                 user = None
                 user_exists = False
         elif 'verification_phone_number' in serializer.validated_data:
@@ -1055,6 +1071,8 @@ class ResetPassword(APIView):
                 user = User.objects.get(phone_number=phone_number)
                 user_exists = True
             except Exception as e:
+                if isinstance(e, OperationalError):
+                    raise e
                 user = None
                 user_exists = False
         if not user_exists:
@@ -1143,6 +1161,8 @@ class ResetPassword(APIView):
                 user = User.objects.get(email=email)
                 user_exists = True
             except Exception as e:
+                if isinstance(e, OperationalError):
+                    raise e
                 user = None
                 user_exists = False
         elif 'verification_phone_number' in serializer.validated_data:
@@ -1152,6 +1172,8 @@ class ResetPassword(APIView):
                 user = User.objects.get(phone_number=phone_number)
                 user_exists = True
             except Exception as e:
+                if isinstance(e, OperationalError):
+                    raise e
                 user = None
                 user_exists = False
         if not user_exists:
@@ -1252,6 +1274,8 @@ class RequestVerificationCode(APIView):
                 _ = User.objects.get(email=verification_email)
                 user_exists = True
             except Exception as e:
+                if isinstance(e, OperationalError):
+                    raise e
                 user_exists = False
         elif 'verification_phone_number' in serializer.validated_data:
             verification_email = None
@@ -1260,6 +1284,8 @@ class RequestVerificationCode(APIView):
                 _ = User.objects.get(phone_number=verification_phone_number)
                 user_exists = True
             except Exception as e:
+                if isinstance(e, OperationalError):
+                    raise e
                 user_exists = False
         if not user_exists:
             status = 400
@@ -1284,6 +1310,8 @@ class RequestVerificationCode(APIView):
                 _ = User.objects.get(email=email)
                 user_exists = True
             except Exception as e:
+                if isinstance(e, OperationalError):
+                    raise e
                 user_exists = False
             if user_exists:
                 status = 200
@@ -1305,6 +1333,8 @@ class RequestVerificationCode(APIView):
                 _ = User.objects.get(phone_number=phone_number)
                 user_exists = True
             except Exception as e:
+                if isinstance(e, OperationalError):
+                    raise e
                 user_exists = False
             if user_exists:
                 status = 200
@@ -1471,6 +1501,8 @@ class RequestVerificationCode(APIView):
                 userBrokerageInfo.full_name = serializer.validated_data["brokerage"]
                 userBrokerageInfo.save()
             except Exception as e:
+                if isinstance(e, OperationalError):
+                    raise e
                 status = 200
                 error_message = "We could not find your brokerage and investment choice. Please contact Accumate."
                 log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = {"error": error_message})
@@ -1487,6 +1519,8 @@ class RequestVerificationCode(APIView):
                 userBrokerageInfo.symbol = serializer.validated_data["symbol"]
                 userBrokerageInfo.save()
             except Exception as e:
+                if isinstance(e, OperationalError):
+                    raise e
                 status = 200
                 error_message = "We could not find your brokerage and investment choice. Please contact Accumate."
                 log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = {"error": error_message})
@@ -1600,6 +1634,8 @@ class DeleteAccountVerify(APIView):
                     status = status
                 )
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             status = 400
             log(Log, self, status, LogState.VAL_ERR_MESSAGE)
             return JsonResponse(
@@ -1638,6 +1674,8 @@ class AddToWaitlist(APIView):
                 status = status
             )
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             status = 400
             error_messages = {"error": e.args[0]}
             log(Log, self, status, LogState.VAL_ERR_NO_MESSAGE, errors = error_messages)

@@ -47,6 +47,7 @@ class User(AbstractUser):
     full_name = models.TextField(max_length=255)
     email = models.EmailField(blank=True, max_length=254, unique=True)
     username = models.CharField(unique=True, max_length=50)
+    date_joined = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         self.username = str(self.id)
@@ -158,7 +159,7 @@ class StockData(models.Model):
 
     def __setitem__(self, key, value):
         setattr(self, key, value)
-        self.save()
+        # self.save()
 
 class PlaidUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
@@ -203,9 +204,7 @@ class PlaidItem(models.Model):
     _accessToken = models.BinaryField()
     accessTokenDek = models.BinaryField()
     previousRefresh = models.DateTimeField(auto_now=True)
-    previousRefreshSuccess = models.BooleanField(default=True)
     transactionsCursor = models.CharField(max_length=255, null=True, default=None)
-    plaid_item = models.CharField(max_length=255, null=True, default=None)
     update_code = models.CharField(max_length=255, null=True, default=None)
     institution_name = models.CharField(max_length=255, null=True, default=None)
     institution_id = models.CharField(max_length=255, null=True, default=None)
@@ -263,27 +262,18 @@ class PlaidItem(models.Model):
 
 class PlaidPersonalFinanceCategories(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    # income = models.FloatField(default=0)
-    # transfer_in = models.FloatField(default=0)
-    # transfer_out = models.FloatField(default=0)
-    # loan_payments = models.FloatField(default=0)
-    # bank_fees = models.FloatField(default=0)
-    entertainment = models.FloatField(default=0)
-    food_and_drink = models.FloatField(default=0)
-    general_merchandise = models.FloatField(default=0)
-    home_improvement = models.FloatField(default=0)
-    # medical = models.FloatField(default=0)
-    personal_care = models.FloatField(default=0)
-    # general_services = models.FloatField(default=0)
-    # government_and_non_profit = models.FloatField(default=0)
-    transportation = models.FloatField(default=0)
+    dining = models.FloatField(default=0)
+    groceries = models.FloatField(default=0)
+    utilities = models.FloatField(default=0)
     travel = models.FloatField(default=0)
-    rent_and_utilities = models.FloatField(default=0)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
 
-    def __setattr__(self, name, value):
-        return super().__setattr__(name, value)
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
 
 
 # investment models
@@ -293,10 +283,10 @@ class RobinhoodDeposit(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     rh_account_id = models.CharField(max_length=255)
     rh_account_ach = models.CharField(max_length=255)
-    plaid_account_id = models.CharField(max_length=255)
+    plaid_account_id = models.CharField(max_length=255, null=True)
     mask = models.CharField(max_length=4)
     state = models.CharField(max_length=255)
-    early_access_amount = models.FloatField()
+    early_access_amount = models.FloatField(null=True)
     amount = models.FloatField()
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
@@ -321,7 +311,7 @@ class Deposit(models.Model):
                            null=True, default=None)
     mask = models.CharField(max_length=4)
     state = models.CharField(max_length=255)
-    early_access_amount = models.FloatField()
+    early_access_amount = models.FloatField(null=True)
     amount = models.FloatField()
     created_at = models.DateTimeField()
     flag = models.BooleanField(default=False)
@@ -340,7 +330,7 @@ class PlaidCashbackTransaction(models.Model):
     iso_currency_code = models.CharField(max_length=10)
     date =  models.DateField(null=True, default=None)
     authorized_date = models.DateField(null=True, default=None)
-    authorized_datetime =  models.DateTimeField(null=True, default=None)
+    authorized_datetime = models.DateTimeField(null=True, default=None)
     name = models.CharField()
     deposit = models.ForeignKey(Deposit, on_delete=models.SET_NULL, 
                                 default=None, null=True)
@@ -396,12 +386,6 @@ class Investment(models.Model):
                                       null=True, default=None)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'buy'], 
-                name='unique_investment'
-            )
-        ]
         ordering = ['user', 'date']
         indexes = [
             models.Index(fields=['user', 'date'])

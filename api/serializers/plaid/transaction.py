@@ -303,10 +303,10 @@ class TransactionSerializer(serializers.Serializer):
         required=False,
         help_text="Merchant information."
     )
-    transaction_code = TransactionCodeSerializer(
+    transaction_code = serializers.CharField(
+        help_text="The transaction code.",
         allow_null=True,
-        required=False,
-        help_text="Transaction code information."
+        required=False
     )
     subtransactions = SubtransactionSerializer(
         many=True,

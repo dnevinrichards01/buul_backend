@@ -22,6 +22,8 @@ from plaid.model.accounts_balance_get_request import AccountsBalanceGetRequest
 from plaid.model.accounts_balance_get_request_options import AccountsBalanceGetRequestOptions
 from plaid.exceptions import ApiException
 
+from django.db.utils import OperationalError
+
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \
     RobinhoodDeposit, Investment, Deposit, UserBrokerageInfo
 from ..serializers.rh import GetLinkedBankAccountsResponseSerializer, \
@@ -29,9 +31,12 @@ from ..serializers.rh import GetLinkedBankAccountsResponseSerializer, \
 from ..serializers.plaid.balance import \
     BalanceGetResponseSerializer, AccountsGetResponseSerializer
 
+from accumate_backend.retry_db import retry_on_db_error
+
 # plaid balance
 
 @shared_task(name="plaid_accounts_get")
+@retry_on_db_error
 def plaid_accounts_get(uid, item_id=None, balance_ids_by_item_id={}):
     import pdb
     breakpoint()
@@ -64,9 +69,12 @@ def plaid_accounts_get(uid, item_id=None, balance_ids_by_item_id={}):
         error = json.loads(e.body)
         return f"accounts get error: {error.get("error_code")}"
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return f"accounts get error: {str(e)}"
 
 @shared_task(name="plaid_balance_get")
+@retry_on_db_error
 def plaid_balance_get(uid, item_id=None, account_ids_by_item_id={}):
     import pdb
     breakpoint()
@@ -105,8 +113,11 @@ def plaid_balance_get(uid, item_id=None, account_ids_by_item_id={}):
         error = json.loads(e.body)
         return f"balance get error: {error.get("error_code")}"
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return f"balance get error: {str(e)}"
-    
+
+@retry_on_db_error
 def process_plaid_balance(plaid_balance_responses, eq={}, gt={}, lt={}, lte={}, 
                           gte={}, metric_to_return_by=None):
     balances = []
@@ -121,6 +132,7 @@ def process_plaid_balance(plaid_balance_responses, eq={}, gt={}, lt={}, lte={},
     return filter_jsons(balances, eq=eq, gt=gt, lt=lt, lte=lte, gte=gte, 
                         metric_to_return_by=metric_to_return_by)
 
+@retry_on_db_error
 def plaid_balance_get_process(uid, item_id=None, account_ids_by_item_id={}, eq={}, 
                               gt={}, lt={}, lte={}, gte={}, metric_to_return_by=None,
                               use_balance=True):
@@ -136,6 +148,7 @@ def plaid_balance_get_process(uid, item_id=None, account_ids_by_item_id={}, eq={
 # check which account to withdraw from
 
 @shared_task(name="rh_get_linked_bank_accounts")
+@retry_on_db_error
 def rh_get_linked_bank_accounts(uid, eq={}, gt={}, lt={}, lte={}, gte={}, 
                                 metric_to_return_by=None):
     import pdb
@@ -146,6 +159,8 @@ def rh_get_linked_bank_accounts(uid, eq={}, gt={}, lt={}, lte={}, gte={},
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
     result = r.get_linked_bank_accounts(session)
     
@@ -153,12 +168,15 @@ def rh_get_linked_bank_accounts(uid, eq={}, gt={}, lt={}, lte={}, gte={},
         serializer = GetLinkedBankAccountsResponseSerializer(data=result, many=True)
         serializer.is_valid(raise_exception=True)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"{str(e)}"}
     
     eq.update({"verified": [True], "state": ["approved"]})
     return filter_jsons(serializer.validated_data, eq=eq, gt=gt, lt=lt, lte=lte, 
                         gte=gte, metric_to_return_by=metric_to_return_by)
 
+@retry_on_db_error
 def comparator(account1, account2):
     plaid1 = account1["plaid_account"]
     plaid2 = account2["plaid_account"]
@@ -172,9 +190,9 @@ def comparator(account1, account2):
     elif account2_matches:
         return 1
 
-    if plaid1["subtype"] == "checking" and plaid2["subtype"] == "savings":
+    if rh1["bank_account_type"] == "checking" and rh2["bank_account_type"] == "savings":
         return -1
-    elif plaid1["subtype"] == "savings" and plaid2["subtype"] == "checking":
+    elif rh1["bank_account_type"] == "savings" and rh2["bank_account_type"] == "checking":
         return 1
     
     if account1["is_previous_choice"] and not account2["is_previous_choice"]:
@@ -195,6 +213,7 @@ def comparator(account1, account2):
     return 0
 
 @shared_task(name="match_brokerage_plaid_accounts")
+@retry_on_db_error
 def match_brokerage_plaid_accounts(uid):
     plaid_accounts = plaid_balance_get_process(uid, use_balance=False)
     rh_accounts = rh_get_linked_bank_accounts(uid)
@@ -204,7 +223,7 @@ def match_brokerage_plaid_accounts(uid):
                 return True
     return False
 
-
+@retry_on_db_error
 def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_account_id, plaid_accounts,
                             rh_accounts, brokerage_plaid_match_required=True):
     # find candidate accounts
@@ -216,7 +235,13 @@ def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_acc
                 raise Exception("not USD")
             # if we find an account both in plaid and in rh, add to candidate list
             if plaid_account["balances"]["available"] >= amount:
-                if not brokerage_plaid_match_required or plaid_account["mask"] == rh_account["bank_account_number"]:
+                if not brokerage_plaid_match_required or \
+                    plaid_account["mask"] == rh_account["bank_account_number"]:
+                    if not brokerage_plaid_match_required:
+                        plaid_account_copy = plaid_account.copy()
+                        for key in plaid_account_copy:
+                            plaid_account_copy[key] = None
+                        plaid_account = plaid_account_copy
                     match = {
                         "rh_account": rh_account,
                         "plaid_account": plaid_account,
@@ -233,12 +258,13 @@ def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_acc
     deposit_account = matching_accounts_list[0]
     return deposit_account["rh_account"], deposit_account["plaid_account"]
 
-#cashbacks = PlaidCashbackTransaction.objects.filter(user__id=uid, deposit=None)
+# cashbacks = PlaidCashbackTransaction.objects.filter(user__id=uid, deposit=None)
 
 # check for repeats or overdrafting
 
 @shared_task(name="rh_get_bank_transfers")
-def rh_get_bank_transfers(uid, eq={}, gt={}, lt={}, lte={}, gte={}, 
+@retry_on_db_error
+def rh_get_bank_transfers(uid, eq={}, neq={}, gt={}, lt={}, lte={}, gte={}, 
                           metric_to_return_by=None):
     import pdb
     breakpoint()
@@ -247,6 +273,8 @@ def rh_get_bank_transfers(uid, eq={}, gt={}, lt={}, lte={}, gte={},
     try:
         session, userRobinhtoodInfo = r.rh_create_session(uid)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
     result = r.get_bank_transfers(session)
     
@@ -254,12 +282,15 @@ def rh_get_bank_transfers(uid, eq={}, gt={}, lt={}, lte={}, gte={},
         serializer = DepositSerializer(data=result, many=True)
         serializer.is_valid(raise_exception=True)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return {"error": f"{str(e)}"}
     
-    return filter_jsons(serializer.validated_data, eq=eq, gt=gt, lt=lt, lte=lte, 
+    return filter_jsons(serializer.validated_data, eq=eq, neq=neq, gt=gt, lt=lt, lte=lte, 
                         gte=gte, metric_to_return_by=metric_to_return_by)
 
-def check_repeat_deposit(uid, amount, repeat_day_range):
+@retry_on_db_error
+def check_repeat_deposit(uid, amount, repeat_day_range, return_failed=True):
     # check for duplicate deposit
     lower_limit = timezone.now() - timedelta(days=repeat_day_range)
     old_deposits = Deposit.objects.filter(
@@ -272,6 +303,8 @@ def check_repeat_deposit(uid, amount, repeat_day_range):
     # could add checking the transfer's account id?
     potential_rh_repeats = rh_get_bank_transfers(
         uid, 
+        eq={"direction": ["deposit"]},
+        neq= {} if return_failed else {"state": ["failed"]},
         lt={"amount":[amount+0.05]}, 
         gt={
             "created_at":[timezone.now() - timedelta(days=repeat_day_range)],
@@ -284,6 +317,7 @@ def check_repeat_deposit(uid, amount, repeat_day_range):
 # deposit
 
 @shared_task(name="rh_deposit_funds_to_robinhood_account")
+@retry_on_db_error
 def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount, force=False, limit=50):
     import pdb
     breakpoint()
@@ -293,6 +327,8 @@ def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount, force=F
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         raise Exception(f"could not find userRobinhoodInfo object for that {uid}")
     
     if not force:
@@ -314,6 +350,8 @@ def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount, force=F
         serializer = DepositSerializer(data=result)
         serializer.is_valid(raise_exception=True)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         try:
             transfers = rh_get_bank_transfers(
                 uid, 
@@ -323,13 +361,16 @@ def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount, force=F
                 }
             )
         except Exception as e:
+            if isinstance(e, OperationalError):
+                raise e
             transfers = {"error": f"{str(e)}"}
         return {"error": f"robinhood response {result} caused {str(e)}",
                 "recent_transfers": transfers}
     return serializer.validated_data
 
+@retry_on_db_error
 def rh_deposit(uid, transactions, repeat_day_range=5, force=False, 
-               limit=50):
+               limit=50, check_failed_deposits=True):
     import pdb; breakpoint()
     # get previous deposit to help decide which account to use
     old_deposits = RobinhoodDeposit.objects.filter(user__id=uid)\
@@ -344,11 +385,14 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
 
     # check for duplicate deposits
     potential_db_repeats, potential_rh_repeats = check_repeat_deposit(
-        uid, cashback_amount, repeat_day_range
+        uid, cashback_amount, repeat_day_range, 
+        return_failed=check_failed_deposits
     )
     if not force and (potential_db_repeats or potential_rh_repeats):
-        raise Exception("potential db repeats {potential_db_repeats} " +  
-                        "potential rh repeats {potential_rh_repeats}")
+        db_repeat_ids = [(f"{d.deposit_id}: {d.state}") for d in potential_db_repeats]
+        rh_repeat_ids = [(f"{d['id']}: {d['state']}") for d in potential_rh_repeats]
+        raise Exception(f"potential db repeats {db_repeat_ids} " +  
+                        f"potential rh repeats {rh_repeat_ids}")
     
     # find accounts matching in Plaid and RH
     plaid_accounts = plaid_balance_get_process(uid)
@@ -381,7 +425,7 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
             rh_account_id = rh_account["id"],
             rh_account_ach = deposit["ach_relationship"],
             plaid_account_id = plaid_account["account_id"],
-            mask = plaid_account["mask"],
+            mask = rh_account["bank_account_number"],
             state = deposit["state"],
             amount = deposit["amount"],
             early_access_amount = deposit["early_access_amount"],
@@ -396,7 +440,9 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
             _transaction.deposit = deposit
         PlaidCashbackTransaction.objects.bulk_update(transactions, ['deposit'])
 
-def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True):
+@retry_on_db_error
+def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True,
+                      ignore_plaid=False):
 
     import pdb; breakpoint()
 
@@ -427,10 +473,10 @@ def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True):
             eq={"mask": [rh_account["bank_account_number"]]},
             use_balance=False
         )
-        if len(plaid_accounts) != 1:
+        if not ignore_plaid or len(plaid_accounts) != 1:
             raise Exception(f"could not find rh account associated with " + 
                             f"{rh_account["bank_account_number"]}")
-        plaid_account = plaid_accounts[0]
+        plaid_account = {} if ignore_plaid else plaid_accounts[0]
 
     try:
         robinhoodCashbackDeposit = RobinhoodDeposit.objects.get(
@@ -444,14 +490,16 @@ def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True):
         robinhoodCashbackDeposit.expected_landing_datetime = transfer_result["expected_landing_datetime"]
         robinhoodCashbackDeposit.cancel = transfer_result["cancel"]
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         if get_bank_info:
             robinhoodCashbackDeposit = RobinhoodDeposit(
                 deposit_id = transfer_result["id"],
                 user = User.objects.get(id=uid),
                 rh_account_id = rh_account["id"],
                 rh_account_ach = transfer_result["ach_relationship"],
-                plaid_account_id = plaid_account["account_id"], 
-                mask = plaid_account["mask"],
+                plaid_account_id = plaid_account.get("account_id", None),
+                mask = rh_account["bank_account_number"],
                 state = transfer_result["state"], 
                 amount = transfer_result["amount"],
                 early_access_amount = transfer_result["early_access_amount"],
@@ -473,6 +521,7 @@ def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True):
 
 
 # untested
+@retry_on_db_error
 def group_cashback_transactions(uid, grouped=True, group_size=50):
     to_deposit = PlaidCashbackTransaction.objects.filter(
         user__id=uid, deposit=None
@@ -495,8 +544,8 @@ def group_cashback_transactions(uid, grouped=True, group_size=50):
         return [transaction for transaction in to_deposit]
 
 
-
 @receiver(post_save, sender=RobinhoodDeposit)
+@retry_on_db_error
 def rhdeposit_to_deposit(sender, instance, **kwargs):
     try:
         deposit = Deposit(
@@ -505,7 +554,7 @@ def rhdeposit_to_deposit(sender, instance, **kwargs):
             mask = instance.mask,
             state = instance.state,
             amount = instance.amount,
-            available_funds = instance.early_access_amount,
+            early_access_amount = instance.early_access_amount,
             created_at = instance.created_at
         )
         deposit.save()
@@ -513,3 +562,4 @@ def rhdeposit_to_deposit(sender, instance, **kwargs):
         deposit = Deposit.objects.get(user = instance.user, rh = instance)
         deposit.state = instance.state
         deposit.save()
+

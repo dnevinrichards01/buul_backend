@@ -8,6 +8,7 @@ from .plaid.link import e164_phone_number_validator
 from api.models import User
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.hashers import check_password
 
 invalid_password_error_message = "The password must contain at least one capital " + \
     "letter, one digit, 8 characters, and one symbol of the following symbols: " + \
@@ -36,8 +37,11 @@ class MyTokenObtainPairSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         email = attrs.pop('email')
+        password = attrs.pop('password')
         try:
             user = User.objects.get(email=email)
+            if not check_password(password, user.password):
+                raise ValidationError()
             attrs['user'] = user
             return attrs
         except:
@@ -86,7 +90,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('pre_account_id', None)
+        password = validated_data.pop('password')
         user = User(**validated_data)
+        user.set_password(password)
         user.save()
         return user
 

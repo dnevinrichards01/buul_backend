@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 import json
 import re
 
+from django.db.utils import OperationalError
 from plaid.model.transactions_get_request import TransactionsGetRequest
 from plaid.model.transactions_get_request_options import TransactionsGetRequestOptions
 from plaid.model.transactions_sync_request import TransactionsSyncRequest
@@ -22,6 +23,8 @@ from..serializers.plaid.transaction import TransactionsSyncResponseSerializer, \
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \
     PlaidPersonalFinanceCategories
 
+from accumate_backend.retry_db import retry_on_db_error
+
 # plaid transactions 
 
 
@@ -31,6 +34,7 @@ from ..models import PlaidItem, User, PlaidCashbackTransaction, \
 # find cashback 
 
 @shared_task(name="transactions_sync")
+@retry_on_db_error
 def transactions_sync(uid=None, item_ids={}, update_cursor=False, page_size=100):
     # import pdb
     # breakpoint()
@@ -83,55 +87,68 @@ def transactions_sync(uid=None, item_ids={}, update_cursor=False, page_size=100)
         error = json.loads(e.body)
         return f"transactions sync get error: {error.get("error_code")}"
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return f"transactions sync get error: {str(e)}"
 
+@retry_on_db_error
 def is_cashback(name):
-    cashback_names = [
-        "CASH REWARD REDEMPTION",
-        "CASH REWARDS STATEMENT CREDIT",
-        "REWARDS DEPOSIT",
-        "CASHBACK BONUS",
-        "REWARDS DEPOSIT",
-        "CASHBACK REDEMPTION",
-        "REWARDS CREDIT",
-        "DISCOVER CASHBACK BONUS",
-        "CASHBACK REWARDS DEPOSIT",
-        "REWARDS REDEMPTION",
-        "CASHBACK REWARDS",
-        "STATEMENT CREDIT",
-        "REWARDS CREDIT",
-        "CASH REDEMPTION",
-    ]
-    cashback_keywords = [
+    keywords_include = [
         "CASHBACK",
-        "REWARDS",
+        "CASH BACK",
+        "CASH AWARD",
+        "CASH REWARD",
         "CASHREWARD", 
-        "\bCASH\b"
+        "CASH REDEMPTION",
+        "CASH AUTO REDEMPTION", # real name
+        "CASHBACK BONUS",
+        "CASHBACK REDEMPTION",
+        "CASHBACK REWARDS",
+        "REWARDS DEPOSIT",
+        "REWARDS CREDIT",
+        "REWARDS DEPOSIT",
+        "REWARDS REDEMPTION",
+        "STATEMENT CREDIT",
+        "CREDIT- REWARD", # real name
+        "CREDIT REWARD",
+        "WELLS FARGO REWARDS",
+        "CREDIT CRD DES:RWRD"
     ]
-
+    keywords_reject = [
+        "ZELLE",
+        "BILL",
+        "CITY",
+        "DIRECT DEP"
+    ]
     # add in terms to return false for. 
     # use 'word boundaries' around CASH etc so it won't match "CASHIER" etc
+    match_pattern = '|'.join(map(re.escape, keywords_include))
+    is_match = re.search(match_pattern, name) is not None
+    reject_pattern = '|'.join(map(re.escape, keywords_reject))
+    is_reject = re.search(reject_pattern, name) is not None 
+    return is_match and not is_reject
 
-    pattern = '|'.join(map(re.escape, cashback_names + cashback_keywords))  # Escape substrings to handle special characters
-    return re.search(pattern, name) is not None
 
 @shared_task(name="find_cashback_added")
+@retry_on_db_error
 def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
+    user = User.objects.get(id=uid)
+
     lt = {"amount": [0]}
-    # is_cashback_name = {
-    #     "func": lambda name, bool: is_cashback(name) == bool,
-    #     "filter_set": {"name" : [True]}
-    # }
+    is_cashback_name = {
+        "func": lambda name, bool: is_cashback(name) == bool,
+        "filter_set": {"name" : [True]}
+    }
     cashback_candidates = filter_jsons(transactions, eq=eq, gt=gt, lt=lt, lte=lte, 
-                        gte=gte, metric_to_return_by=metric_to_return_by)#, 
-                        # is_cashback=is_cashback_name)
+                        gte=gte, metric_to_return_by=metric_to_return_by, 
+                        is_cashback=is_cashback_name)
     if isinstance(cashback_candidates, str):
         raise Exception(cashback_candidates)
     all_cashback = []
     for cashback in cashback_candidates:
         plaidCashbackTransaction = PlaidCashbackTransaction(
-            user = User.objects.get(id=uid),
+            user = user,
             transaction_id = cashback["transaction_id"],
             account_id = cashback["account_id"],
             amount = cashback["amount"],
@@ -140,7 +157,11 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
             authorized_datetime = cashback["authorized_datetime"], 
             date = cashback["date"],
             name = cashback["name"],
-            iso_currency_code = cashback["iso_currency_code"]
+            iso_currency_code = cashback["iso_currency_code"],
+            flag = user.date_joined > timezone.make_aware(
+                datetime.combine(cashback["date"], datetime.min.time()),
+                timezone.get_current_timezone()
+            )
         )
         all_cashback.append(plaidCashbackTransaction)
     try:
@@ -148,6 +169,7 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
     except:
         # if bulk create fails
         for cashback in cashback_candidates:
+            # could use all_cashback instead
             try:
                 # try to create them individually 
                 plaidCashbackTransaction = PlaidCashbackTransaction(
@@ -160,7 +182,11 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
                     authorized_datetime = cashback["authorized_datetime"], 
                     date = cashback["date"],
                     name = cashback["name"],
-                    iso_currency_code = cashback["iso_currency_code"]
+                    iso_currency_code = cashback["iso_currency_code"],
+                    flag = user.date_joined > timezone.make_aware(
+                        datetime.combine(cashback["date"], datetime.min.time()),
+                        timezone.get_current_timezone()
+                    )
                 )
                 plaidCashbackTransaction.save()
             except:
@@ -170,7 +196,13 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
                     transaction_id = cashback["transaction_id"],
                     account_id = cashback["account_id"]
                 )
-                plaidCashbackTransaction.amount = cashback["amount"]
+                if plaidCashbackTransaction.deposit is not None and \
+                cashback["amount"] != plaidCashbackTransaction.amount or \
+                cashback["iso_currency_code"] != plaidCashbackTransaction.iso_currency_code:
+                    plaidCashbackTransaction.deposit.flag = True
+                if not plaidCashbackTransaction.deposit:
+                    plaidCashbackTransaction.amount = cashback["amount"]
+                    plaidCashbackTransaction.iso_currency_code = cashback["iso_currency_code"]
                 plaidCashbackTransaction.pending = cashback["pending"]
                 plaidCashbackTransaction.authorized_date = cashback["authorized_date"]
                 plaidCashbackTransaction.authorized_datetime = cashback["authorized_datetime"]
@@ -183,16 +215,17 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
                 # something to mark any deposits or investments 
 
 @shared_task(name="find_cashback_modified")
+@retry_on_db_error
 def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
     lt = {"amount": [0]}
-    # is_cashback_name = {
-    #     "func": lambda name, bool: is_cashback(name) == bool,
-    #     "filter_set": {"name" : [True]}
-    # }
+    is_cashback_name = {
+        "func": lambda name, bool: is_cashback(name) == bool,
+        "filter_set": {"name" : [True]}
+    }
     cashback_candidates = filter_jsons(transactions, eq=eq, gt=gt, lt=lt, lte=lte, 
-                        gte=gte, metric_to_return_by=metric_to_return_by)#, 
-                        # is_cashback=is_cashback_name)
+                        gte=gte, metric_to_return_by=metric_to_return_by, 
+                        is_cashback=is_cashback_name)
     to_create = []
     to_update = []
     for cashback in cashback_candidates:
@@ -203,16 +236,16 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
                 account_id = cashback["account_id"]
             )
             if plaidCashbackTransaction.deposit is not None and \
-                plaidCashbackTransaction.deposit.investment is None and \
                 cashback["amount"] != plaidCashbackTransaction.amount or \
                 cashback["iso_currency_code"] != plaidCashbackTransaction.iso_currency_code:
                 plaidCashbackTransaction.deposit.flag = True
-            plaidCashbackTransaction.amount = cashback["amount"]
+            if not plaidCashbackTransaction.deposit:
+                plaidCashbackTransaction.amount = cashback["amount"]
+                plaidCashbackTransaction.iso_currency_code = cashback["iso_currency_code"]
             plaidCashbackTransaction.pending = cashback["pending"]
             plaidCashbackTransaction.authorized_date = cashback["authorized_date"]
             plaidCashbackTransaction.authorized_datetime = cashback["authorized_datetime"]
             plaidCashbackTransaction.date = cashback["date"]
-            plaidCashbackTransaction.iso_currency_code = cashback["iso_currency_code"]
             to_create.append(plaidCashbackTransaction)
 
             # xact x deposit, deposit connected to investment
@@ -242,16 +275,17 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
 # in future turn these into generators?
 # or in future make transactions ordered by dictionary (key=cashback?)
 @shared_task(name="find_cashback_removed")
+@retry_on_db_error
 def find_cashback_removed(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}, 
                         metric_to_return_by=None):
     lt = {"amount": [0]}
-    # is_cashback_name = {
-    #     "func": lambda name, bool: is_cashback(name) == bool,
-    #     "filter_set": {"name" : [True]}
-    # }
+    is_cashback_name = {
+        "func": lambda name, bool: is_cashback(name) == bool,
+        "filter_set": {"name" : [True]}
+    }
     cashback_candidates = filter_jsons(transactions, eq=eq, gt=gt, lt=lt, lte=lte, 
-                        gte=gte, metric_to_return_by=metric_to_return_by)#, 
-                        # is_cashback=is_cashback_name)
+                        gte=gte, metric_to_return_by=metric_to_return_by, 
+                        is_cashback=is_cashback_name)
     for cashback in cashback_candidates:
         try:
             plaidCashbackTransaction = PlaidCashbackTransaction.objects.get(
@@ -262,13 +296,13 @@ def find_cashback_removed(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}
             if plaidCashbackTransaction.deposit is None:
                 plaidCashbackTransaction.delete()
             else: 
-                if plaidCashbackTransaction.deposit.investment is None:
-                    plaidCashbackTransaction.deposit.flag = True
-                    plaidCashbackTransaction.deposit.save()
+                plaidCashbackTransaction.deposit.flag = True
+                plaidCashbackTransaction.deposit.save()
         except:
             continue
 
 @shared_task(name="update_transactions")
+@retry_on_db_error
 def update_transactions(item_id):
     item = PlaidItem.objects.get(itemId = item_id)
     uid = item.user.id
@@ -281,6 +315,8 @@ def update_transactions(item_id):
         find_cashback_modified(uid, modified)
         find_cashback_removed(uid, removed)
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         item.transactionsCursor = cursor
         return e
         # some sort of CTE / view made from celery logs
@@ -289,6 +325,7 @@ def update_transactions(item_id):
 # spending by category
 
 @shared_task(name="transactions_get")
+@retry_on_db_error
 def transactions_get(uid, start_date_str, end_date_str, item_ids={}, page_size=100):
     # import pdb
     # breakpoint()
@@ -337,13 +374,29 @@ def transactions_get(uid, start_date_str, end_date_str, item_ids={}, page_size=1
         error = json.loads(e.body)
         return f"transactions get error: {error.get("error_code")}"
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         return f"transactions get error: {str(e)}"
 
 @shared_task(name="transactions_categories_sum")
+@retry_on_db_error
 def transactions_categories_sum(transactions_response, transactions_sync=True,
                                 personal_finance_categories=True):
+    plaid_category_detail_to_buul_categories = {
+        "FOOD_DRINK_AND_COFFEE": "dining",
+        "FOOD_DRINK_AND_FAST_FOOD": "dining",
+        "FOOD_AND_DRINK_RESTAURANT": "dining",
+        "FOOD_AND_DRINK_GROCERIES": "groceries",
+        "RENT_AND_UTILITIES_WATER": "utilities",
+        "RENT_AND_UTILITIES_TELEPHONE": "utilities",
+        "RENT_AND_UTILITIES_SEWAGE_AND_WASTE_TREATMENT": "utilities",
+        "RENT_AND_UTILITIES_INTERNET_AND_CABLE": "utilities",
+        "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY": "utilities",
+        "TRAVEL_FLIGHTS": "travel",
+        "TRAVEL_LODGING": "travel"
+    }
+
     counter_dict = {}
-    count = 0
     min_date = None
     max_date = None
     for item_id in transactions_response:
@@ -356,25 +409,26 @@ def transactions_categories_sum(transactions_response, transactions_sync=True,
                 if transaction['pending'] == True or amount < 0:
                     continue
 
-                if count == 0:
+                if min_date is None or max_date is None:
                     min_date = transaction["date"]
-                max_date = transaction["date"]
-                
-                if personal_finance_categories:
-                    personal_finance_category = transaction['personal_finance_category']['primary']
-                    if personal_finance_category in counter_dict:
-                        counter_dict[personal_finance_category] += amount
-                    else:
-                        counter_dict[personal_finance_category] = amount
-                else:
-                    for category in transaction['category']:
-                        if category in counter_dict:
-                            counter_dict[category] += amount
-                        else:
-                            counter_dict[category] = amount
+                    max_date = transaction["date"]
+                elif transaction["date"] < min_date:
+                    min_date = transaction["date"]
+                elif transaction["date"] > max_date:
+                    max_date = transaction["date"]
+
+                detailed = transaction['personal_finance_category']['detailed']
+                categ = plaid_category_detail_to_buul_categories.get(detailed, None)
+                if categ and categ in counter_dict:
+                    counter_dict[categ] += amount
+                elif categ and categ not in counter_dict:
+                    counter_dict[categ] = amount
+                else: 
+                    continue
     return counter_dict, min_date, max_date
 
 @shared_task(name="user_spending_by_category")
+@retry_on_db_error
 def user_spending_by_category(uid):
     start_date_str = (timezone.now() - relativedelta(months=1)).strftime("%Y-%m-%d")
     end_date_str = timezone.now().strftime("%Y-%m-%d")
@@ -383,18 +437,22 @@ def user_spending_by_category(uid):
         transactions, transactions_sync=False
     )
 
-    categ_model, created = PlaidPersonalFinanceCategories.objects.get_or_create(
-        user__id=uid,
-        defaults = {
-            "min_date": min_date,
-            "max_date": max_date
-        }
-    )
+    category_model_query = PlaidPersonalFinanceCategories.objects.filter(user__id=uid)
+    if category_model_query.exists():
+        category_model = category_model_query.first()
+    else:
+        category_model = PlaidPersonalFinanceCategories(
+            user = User.objects.get(id=uid)
+        )
     for category in spending_by_category:
-        categ_model[category] = spending_by_category[category]
-    categ_model.save()
+        category_model[category] = spending_by_category[category]
+    category_model.start_date = start_date_str
+    category_model.end_date = end_date_str
+    category_model.save()
+    
 
 @shared_task(name="all_users_spending_by_category")
+@retry_on_db_error
 def all_users_spending_by_category():
     for user in User.objects.all():
         user_spending_by_category(user.id)

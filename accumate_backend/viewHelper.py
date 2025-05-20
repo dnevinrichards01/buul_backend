@@ -1,6 +1,7 @@
 from enum import Enum
 from django.http import JsonResponse
 from rest_framework.exceptions import ValidationError
+from django.db.utils import OperationalError
 import json
 
 class LogState(Enum):
@@ -103,6 +104,8 @@ def validate(logger, serializer, instance, fields_to_correct=[], fields_to_fail=
             status=status
         )
     except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         # unknown error
         status = 400
         pre_account_id = dict(instance.request.data).get('pre_account_id', None)
