@@ -33,7 +33,7 @@ class PlaidItemAddSerializer(serializers.Serializer):
 # when we create the item, pull their transactions immediately. 
 # bc we only get this webhook after the initial sync call
 class PlaidTransactionSyncUpdatesAvailable(serializers.Serializer):
-    webhook_type = serializers.ChoiceField(required=True, choices=["TRANSACTION"])
+    webhook_type = serializers.ChoiceField(required=True, choices=["TRANSACTIONS"])
     webhook_code = serializers.ChoiceField(required=True, choices=["SYNC_UPDATES_AVAILABLE"])
     item_id = serializers.CharField(required=True)
     initial_update_complete = serializers.BooleanField(required=True)
@@ -101,7 +101,7 @@ class WebhookSerializer(serializers.Serializer):
         webhook_type = data.get('webhook_type')
         webhook_code = data.get('webhook_code')
         if not (webhook_type == "LINK" and webhook_code == "SESSION_FINISHED") and \
-            not (webhook_type == "TRANSACTION" and webhook_code == "SYNC_UPDATES_AVAILABLE") and \
+            not (webhook_type == "TRANSACTIONS" and webhook_code == "SYNC_UPDATES_AVAILABLE") and \
             not (webhook_type == "ITEM" and webhook_code in [
                 'WEBHOOK_UPDATE_ACKNOWLEDGED', 'USER_ACCOUNT_REVOKED', 
                 'USER_PERMISSION_REVOKED', 'PENDING_EXPIRATION', 'ERROR',

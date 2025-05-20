@@ -19,7 +19,7 @@ import functools
 
 from plaid.model.accounts_get_request import AccountsGetRequest
 from plaid.model.accounts_balance_get_request import AccountsBalanceGetRequest
-from plaid.model.accounts_balance_get_options import AccountsBalanceGetRequestOptions
+from plaid.model.accounts_balance_get_request_options import AccountsBalanceGetRequestOptions
 from plaid.exceptions import ApiException
 
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \

@@ -7,24 +7,28 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV COLUMNS=80
 
 RUN apt-get update && apt-get install -y \
- curl nano python3-pip gettext chrpath libssl-dev libxft-dev postgresql-client supervisor \
+ ca-certificates curl nano python3-pip gettext chrpath libssl-dev libxft-dev postgresql-client supervisor \
  libfreetype6 libfreetype6-dev libfontconfig1 libfontconfig1-dev sudo ufw systemd \
  python3-venv python3-dev libpq-dev postgresql postgresql-contrib nginx systemd-sysv \
  snapd redis-tools openssl libcap2-bin gpg less certbot \
   && rm -rf /var/lib/apt/lists/*
 
+WORKDIR /code/
+COPY . /code/
+RUN cp /code/conf_files/mozilla-cacert.pem /etc/ssl/certs/ca-certificates.crt
+
+# RUN sudo apt-get install --reinstall ca-certificates && sudo update-ca-certificates
 RUN sudo apt-get install -y curl gpg \ 
-  && curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg \
-  && sudo chmod 644 /usr/share/keyrings/redis-archive-keyring.gpg \
+#/etc/ssl/certs/ca-certificates.crt
+  && curl -fsSL --cacert /code/conf_files/redis-download-cacert.pem https://packages.redis.io/gpg \
+  | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
+  # && curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg \
+RUN sudo chmod 644 /usr/share/keyrings/redis-archive-keyring.gpg \
   && echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb bullseye main" | sudo tee /etc/apt/sources.list.d/redis.list \
   && sudo apt-get update \
   && sudo apt-get install -y redis-tools \ 
   && rm -rf /var/lib/apt/lists/*
   
-WORKDIR /code/
-RUN pip install wheel
-COPY . /code/
-
 RUN curl -o /code/conf_files/awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" 
 RUN gpg --import /code/conf_files/aws.pem
 RUN curl -o /code/conf_files/awscliv2.sig "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip.sig"
@@ -33,6 +37,7 @@ RUN unzip /code/conf_files/awscliv2.zip -d /code/conf_files/
 RUN bash /code/conf_files/aws/install -i /usr/local/aws-cli -b /usr/local/bin
 RUN rm -rf /code/conf_files/awscliv2.sig /code/conf_files/awscliv2.zip /code/conf_files/aws/
 
+RUN pip install wheel
 RUN pip install -r requirements.txt
 # RUN pip install -e /code/build_files/accumate_robinstocks
 

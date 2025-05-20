@@ -710,8 +710,8 @@ class PlaidItemWebhook(APIView):
                 }, 
                 status = status
             )
-    
-        elif webhook_type == "TRANSACTION" and webhook_code == "SYNC_UPDATES_AVAILABLE":
+
+        elif webhook_type == "TRANSACTIONS" and webhook_code == "SYNC_UPDATES_AVAILABLE":
             serializer = PlaidTransactionSyncUpdatesAvailable(data=request.data)
             validation_error_respose = validate(
                 Log, serializer, self,
@@ -735,7 +735,7 @@ class PlaidItemWebhook(APIView):
             
             item_id = serializer.validated_data["item_id"]
 
-            # update_transactions.apply_async(args = [item_id])
+            update_transactions.apply_async(args = [item_id])
 
             status = 200
             log(Log, self, status, webhook_code)#LogState.SUCCESS)
@@ -1507,9 +1507,11 @@ class RequestVerificationCode(APIView):
                 json.dumps({"success": None, "error": None}),
                 timeout=120
             )
-            chain(
-                plaid_user_remove.s(user.id, code),
-                accumate_user_remove.si(user.id, code)
+            chord(
+                [
+                    plaid_user_remove.s(user.id, code)
+                ],
+                accumate_user_remove.s(user.id, code)
             ).apply_async()
         else:
             status = 200

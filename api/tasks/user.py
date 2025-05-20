@@ -367,13 +367,14 @@ def plaid_user_remove(uid, code):
     try:
         plaidUser = PlaidUser.objects.get(user__id=uid)
     except Exception as e:
-        cache.delete(f"code_{code}_plaid_user_remove")
-        cache.set(
-            f"code_{code}_plaid_user_remove",
-            json.dumps({"success": "Plaid user did not exist", "error": None}), 
-            timeout=120
-        )
-        return f"cached plaid user remove success"
+        # cache.delete(f"code_{code}_plaid_user_remove")
+        # cache.set(
+        #     f"code_{code}_plaid_user_remove",
+        #     json.dumps({"success": "Plaid user did not exist", "error": None}), 
+        #     timeout=120
+        # )
+        # return f"cached plaid user remove success"
+        True
     
     exchange_request = UserRemoveRequest(
         user_token = plaidUser.userToken
@@ -387,68 +388,84 @@ def plaid_user_remove(uid, code):
         serializer.is_valid(raise_exception=True)
 
         plaidUser.delete()
-        cache.delete(f"code_{code}_plaid_user_remove")
-        cache.set(
-            f"code_{code}_plaid_user_remove", 
-            json.dumps({
-                "success": "plaid user deleted", 
-                "error": None
-            }), 
-            timeout=120
-        )
-        return "cached plaid user remove success"
+        # cache.delete(f"code_{code}_plaid_user_remove")
+        # cache.set(
+        #     f"code_{code}_plaid_user_remove", 
+        #     json.dumps({
+        #         "success": "plaid user deleted", 
+        #         "error": None
+        #     }), 
+        #     timeout=120
+        # )
+        # return "cached plaid user remove success"
+        return True
     except ApiException as e:
         if e.body["error_type"] == "INVALID_INPUT" and e.body["error_code"] == "INVALID_USER_TOKEN":
-            cache.delete(f"code_{code}_plaid_user_remove")
-            cache.set(
-                f"code_{code}_plaid_user_remove",
-                json.dumps({"success": "Plaid user did not exist", "error": None}), 
-                timeout=120
-            )
+            # cache.delete(f"code_{code}_plaid_user_remove")
+            # cache.set(
+            #     f"code_{code}_plaid_user_remove",
+            #     json.dumps({"success": "Plaid user did not exist", "error": None}), 
+            #     timeout=120
+            # )
             plaidUser.delete()
-            return f"cached plaid user remove success"
-        else:
-            cache.delete(f"code_{code}_plaid_user_remove")
-            cache.set(
-                f"code_{code}_plaid_user_remove",
-                json.dumps({"success": None, "error": f"error: {str(e.body)}"}), 
-                timeout=120
-            )
-            return f"cached plaid user remove error: {str(e.body)}"
+            # return f"cached plaid user remove success"
+            return True
+            # cache.delete(f"code_{code}_plaid_user_remove")
+            # cache.set(
+            #     f"code_{code}_plaid_user_remove",
+            #     json.dumps({"success": None, "error": f"error: {str(e.body)}"}), 
+            #     timeout=120
+            # )
+            # return f"cached plaid user remove error: {str(e.body)}"
+            # return False
     except ValidationError as e:
-        cache.delete(f"code_{code}_plaid_user_remove")
-        cache.set(
-            f"code_{code}_plaid_user_remove",
-            json.dumps({"success": None, "error": f"error: {str(e.detail)}"}), 
-            timeout=120
-        )
+        # cache.delete(f"code_{code}_plaid_user_remove")
+        # cache.set(
+        #     f"code_{code}_plaid_user_remove",
+        #     json.dumps({"success": None, "error": f"error: {str(e.detail)}"}), 
+        #     timeout=120
+        # )
         return f"cached plaid user remove error: {str(e.detail)}"
+        # return False
 
 @shared_task(name="accumate_user_remove")
-def accumate_user_remove(uid, code, ignore_plaid_delete=False):
+def accumate_user_remove(results_from_dependencies, uid, code, ignore_dependencies=False):
     # import pdb
     # breakpoint()
 
-    if not ignore_plaid_delete:
-        cached_plaid_user_delete = cache.get(f"code_{code}_plaid_user_remove")
-        if not cached_plaid_user_delete:
-            cache.delete(f"code_{code}_accumate_user_remove")
-            cache.set(
-                f"code_{code}_accumate_user_remove",
-                json.dumps({"success": None, "error": "plaid user not yet deleted"}), 
-                timeout=120
-            )
-            return f"accumate user not deleted because plaid user not yet deleted"
+    if not ignore_dependencies and not all(results_from_dependencies):
+        failed_dependencies_str = " and ".join([
+            ["plaid"][i] for i in len(range(results_from_dependencies)) \
+            if results_from_dependencies[i] == True
+        ])
+        cache.delete(f"code_{code}_accumate_user_remove")
+        cache.set(
+            f"code_{code}_accumate_user_remove",
+            json.dumps({"success": None, "error": f"{failed_dependencies_str} user not yet deleted"}), 
+            timeout=120
+        )
+        return f"accumate user not deleted because {failed_dependencies_str} user not yet deleted"
+
+        # for dependency in ["plaid", "snaptrade"]:
+        #     cached = cache.get(f"code_{code}_{dependency}_user_remove")
+        #     if not cached:
+        #         cache.delete(f"code_{code}_accumate_user_remove")
+        #         cache.set(
+        #             f"code_{code}_accumate_user_remove",
+        #             json.dumps({"success": None, "error": f"{dependency} user not yet deleted"}), 
+        #             timeout=120
+        #         )
+        #         return f"accumate user not deleted because {dependency} user not yet deleted"
         
-        plaid_user_delete_dict = json.loads(cached_plaid_user_delete)
-        if not plaid_user_delete_dict["success"]:
-            cache.delete(f"code_{code}_accumate_user_remove")
-            cache.set(
-                f"code_{code}_accumate_user_remove",
-                json.dumps({"success": None, "error": "plaid user not yet deleted"}), 
-                timeout=120
-            )
-            return f"accumate user not deleted because plaid user not yet deleted"
+        #     cached_dict = json.loads(cached)
+        #     if not cached_dict["success"]:
+                # cache.delete(f"code_{code}_accumate_user_remove")
+                # cache.set(
+                #     f"code_{code}_accumate_user_remove",
+                #     json.dumps({"success": None, "error": f"{dependency} user not yet deleted"}), 
+                #     timeout=120
+                # )
+                # return f"accumate user not deleted because {dependency} user not yet deleted"
 
     try:
         User.objects.get(id=uid).delete()
