@@ -31,7 +31,7 @@ from ..serializers.rh import GetLinkedBankAccountsResponseSerializer, \
 from ..serializers.plaid.balance import \
     BalanceGetResponseSerializer, AccountsGetResponseSerializer
 
-from accumate_backend.retry_db import retry_on_db_error
+from buul_backend.retry_db import retry_on_db_error
 
 # plaid balance
 

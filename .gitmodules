@@ -1,4 +1,4 @@
 
-[submodule "build_files/accumate_robinstocks"]
-	path = build_files/accumate_robinstocks
-	url = https://github.com/dnevinrichards01/robinstocks-accumate.git
+[submodule "build_files/buul_robinstocks"]
+	path = build_files/buul_robinstocks
+	url = https://github.com/dnevinrichards01/buul_robinstocks.git

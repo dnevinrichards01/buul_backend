@@ -9,7 +9,7 @@ from django_celery_results.models import TaskResult
 from api.apis.plaid import plaid_client
 from api.apis.sendgrid import sendgrid_client
 from sendgrid.helpers.mail import Mail
-from accumate_backend.settings import NOTIFICATIONS_EMAIL
+from buul_backend.settings import NOTIFICATIONS_EMAIL
 
 import re
 import json
@@ -33,7 +33,7 @@ from ..serializers.plaid.user import UserRemoveResponseSerializer, \
     UserCreateResponseSerializer
 from ..models import PlaidItem, PlaidUser, User
 
-from accumate_backend.retry_db import retry_on_db_error
+from buul_backend.retry_db import retry_on_db_error
 
 from django.db.utils import OperationalError
 
@@ -447,8 +447,8 @@ def plaid_user_remove(uid, code):
         return f"cached plaid user remove error: {str(e.detail)}"
         # return False
 
-@shared_task(name="accumate_user_remove")
-def accumate_user_remove(results_from_dependencies, uid, code, ignore_dependencies=False):
+@shared_task(name="buul_user_remove")
+def buul_user_remove(results_from_dependencies, uid, code, ignore_dependencies=False):
     # import pdb
     # breakpoint()
 
@@ -457,41 +457,41 @@ def accumate_user_remove(results_from_dependencies, uid, code, ignore_dependenci
             ["plaid"][i] for i in len(range(results_from_dependencies)) \
             if results_from_dependencies[i] == True
         ])
-        cache.delete(f"code_{code}_accumate_user_remove")
+        cache.delete(f"code_{code}_buul_user_remove")
         cache.set(
-            f"code_{code}_accumate_user_remove",
+            f"code_{code}_buul_user_remove",
             json.dumps({"success": None, "error": f"{failed_dependencies_str} user not yet deleted"}), 
             timeout=120
         )
-        return f"accumate user not deleted because {failed_dependencies_str} user not yet deleted"
+        return f"buul user not deleted because {failed_dependencies_str} user not yet deleted"
 
         # for dependency in ["plaid", "snaptrade"]:
         #     cached = cache.get(f"code_{code}_{dependency}_user_remove")
         #     if not cached:
-        #         cache.delete(f"code_{code}_accumate_user_remove")
+        #         cache.delete(f"code_{code}_buul_user_remove")
         #         cache.set(
-        #             f"code_{code}_accumate_user_remove",
+        #             f"code_{code}_buul_user_remove",
         #             json.dumps({"success": None, "error": f"{dependency} user not yet deleted"}), 
         #             timeout=120
         #         )
-        #         return f"accumate user not deleted because {dependency} user not yet deleted"
+        #         return f"buul user not deleted because {dependency} user not yet deleted"
         
         #     cached_dict = json.loads(cached)
         #     if not cached_dict["success"]:
-                # cache.delete(f"code_{code}_accumate_user_remove")
+                # cache.delete(f"code_{code}_buul_user_remove")
                 # cache.set(
-                #     f"code_{code}_accumate_user_remove",
+                #     f"code_{code}_buul_user_remove",
                 #     json.dumps({"success": None, "error": f"{dependency} user not yet deleted"}), 
                 #     timeout=120
                 # )
-                # return f"accumate user not deleted because {dependency} user not yet deleted"
+                # return f"buul user not deleted because {dependency} user not yet deleted"
 
     try:
         User.objects.get(id=uid).delete()
 
-        cache.delete(f"code_{code}_accumate_user_remove")
+        cache.delete(f"code_{code}_buul_user_remove")
         cache.set(
-            f"code_{code}_accumate_user_remove",
+            f"code_{code}_buul_user_remove",
             json.dumps({
                 "success": "user deleted",
                 "error": None
@@ -503,13 +503,13 @@ def accumate_user_remove(results_from_dependencies, uid, code, ignore_dependenci
             raise e
         # import pdb 
         # breakpoint()
-        cache.delete(f"code_{code}_accumate_user_remove")
+        cache.delete(f"code_{code}_buul_user_remove")
         cache.set(
-            f"code_{code}_accumate_user_remove",
+            f"code_{code}_buul_user_remove",
             json.dumps({"success": None, "error": str(e)}), 
             timeout=120
         )
-        return f"cached accumate user remove error: {str(e)}"
+        return f"cached buul user remove error: {str(e)}"
 
 
 
@@ -533,9 +533,9 @@ def send_verification_code(**kwargs):
                 raise e
             return f"error: {str(e)}"
         # send_mail(
-        #     "Accumate verification code",
-        #     f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}.\nIf you didn't request this code, please ignore this email.",
-        #     "accumate-verify@accumatewealth.com",
+        #     "Buul verification code",
+        #     f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}.\nIf you didn't request this code, please ignore this email.",
+        #     "buul-verify@buulwealth.com",
         #     [kwargs["sendTo"]],
         #     fail_silently=False,
         # )
@@ -544,7 +544,7 @@ def send_verification_code(**kwargs):
         # twilio_client.messages.create(
         #     to = kwargs["sendTo"],
         #     from_ = TWILIO_PHONE_NUMBER,
-        #     body = f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}"
+        #     body = f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}"
         # )
 
 @shared_task(name="send_forgot_email")
@@ -571,7 +571,7 @@ def send_forgot_email(**kwargs):
         # twilio_client.messages.create(
         #     to = kwargs["sendTo"],
         #     from_ = TWILIO_PHONE_NUMBER,
-        #     body = f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}"
+        #     body = f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}"
         # )
 
 @shared_task(name="send_waitlist_email")
@@ -585,7 +585,7 @@ def send_waitlist_email(**kwargs):
             html_content=f"We look forward to working with you to maximize your cashback " \
                 "and grow your wealth! Stay tuned for updates. \nIf you would like " \
                 "to unsubscribe, respond to this email address requesting to be taken " \
-                "off. \n\nThank you, \nthe Accumate team",
+                "off. \n\nThank you, \nthe Buul team",
         )
         try:
             response = sendgrid_client.send(message)
@@ -599,7 +599,7 @@ def send_waitlist_email(**kwargs):
         # twilio_client.messages.create(
         #     to = kwargs["sendTo"],
         #     from_ = TWILIO_PHONE_NUMBER,
-        #     body = f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}"
+        #     body = f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}"
         # )
 
 

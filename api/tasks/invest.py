@@ -16,7 +16,7 @@ from ..serializers.rh import StockOrderSerializer, RobinhoodAccountListSerialize
     RobinhoodAccountSerializer
 from .deposit import rh_update_deposit
 
-from accumate_backend.retry_db import retry_on_db_error
+from buul_backend.retry_db import retry_on_db_error
 
 # transactions
 

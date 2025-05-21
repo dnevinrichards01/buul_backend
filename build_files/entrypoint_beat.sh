@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-pip install -e /code/build_files/accumate_robinstocks
+pip install -e /code/build_files/buul_robinstocks
 
 until pg_isready -h $DB_HOST -p $DB_PORT; do
   echo "Waiting for database..."

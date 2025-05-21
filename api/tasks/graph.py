@@ -14,7 +14,7 @@ from dateutil.relativedelta import relativedelta
 from zoneinfo import ZoneInfo
 import json
 
-from accumate_backend.retry_db import retry_on_db_error
+from buul_backend.retry_db import retry_on_db_error
 
 @shared_task(name="refresh_stock_data_by_interval")
 @retry_on_db_error

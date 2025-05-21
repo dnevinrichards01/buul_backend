@@ -23,7 +23,7 @@ from..serializers.plaid.transaction import TransactionsSyncResponseSerializer, \
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \
     PlaidPersonalFinanceCategories
 
-from accumate_backend.retry_db import retry_on_db_error
+from buul_backend.retry_db import retry_on_db_error
 
 # plaid transactions 
 

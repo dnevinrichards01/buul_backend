@@ -7,8 +7,8 @@ import uuid
 import json
 from django.utils import timezone
 from django_celery_results.models import TaskResult
-from accumate_backend.encryption import encrypt, decrypt
-from accumate_backend.settings import RH_ACCESS_KMS_ALIAS, \
+from buul_backend.encryption import encrypt, decrypt
+from buul_backend.settings import RH_ACCESS_KMS_ALIAS, \
     RH_REFRESH_KMS_ALIAS, PLAID_ITEM_KMS_ALIAS, PLAID_USER_KMS_ALIAS, \
     USER_PII_KMS_ALIAS, ANONYMIZE_USER_HMAC_KEY
 import hmac

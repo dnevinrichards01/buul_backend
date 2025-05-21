@@ -23,7 +23,7 @@ from celery import current_app, chain
 from functools import partial
 from django.db import transaction
 from .tasks.user import plaid_item_public_tokens_exchange, \
-    plaid_link_token_create, plaid_user_create, accumate_user_remove, \
+    plaid_link_token_create, plaid_user_create, buul_user_remove, \
     plaid_user_remove, send_verification_code, send_waitlist_email, send_forgot_email
 from .tasks.identify import get_investment_graph_data
 
@@ -382,7 +382,7 @@ class MyModelTestCase(TestCase):
 
 # from api.models import User
 # from api.tasks.userTasks import plaid_link_token_create
-# plaid_link_token_create(**{'client_name': 'Accumate', 'language': 'en', 'country_codes': ['US'], 'user': {'phone_number': '+14155550123', 'email_address': 'dnevinrichards@gmail.com'}, 'products': ['transactions'], 'transactions': {'days_requested': 100}, 'uid': 1})
+# plaid_link_token_create(**{'client_name': '', 'language': 'en', 'country_codes': ['US'], 'user': {'phone_number': '+14155550123', 'email_address': 'dnevinrichards@gmail.com'}, 'products': ['transactions'], 'transactions': {'days_requested': 100}, 'uid': 1})
 
 # ____
 
@@ -455,7 +455,7 @@ class MyModelTestCase(TestCase):
 # response = client.post("/api/user/delete/")
 
 # from api.tasks import plaid_user_remove
-# from api.tasks import accumate_user_remove
+# from api.tasks import buul_user_remove
 
 
 # ____

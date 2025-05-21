@@ -25,7 +25,7 @@ import json
 from api.apis.fmp import FPMUtils
 from celery import current_app, chain, chord
 from .tasks.user import plaid_item_public_tokens_exchange, \
-    plaid_link_token_create, plaid_user_create, accumate_user_remove, \
+    plaid_link_token_create, plaid_user_create, buul_user_remove, \
     plaid_user_remove, send_verification_code, send_waitlist_email, send_forgot_email
 from .tasks.graph import refresh_stock_data_by_interval, get_graph_data
 from .tasks.identify import update_transactions
@@ -36,13 +36,13 @@ import secrets
 
 from django.db.utils import OperationalError
 
-from accumate_backend.settings import LOAD_BALANCER_ENDPOINT
+from buul_backend.settings import LOAD_BALANCER_ENDPOINT
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .serializers.buul import MyTokenObtainPairSerializer
 import bcrypt 
 
-from accumate_backend.viewHelper import LogState, log, validate, \
+from buul_backend.viewHelper import LogState, log, validate, \
     cached_task_logging_info
 
 
@@ -1504,7 +1504,7 @@ class RequestVerificationCode(APIView):
                 if isinstance(e, OperationalError):
                     raise e
                 status = 200
-                error_message = "We could not find your brokerage and investment choice. Please contact Accumate."
+                error_message = "We could not find your brokerage and investment choice. Please contact Buul."
                 log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = {"error": error_message})
                 return JsonResponse(
                     {
@@ -1522,7 +1522,7 @@ class RequestVerificationCode(APIView):
                 if isinstance(e, OperationalError):
                     raise e
                 status = 200
-                error_message = "We could not find your brokerage and investment choice. Please contact Accumate."
+                error_message = "We could not find your brokerage and investment choice. Please contact Buul."
                 log(Log, self, status, LogState.VAL_ERR_MESSAGE, errors = {"error": error_message})
                 return JsonResponse(
                     {
@@ -1535,9 +1535,9 @@ class RequestVerificationCode(APIView):
             user.set_password(serializer.validated_data["password"])
             user.save()
         elif field == "delete_account":
-            cache.delete(f"code_{code}_accumate_user_remove")
+            cache.delete(f"code_{code}_buul_user_remove")
             cache.set(
-                f"code_{code}_accumate_user_remove",
+                f"code_{code}_buul_user_remove",
                 json.dumps({"success": None, "error": None}),
                 timeout=120
             )
@@ -1545,7 +1545,7 @@ class RequestVerificationCode(APIView):
                 [
                     plaid_user_remove.s(user.id, code)
                 ],
-                accumate_user_remove.s(user.id, code)
+                buul_user_remove.s(user.id, code)
             ).apply_async()
         else:
             status = 200
@@ -1613,7 +1613,7 @@ class DeleteAccountVerify(APIView):
         try:
             serializer.is_valid(raise_exception=True)
             code = serializer.validated_data["code"]
-            cached_result = cache.get(f"code_{code}_accumate_user_remove")
+            cached_result = cache.get(f"code_{code}_buul_user_remove")
             if cached_result:
                 status = 200
                 log(Log, self, status, LogState.SUCCESS)
