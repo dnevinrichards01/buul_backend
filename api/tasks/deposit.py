@@ -370,7 +370,8 @@ def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount, force=F
 
 @retry_on_db_error
 def rh_deposit(uid, transactions, repeat_day_range=5, force=False, 
-               limit=50, check_failed_deposits=True):
+               limit=50, check_failed_deposits=True, 
+               ignore_overdraft_protection=False):
     import pdb; breakpoint()
     # get previous deposit to help decide which account to use
     old_deposits = RobinhoodDeposit.objects.filter(user__id=uid)\
@@ -406,7 +407,7 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
         latest_deposit,
         plaid_accounts,
         rh_accounts,
-        brokerage_plaid_match_required = overdraft_protection
+        brokerage_plaid_match_required = not ignore_overdraft_protection and overdraft_protection
     )
 
     # make the deposit
@@ -473,7 +474,7 @@ def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True,
             eq={"mask": [rh_account["bank_account_number"]]},
             use_balance=False
         )
-        if not ignore_plaid or len(plaid_accounts) != 1:
+        if not ignore_plaid and len(plaid_accounts) != 1:
             raise Exception(f"could not find rh account associated with " + 
                             f"{rh_account["bank_account_number"]}")
         plaid_account = {} if ignore_plaid else plaid_accounts[0]
@@ -561,5 +562,6 @@ def rhdeposit_to_deposit(sender, instance, **kwargs):
     except:
         deposit = Deposit.objects.get(user = instance.user, rh = instance)
         deposit.state = instance.state
+        deposit.early_access_amount = instance.early_access_amount
         deposit.save()
 

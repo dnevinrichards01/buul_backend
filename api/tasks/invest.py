@@ -279,7 +279,7 @@ def rh_find_stock_orders_custom(uid, eq={}, lt={}, gt={}, lte={}, gte={}):
 # invest based on a deposit / cashback
 
 @retry_on_db_error
-def rh_save_order_from_order_info(uid, deposit, order_id, symbol):
+def rh_save_order_from_order_info(uid, order_id, deposit=None, symbol=None):
     import pdb; breakpoint()
     order = rh_get_stock_order_info(uid, order_id)
 
@@ -303,6 +303,8 @@ def rh_save_order_from_order_info(uid, deposit, order_id, symbol):
         robinhoodStockOrder.executed_amount = executed_amount
         robinhoodStockOrder.user_cancel_request_state = order["user_cancel_request_state"]
     except:
+        if not symbol:
+            raise Exception("Cannot created RobinhoodStockOrder without symbol")
         robinhoodStockOrder = RobinhoodStockOrder(
             user = user,
             order_id = order["id"],
@@ -321,9 +323,12 @@ def rh_save_order_from_order_info(uid, deposit, order_id, symbol):
     robinhoodStockOrder.save()
 
     investment = Investment.objects.get(rh = robinhoodStockOrder)
-    investment.deposit = deposit
-    investment.save()
-
+    if deposit:
+        investment.deposit = deposit
+        investment.save()
+    if not symbol:
+        symbol = robinhoodStockOrder.symbol
+    
     recent_investment_query = Investment.objects\
         .filter(user=user, date__lte=investment.date)\
         .exclude(id=investment.id)\
@@ -369,17 +374,20 @@ def rh_invest(uid, deposit, repeat_day_range=5,
     import pdb; breakpoint()
 
     # check if enough cash 
-    account_info_response = rh_load_account_profile(uid)
-    if "error" in account_info_response:
-        return account_info_response
-    elif isinstance(account_info_response, list):
-        if len(account_info_response) != 1:
-            raise Exception(f"we found {len(account_info_response)} accounts for this user")
-        account_info = account_info_response[0]
-    if account_info[0]["buying_power"] < deposit.amount \
-        and account_info[0]["portfolio_cash"] < deposit.amount:
-        raise Exception(f"Buying power is {account_info[0]["buying_power"]} " +\
-                        f"and portfolio cash is {account_info[0]["portfolio_cash"]} " +\
+    account_info = rh_load_account_profile(uid)
+    import pdb; breakpoint()
+    if "error" in account_info:
+        return account_info
+    elif isinstance(account_info, list):
+        if len(account_info) != 1:
+            raise Exception(f"we found {len(account_info)} accounts for this user")
+        account_info = account_info[0]
+    # improve with 'instant' stuff?
+    # maybe check if enough instant or cash exists before making the deposit
+    if account_info["buying_power"] < deposit.amount \
+        and account_info["portfolio_cash"] < deposit.amount:
+        raise Exception(f"Buying power is {account_info["buying_power"]} " +\
+                        f"and portfolio cash is {account_info["portfolio_cash"]} " +\
                         f"but investment requires {deposit.amount}")
     
     try:

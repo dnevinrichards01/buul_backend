@@ -36,7 +36,7 @@ class MyTokenObtainPairSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
-        email = attrs.pop('email')
+        email = attrs.pop('email').lower()
         password = attrs.pop('password')
         try:
             user = User.objects.get(email=email)
@@ -139,6 +139,11 @@ class VerificationCodeResponseSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
+        if 'email' in attrs:
+            attrs['email'] = attrs['email'].lower()
+        if 'verification_email' in attrs:
+            attrs['verification_email'] = attrs['verification_email'].lower()
+        
         if ("verification_email" in attrs) == ("verification_phone_number" in attrs):
             raise serializers.ValidationError("You must submit either the email or phone number associated with your account.")
         if ('pre_account_id' in attrs and len(attrs) != 5) \
@@ -173,6 +178,11 @@ class VerificationCodeRequestSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
+        if 'email' in attrs:
+            attrs['email'] = attrs['email'].lower()
+        if 'verification_email' in attrs:
+            attrs['verification_email'] = attrs['verification_email'].lower()
+
         if ("verification_email" in attrs) == ("verification_phone_number" in attrs):
             raise ValidationError("You must submit either the email or phone number associated with your account.")
         if attrs["field"] == "password":
@@ -193,6 +203,11 @@ class VerificationCodeRequestSerializer(serializers.Serializer):
 class SendEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
+    def validate(self, attrs):
+        attrs['email'] = attrs['email'].lower()
+        return attrs
+
+
 class DeleteAccountVerifySerializer(serializers.Serializer):
     code = serializers.RegexField(
         regex=r'^[\d]{6}$',
@@ -210,11 +225,16 @@ class WaitlistEmailSerializer(serializers.ModelSerializer):
         extra_kwargs = {'email': {'write_only': True}}
 
     def validate_email(self, email):
+        email = email.lower()
         try: 
             validate_email(email)
             return email
         except: 
             raise ValidationError()
+        
+    def validate(self, attrs):
+        attrs['email'] = attrs['email'].lower()
+        return attrs
         
 class UserBrokerageInfoSerializer(serializers.Serializer):
     brokerage = serializers.CharField(required=False)

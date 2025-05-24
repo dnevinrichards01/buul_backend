@@ -155,12 +155,12 @@ class MarginBalancesSerializer(serializers.Serializer):
 
 class RobinhoodAccountSerializer(serializers.Serializer):
     url = serializers.URLField()
-    portfolio_cash = serializers.CharField() # this one
+    portfolio_cash = serializers.FloatField() # this one
     account_number = serializers.CharField()
     deactivated = serializers.BooleanField()
     deposit_halted = serializers.BooleanField()
     withdrawal_halted = serializers.BooleanField()
-    buying_power = serializers.CharField() # this one
+    buying_power = serializers.FloatField() # this one
     onbp = serializers.CharField() # this one
     cash_available_for_withdrawal = serializers.CharField() # this one
     cash_available_for_withdrawal_without_margin = serializers.CharField() # this one
