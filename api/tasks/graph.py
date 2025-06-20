@@ -18,7 +18,7 @@ from buul_backend.retry_db import retry_on_db_error
 
 @shared_task(name="refresh_stock_data_by_interval")
 @retry_on_db_error
-def refresh_stock_data_by_interval(symbols=["VOO", "VOOG", "QQQ", "IBIT"], 
+def refresh_stock_data_by_interval(symbols=["VOO", "VOOG", "QQQ", "IBIT", "BTC"], 
                        interval="1d", refresh_all=False):
     # import pdb
     # breakpoint()
