@@ -150,6 +150,7 @@ class StockData(models.Model):
     VOOG = models.FloatField(null=True, default=None)
     QQQ = models.FloatField(null=True, default=None)
     IBIT = models.FloatField(null=True, default=None)
+    BTC = models.FloatField(null=True, default=None)
     date = models.DateTimeField(primary_key=True)
 
     class Meta:
