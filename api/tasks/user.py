@@ -9,7 +9,7 @@ from django_celery_results.models import TaskResult
 from api.apis.plaid import plaid_client
 from api.apis.sendgrid import sendgrid_client
 from sendgrid.helpers.mail import Mail
-from accumate_backend.settings import NOTIFICATIONS_EMAIL
+from buul_backend.settings import NOTIFICATIONS_EMAIL
 
 import re
 import json
@@ -33,7 +33,7 @@ from ..serializers.plaid.user import UserRemoveResponseSerializer, \
     UserCreateResponseSerializer
 from ..models import PlaidItem, PlaidUser, User
 
-from accumate_backend.retry_db import retry_on_db_error
+from buul_backend.retry_db import retry_on_db_error
 
 from django.db.utils import OperationalError
 
@@ -48,11 +48,10 @@ def plaid_item_public_tokens_exchange(**kwargs):
     uid = kwargs.pop('uid')
     public_tokens = kwargs.pop('public_tokens')
     context = kwargs.pop('context')
-    
+
     try:
         plaidUser = PlaidUser.objects.get(user__id=uid) # make sure we have a user
         item_get_error_messages = {}
-        item_remove_error_messages = {}
         for public_token in public_tokens:
             exchange_request = ItemPublicTokenExchangeRequest(public_token=public_token)
 
@@ -73,6 +72,13 @@ def plaid_item_public_tokens_exchange(**kwargs):
             plaidItem.save()
 
             # get new item's institution
+            existing_connections_to_institution = PlaidItem.objects.filter(
+                user__id=uid, 
+                institution_id=plaidItem.institution_id
+            )
+            if existing_connections_to_institution.count() > 1:
+                continue
+
             item_get_result = plaid_item_get(
                 uid=uid,
                 item_ids=[validated_data['item_id']]
@@ -84,18 +90,6 @@ def plaid_item_public_tokens_exchange(**kwargs):
                 plaidItem.institution_id = item_get_result["success"]["institution_id"]
                 plaidItem.save()
 
-                # if got institution, delete duplicates of institution
-                duplicate_institutions = PlaidItem.objects.filter(
-                    user__id=uid, 
-                    institution_id=plaidItem.institution_id
-                ).exclude(itemId=plaidItem.itemId)
-                for item in duplicate_institutions:
-                    item_remove_result = plaid_item_remove(uid, item.itemId)
-                    if item_remove_result['error']:
-                        item_remove_error_messages[validated_data['item_id']] = item_remove_result['error']
-                    else:
-                        item.delete()
-
         plaidUser.link_token = None
         plaidUser.save()
         cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
@@ -105,10 +99,9 @@ def plaid_item_public_tokens_exchange(**kwargs):
             timeout=120
         )
 
-        if item_get_error_messages or item_remove_error_messages:
+        if item_get_error_messages:
             return f"cached plaid public token exchange success but " + \
-                "item_get failures: {item_get_error_messages} + " \
-                "item_remove failures: {item_remove_error_messages}"
+                "item_get failures: {item_get_error_messages}"
         else:
             return "cached plaid public token exchange success"
     except ApiException as e:
@@ -386,15 +379,14 @@ def plaid_user_remove(uid, code):
     try:
         plaidUser = PlaidUser.objects.get(user__id=uid)
     except Exception as e:
-        if isinstance(e, OperationalError):
-            raise e
-        cache.delete(f"code_{code}_plaid_user_remove")
-        cache.set(
-            f"code_{code}_plaid_user_remove",
-            json.dumps({"success": "Plaid user did not exist", "error": None}), 
-            timeout=120
-        )
-        return f"cached plaid user remove success"
+        # cache.delete(f"code_{code}_plaid_user_remove")
+        # cache.set(
+        #     f"code_{code}_plaid_user_remove",
+        #     json.dumps({"success": "Plaid user did not exist", "error": None}), 
+        #     timeout=120
+        # )
+        # return f"cached plaid user remove success"
+        True
     
     exchange_request = UserRemoveRequest(
         user_token = plaidUser.userToken
@@ -408,76 +400,91 @@ def plaid_user_remove(uid, code):
         serializer.is_valid(raise_exception=True)
 
         plaidUser.delete()
-        cache.delete(f"code_{code}_plaid_user_remove")
-        cache.set(
-            f"code_{code}_plaid_user_remove", 
-            json.dumps({
-                "success": "plaid user deleted", 
-                "error": None
-            }), 
-            timeout=120
-        )
-        return "cached plaid user remove success"
+        # cache.delete(f"code_{code}_plaid_user_remove")
+        # cache.set(
+        #     f"code_{code}_plaid_user_remove", 
+        #     json.dumps({
+        #         "success": "plaid user deleted", 
+        #         "error": None
+        #     }), 
+        #     timeout=120
+        # )
+        # return "cached plaid user remove success"
+        return True
     except ApiException as e:
         if e.body["error_type"] == "INVALID_INPUT" and e.body["error_code"] == "INVALID_USER_TOKEN":
-            cache.delete(f"code_{code}_plaid_user_remove")
-            cache.set(
-                f"code_{code}_plaid_user_remove",
-                json.dumps({"success": "Plaid user did not exist", "error": None}), 
-                timeout=120
-            )
+            # cache.delete(f"code_{code}_plaid_user_remove")
+            # cache.set(
+            #     f"code_{code}_plaid_user_remove",
+            #     json.dumps({"success": "Plaid user did not exist", "error": None}), 
+            #     timeout=120
+            # )
             plaidUser.delete()
-            return f"cached plaid user remove success"
-        else:
-            cache.delete(f"code_{code}_plaid_user_remove")
-            cache.set(
-                f"code_{code}_plaid_user_remove",
-                json.dumps({"success": None, "error": f"error: {str(e.body)}"}), 
-                timeout=120
-            )
-            return f"cached plaid user remove error: {str(e.body)}"
+            # return f"cached plaid user remove success"
+            return True
+            # cache.delete(f"code_{code}_plaid_user_remove")
+            # cache.set(
+            #     f"code_{code}_plaid_user_remove",
+            #     json.dumps({"success": None, "error": f"error: {str(e.body)}"}), 
+            #     timeout=120
+            # )
+            # return f"cached plaid user remove error: {str(e.body)}"
+            # return False
     except ValidationError as e:
-        cache.delete(f"code_{code}_plaid_user_remove")
-        cache.set(
-            f"code_{code}_plaid_user_remove",
-            json.dumps({"success": None, "error": f"error: {str(e.detail)}"}), 
-            timeout=120
-        )
+        # cache.delete(f"code_{code}_plaid_user_remove")
+        # cache.set(
+        #     f"code_{code}_plaid_user_remove",
+        #     json.dumps({"success": None, "error": f"error: {str(e.detail)}"}), 
+        #     timeout=120
+        # )
         return f"cached plaid user remove error: {str(e.detail)}"
+        # return False
 
-@shared_task(name="accumate_user_remove")
-@retry_on_db_error
-def accumate_user_remove(uid, code, ignore_plaid_delete=False):
+@shared_task(name="buul_user_remove")
+def buul_user_remove(results_from_dependencies, uid, code, ignore_dependencies=False):
     # import pdb
     # breakpoint()
 
-    if not ignore_plaid_delete:
-        cached_plaid_user_delete = cache.get(f"code_{code}_plaid_user_remove")
-        if not cached_plaid_user_delete:
-            cache.delete(f"code_{code}_accumate_user_remove")
-            cache.set(
-                f"code_{code}_accumate_user_remove",
-                json.dumps({"success": None, "error": "plaid user not yet deleted"}), 
-                timeout=120
-            )
-            return f"accumate user not deleted because plaid user not yet deleted"
+    if not ignore_dependencies and not all(results_from_dependencies):
+        failed_dependencies_str = " and ".join([
+            ["plaid"][i] for i in len(range(results_from_dependencies)) \
+            if results_from_dependencies[i] == True
+        ])
+        cache.delete(f"code_{code}_buul_user_remove")
+        cache.set(
+            f"code_{code}_buul_user_remove",
+            json.dumps({"success": None, "error": f"{failed_dependencies_str} user not yet deleted"}), 
+            timeout=120
+        )
+        return f"buul user not deleted because {failed_dependencies_str} user not yet deleted"
+
+        # for dependency in ["plaid", "snaptrade"]:
+        #     cached = cache.get(f"code_{code}_{dependency}_user_remove")
+        #     if not cached:
+        #         cache.delete(f"code_{code}_buul_user_remove")
+        #         cache.set(
+        #             f"code_{code}_buul_user_remove",
+        #             json.dumps({"success": None, "error": f"{dependency} user not yet deleted"}), 
+        #             timeout=120
+        #         )
+        #         return f"buul user not deleted because {dependency} user not yet deleted"
         
-        plaid_user_delete_dict = json.loads(cached_plaid_user_delete)
-        if not plaid_user_delete_dict["success"]:
-            cache.delete(f"code_{code}_accumate_user_remove")
-            cache.set(
-                f"code_{code}_accumate_user_remove",
-                json.dumps({"success": None, "error": "plaid user not yet deleted"}), 
-                timeout=120
-            )
-            return f"accumate user not deleted because plaid user not yet deleted"
+        #     cached_dict = json.loads(cached)
+        #     if not cached_dict["success"]:
+                # cache.delete(f"code_{code}_buul_user_remove")
+                # cache.set(
+                #     f"code_{code}_buul_user_remove",
+                #     json.dumps({"success": None, "error": f"{dependency} user not yet deleted"}), 
+                #     timeout=120
+                # )
+                # return f"buul user not deleted because {dependency} user not yet deleted"
 
     try:
         User.objects.get(id=uid).delete()
 
-        cache.delete(f"code_{code}_accumate_user_remove")
+        cache.delete(f"code_{code}_buul_user_remove")
         cache.set(
-            f"code_{code}_accumate_user_remove",
+            f"code_{code}_buul_user_remove",
             json.dumps({
                 "success": "user deleted",
                 "error": None
@@ -489,13 +496,13 @@ def accumate_user_remove(uid, code, ignore_plaid_delete=False):
             raise e
         # import pdb 
         # breakpoint()
-        cache.delete(f"code_{code}_accumate_user_remove")
+        cache.delete(f"code_{code}_buul_user_remove")
         cache.set(
-            f"code_{code}_accumate_user_remove",
+            f"code_{code}_buul_user_remove",
             json.dumps({"success": None, "error": str(e)}), 
             timeout=120
         )
-        return f"cached accumate user remove error: {str(e)}"
+        return f"cached buul user remove error: {str(e)}"
 
 
 
@@ -519,9 +526,9 @@ def send_verification_code(**kwargs):
                 raise e
             return f"error: {str(e)}"
         # send_mail(
-        #     "Accumate verification code",
-        #     f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}.\nIf you didn't request this code, please ignore this email.",
-        #     "accumate-verify@accumatewealth.com",
+        #     "Buul verification code",
+        #     f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}.\nIf you didn't request this code, please ignore this email.",
+        #     "buul-verify@buulwealth.com",
         #     [kwargs["sendTo"]],
         #     fail_silently=False,
         # )
@@ -530,7 +537,7 @@ def send_verification_code(**kwargs):
         # twilio_client.messages.create(
         #     to = kwargs["sendTo"],
         #     from_ = TWILIO_PHONE_NUMBER,
-        #     body = f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}"
+        #     body = f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}"
         # )
 
 @shared_task(name="send_forgot_email")
@@ -557,7 +564,7 @@ def send_forgot_email(**kwargs):
         # twilio_client.messages.create(
         #     to = kwargs["sendTo"],
         #     from_ = TWILIO_PHONE_NUMBER,
-        #     body = f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}"
+        #     body = f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}"
         # )
 
 @shared_task(name="send_waitlist_email")
@@ -571,7 +578,7 @@ def send_waitlist_email(**kwargs):
             html_content=f"We look forward to working with you to maximize your cashback " \
                 "and grow your wealth! Stay tuned for updates. \nIf you would like " \
                 "to unsubscribe, respond to this email address requesting to be taken " \
-                "off. \n\nThank you, \nthe Accumate team",
+                "off. \n\nThank you, \nthe Buul team",
         )
         try:
             response = sendgrid_client.send(message)
@@ -585,7 +592,7 @@ def send_waitlist_email(**kwargs):
         # twilio_client.messages.create(
         #     to = kwargs["sendTo"],
         #     from_ = TWILIO_PHONE_NUMBER,
-        #     body = f"Enter this code in the Accumate app to verify your identity: {kwargs["code"]}"
+        #     body = f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}"
         # )
 
 
@@ -668,7 +675,9 @@ def modify_task_result(sender, instance, **kwargs):
             if key in task_kwargs:
                 task_kwargs[key] = "****"
         instance.task_kwargs = f'{{"uid": UUID(\'{uuid}\'), ' + json.dumps(task_kwargs)[1:]
-    except:
+    except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         instance.task_kwargs = instance.task_kwargs
 
     try:
@@ -678,7 +687,9 @@ def modify_task_result(sender, instance, **kwargs):
             if key in task_args:
                 task_args[key] = "****"
         instance.task_args = f'{{"uid": UUID({uuid}), ' + json.dumps(task_args)[1:]
-    except:
+    except Exception as e:
+        if isinstance(e, OperationalError):
+            raise e
         instance.task_args = instance.task_args
 
 

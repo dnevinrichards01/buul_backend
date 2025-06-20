@@ -7,8 +7,8 @@ import uuid
 import json
 from django.utils import timezone
 from django_celery_results.models import TaskResult
-from accumate_backend.encryption import encrypt, decrypt
-from accumate_backend.settings import RH_ACCESS_KMS_ALIAS, \
+from buul_backend.encryption import encrypt, decrypt
+from buul_backend.settings import RH_ACCESS_KMS_ALIAS, \
     RH_REFRESH_KMS_ALIAS, PLAID_ITEM_KMS_ALIAS, PLAID_USER_KMS_ALIAS, \
     USER_PII_KMS_ALIAS, ANONYMIZE_USER_HMAC_KEY
 import hmac
@@ -48,6 +48,7 @@ class User(AbstractUser):
     email = models.EmailField(blank=True, max_length=254, unique=True)
     username = models.CharField(unique=True, max_length=50)
     date_joined = models.DateTimeField(auto_now_add=True)
+    app_version = models.CharField(default="pre_build_8")
 
     def save(self, *args, **kwargs):
         self.username = str(self.id)
@@ -57,7 +58,7 @@ class LogAnon(models.Model):
     name = models.CharField()
     method = models.CharField()
     user = models.CharField(default=None, null=True)
-    date = models.DateTimeField(auto_now=True)
+    date = models.DateTimeField(auto_now_add=True)
     errors = models.JSONField(default=None, null=True)
     state = models.CharField()
     status = models.IntegerField()
@@ -74,7 +75,7 @@ class Log(models.Model):
     method = models.CharField()
     user = models.ForeignKey(User, default=None, null=True, 
                              on_delete=models.SET_NULL, related_name='api_logs')
-    date = models.DateTimeField(auto_now=True)
+    date = models.DateTimeField(auto_now_add=True)
     errors = models.JSONField(default=None, null=True)
     state = models.CharField()
     status = models.IntegerField()
@@ -118,7 +119,7 @@ class Log(models.Model):
 
 class WaitlistEmail(models.Model):
     email = models.EmailField(primary_key=True)
-    date_enrolled = models.DateTimeField(auto_now=True)
+    date_enrolled = models.DateTimeField(auto_now_add=True)
 
 class UserBrokerageInfo(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
@@ -326,7 +327,6 @@ class PlaidCashbackTransaction(models.Model):
     account_id = models.CharField(max_length=255)
     transaction_id = models.CharField(max_length=255)
     amount = models.FloatField()
-    # add mask? must prevent items from being deleted tbh... 
     pending = models.BooleanField() # must be false
     iso_currency_code = models.CharField(max_length=10)
     date =  models.DateField(null=True, default=None)
@@ -339,8 +339,8 @@ class PlaidCashbackTransaction(models.Model):
 
     class Meta:
         constraints = [
-            # add mask?
-            models.UniqueConstraint(fields=['user', 'account_id', 'transaction_id'], name='unique_plaid_transaction')
+            # improve this - may not always be unique
+            models.UniqueConstraint(fields=['user', 'transaction_id'], name='unique_plaid_transaction')
         ]
 
 class RobinhoodStockOrder(models.Model):
@@ -415,7 +415,26 @@ class Investment(models.Model):
         logAnonInvestment.save()
 
 
+class PlaidLinkWebhook(models.Model):
+    event_name = models.CharField(null=True)
+    event_id = models.UUIDField(null=True)
+    link_session_id = models.CharField(null=True)
+    link_token = models.CharField()
+    request_id = models.CharField(null=True)
+    institution_name = models.CharField(null=True)
+    view_name = models.CharField(null=True)
+    webhook_code = models.CharField()
+    exit_status = models.CharField(null=True)
+    error_code = models.CharField(null=True)
+    error_message = models.CharField(null=True)
+    error_type = models.CharField(null=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    time_created = models.DateTimeField(default=timezone.now)
 
-
-
-
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'link_session_id', 'event_id'], name='plaidevent')
+        ]
+        indexes = [
+            models.Index(fields=['user', 'link_session_id', 'event_id'])
+        ]

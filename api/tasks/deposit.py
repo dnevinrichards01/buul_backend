@@ -31,7 +31,7 @@ from ..serializers.rh import GetLinkedBankAccountsResponseSerializer, \
 from ..serializers.plaid.balance import \
     BalanceGetResponseSerializer, AccountsGetResponseSerializer
 
-from accumate_backend.retry_db import retry_on_db_error
+from buul_backend.retry_db import retry_on_db_error
 
 # plaid balance
 
@@ -90,7 +90,7 @@ def plaid_balance_get(uid, item_id=None, account_ids_by_item_id={}):
                     access_token=plaidItem.accessToken,
                     options={
                         "account_ids": account_ids_by_item_id[plaidItem.itemId],
-                        "min_last_updated_datetime": timezone.now().replace(hour=0, minute=0, second=0, microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ')
+                        "min_last_updated_datetime": timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)#.strftime('%Y-%m-%dT%H:%M:%SZ')
                     }
                 )
             else:
@@ -137,11 +137,9 @@ def plaid_balance_get_process(uid, item_id=None, account_ids_by_item_id={}, eq={
                               gt={}, lt={}, lte={}, gte={}, metric_to_return_by=None,
                               use_balance=True):
     if use_balance:
-        balance_get = plaid_balance_get(uid, item_id=None, 
-                                        account_ids_by_item_id=account_ids_by_item_id)
+        balance_get = plaid_balance_get(uid, item_id=None, account_ids_by_item_id={})
     else:
-        balance_get = plaid_accounts_get(uid, item_id=None, 
-                                         balance_ids_by_item_id=account_ids_by_item_id)
+        balance_get = plaid_accounts_get(uid, item_id=None, account_ids_by_item_id={})
     balance_processed = process_plaid_balance(balance_get, eq=eq, gt=gt, lt=lt, lte=lte, 
                                               gte=gte, metric_to_return_by=None)
     return balance_processed
@@ -236,7 +234,8 @@ def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_acc
             if plaid_account["balances"]["iso_currency_code"] != "USD":
                 raise Exception("not USD")
             # if we find an account both in plaid and in rh, add to candidate list
-            if plaid_account["balances"]["available"] >= amount:
+            if plaid_account["balances"]["available"] is not None and \
+                plaid_account["balances"]["available"] >= amount:
                 if not brokerage_plaid_match_required or \
                     plaid_account["mask"] == rh_account["bank_account_number"]:
                     if not brokerage_plaid_match_required:
@@ -372,7 +371,8 @@ def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount, force=F
 
 @retry_on_db_error
 def rh_deposit(uid, transactions, repeat_day_range=5, force=False, 
-               limit=50, check_failed_deposits=True):
+               limit=50, check_failed_deposits=True, 
+               ignore_overdraft_protection=False):
     import pdb; breakpoint()
     # get previous deposit to help decide which account to use
     old_deposits = RobinhoodDeposit.objects.filter(user__id=uid)\
@@ -408,7 +408,7 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
         latest_deposit,
         plaid_accounts,
         rh_accounts,
-        brokerage_plaid_match_required = overdraft_protection
+        brokerage_plaid_match_required = not ignore_overdraft_protection and overdraft_protection
     )
 
     # make the deposit
@@ -460,7 +460,6 @@ def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True,
         raise Exception(f"multiple deposits matching: {transfers}")
     transfer_result = transfers[0]
 
-    # update for no checking
     if get_bank_info:
         rh_accounts = rh_get_linked_bank_accounts(
             uid, 
@@ -477,7 +476,7 @@ def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True,
             use_balance=False
         )
         if not ignore_plaid and len(plaid_accounts) != 1:
-            raise Exception(f"could not find plaid account associated with " + 
+            raise Exception(f"could not find rh account associated with " + 
                             f"{rh_account["bank_account_number"]}")
         plaid_account = {} if ignore_plaid else plaid_accounts[0]
 
@@ -520,7 +519,7 @@ def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True,
         for transaction in transactions:
             transaction.deposit = deposit
         PlaidCashbackTransaction.objects.bulk_update(transactions, ['deposit'])
-    return transfer_result["state"]
+    return transfer_result["state"], transfer_result["early_access_amount"]
 
 
 # untested

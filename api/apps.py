@@ -51,12 +51,12 @@ class ApiConfig(AppConfig):
                     "kwargs": json.dumps({}),
                     "crontab": crontab_daily,
                     "task_type": "userTasks"
+                },
+                "all_users_spending_by_category": {
+                    "kwargs": json.dumps({}),
+                    "crontab": crontab_weekly,
+                    "task_type": "transactionsTasks"
                 }
-                # "all_users_spending_by_category": {
-                #     "kwargs": json.dumps({}),
-                #     "crontab": crontab_weekly,
-                #     "task_type": "transactionsTasks"
-                # }
                 
             }
 

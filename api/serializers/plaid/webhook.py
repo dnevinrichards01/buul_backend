@@ -18,7 +18,7 @@ class PlaidSessionFinishedSerializer(serializers.Serializer):
     environment = serializers.ChoiceField(required=True, choices=["sandbox", "production"])
 
     def validate(self, attrs):
-        if attrs['status'] not in ["SUCCESS", "success"]:
+        if attrs['status'] not in ["SUCCESS", "success", "exited", "EXITED"]:
             raise serializers.ValidationError("status must be 'SUCCESS' or 'success'")
         return attrs
 
@@ -33,7 +33,7 @@ class PlaidItemAddSerializer(serializers.Serializer):
 # when we create the item, pull their transactions immediately. 
 # bc we only get this webhook after the initial sync call
 class PlaidTransactionSyncUpdatesAvailable(serializers.Serializer):
-    webhook_type = serializers.ChoiceField(required=True, choices=["TRANSACTION"])
+    webhook_type = serializers.ChoiceField(required=True, choices=["TRANSACTIONS"])
     webhook_code = serializers.ChoiceField(required=True, choices=["SYNC_UPDATES_AVAILABLE"])
     item_id = serializers.CharField(required=True)
     initial_update_complete = serializers.BooleanField(required=True)
@@ -56,7 +56,39 @@ class PlaidItemWebhookSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         return attrs
+
+class LinkEventMetadataSerializer(serializers.Serializer):
+    error_code = serializers.CharField(required=False, allow_blank=True, allow_null=True) # this if exists
+    error_message = serializers.CharField(required=False, allow_blank=True, allow_null=True) # this if exists
+    error_type = serializers.CharField(required=False, allow_blank=True, allow_null=True) # this if exists
+    exit_status = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    institution_id = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    institution_name = serializers.CharField(required=False, allow_blank=True, allow_null=True) # this
+    institution_search_query = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    request_id = serializers.CharField(required=True) # this
+    mfa_type = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    view_name = serializers.CharField(required=False, allow_blank=True, allow_null=True) # this if exists
+    selection = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    brand_name = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    match_reason = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    routing_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    account_number_mask = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+class LinkEventSerializer(serializers.Serializer):
+    event_name = serializers.CharField(allow_blank=True, allow_null=True)
+    timestamp = serializers.DateTimeField(allow_null=True)
+    event_id = serializers.UUIDField(allow_null=True)
+    event_metadata = LinkEventMetadataSerializer()
+
+class LinkEventWebhookSerializer(serializers.Serializer):
+    webhook_type = serializers.ChoiceField(required=True, choices=["LINK"])
+    webhook_code = serializers.ChoiceField(required=True, choices=["EVENTS"])
+    environment = serializers.ChoiceField(required=True, choices=["sandbox", "production"])
+    link_session_id = serializers.CharField(required=True)
+    link_token = serializers.CharField(required=True)
+    events = LinkEventSerializer(many=True)
     
+
 class WebhookSerializer(serializers.Serializer):
     """
     Serializer for Plaid link webhooks.
@@ -74,7 +106,8 @@ class WebhookSerializer(serializers.Serializer):
         ('USER_ACCOUNT_REVOKED', 'USER_ACCOUNT_REVOKED'),
         ('USER_PERMISSION_REVOKED', 'USER_PERMISSION_REVOKED'),
         ('PENDING_EXPIRATION', 'PENDING_EXPIRATION'),
-        ('ERROR', 'ERROR')
+        ('ERROR', 'ERROR'),
+        ('EVENTS', 'EVENTS')
     )
 
     webhook_type = serializers.ChoiceField(
@@ -100,8 +133,8 @@ class WebhookSerializer(serializers.Serializer):
         """
         webhook_type = data.get('webhook_type')
         webhook_code = data.get('webhook_code')
-        if not (webhook_type == "LINK" and webhook_code == "SESSION_FINISHED") and \
-            not (webhook_type == "TRANSACTION" and webhook_code == "SYNC_UPDATES_AVAILABLE") and \
+        if not (webhook_type == "LINK" and webhook_code in ["SESSION_FINISHED", "EVENTS"]) and \
+            not (webhook_type == "TRANSACTIONS" and webhook_code == "SYNC_UPDATES_AVAILABLE") and \
             not (webhook_type == "ITEM" and webhook_code in [
                 'WEBHOOK_UPDATE_ACKNOWLEDGED', 'USER_ACCOUNT_REVOKED', 
                 'USER_PERMISSION_REVOKED', 'PENDING_EXPIRATION', 'ERROR',

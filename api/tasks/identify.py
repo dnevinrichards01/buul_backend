@@ -23,8 +23,7 @@ from..serializers.plaid.transaction import TransactionsSyncResponseSerializer, \
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \
     PlaidPersonalFinanceCategories
 
-from accumate_backend.retry_db import retry_on_db_error
-
+from buul_backend.retry_db import retry_on_db_error
 # plaid transactions 
 
 
@@ -166,8 +165,17 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
         all_cashback.append(plaidCashbackTransaction)
     try:
         PlaidCashbackTransaction.objects.bulk_create(all_cashback, batch_size=100)
+        return {
+            "added": len(all_cashback), 
+            "modified": 0,
+            "deleted": 0,
+            "deposits_flagged": 0
+        }
     except:
         # if bulk create fails
+        cashback_added = 0
+        cashback_modified = 0
+        deposits_flagged = 0
         for cashback in cashback_candidates:
             # could use all_cashback instead
             try:
@@ -189,6 +197,7 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
                     )
                 )
                 plaidCashbackTransaction.save()
+                cashback_added += 1
             except:
                 # if fails then assume it's because it already exists 
                 plaidCashbackTransaction = PlaidCashbackTransaction.objects.get(
@@ -200,6 +209,7 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
                 cashback["amount"] != plaidCashbackTransaction.amount or \
                 cashback["iso_currency_code"] != plaidCashbackTransaction.iso_currency_code:
                     plaidCashbackTransaction.deposit.flag = True
+                    deposits_flagged += 1
                 if not plaidCashbackTransaction.deposit:
                     plaidCashbackTransaction.amount = cashback["amount"]
                     plaidCashbackTransaction.iso_currency_code = cashback["iso_currency_code"]
@@ -210,9 +220,16 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
                 plaidCashbackTransaction.name = cashback["name"]
                 plaidCashbackTransaction.iso_currency_code = cashback["iso_currency_code"]
                 plaidCashbackTransaction.save()
+                cashback_modified += 1
 
                 # xact x deposit, deposit connected to investment
                 # something to mark any deposits or investments 
+        return {
+            "added": cashback_added, 
+            "modified": cashback_modified,
+            "deleted": 0,
+            "deposits_flagged": deposits_flagged
+        }
 
 @shared_task(name="find_cashback_modified")
 @retry_on_db_error
@@ -228,6 +245,7 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
                         is_cashback=is_cashback_name)
     to_create = []
     to_update = []
+    deposits_flagged = 0
     for cashback in cashback_candidates:
         try:
             plaidCashbackTransaction = PlaidCashbackTransaction.objects.get(
@@ -239,6 +257,7 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
                 cashback["amount"] != plaidCashbackTransaction.amount or \
                 cashback["iso_currency_code"] != plaidCashbackTransaction.iso_currency_code:
                 plaidCashbackTransaction.deposit.flag = True
+                deposits_flagged += 1
             if not plaidCashbackTransaction.deposit:
                 plaidCashbackTransaction.amount = cashback["amount"]
                 plaidCashbackTransaction.iso_currency_code = cashback["iso_currency_code"]
@@ -271,6 +290,12 @@ def find_cashback_modified(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={
          "authorized_datetime", "date"],
          batch_size=100
     )
+    return {
+        "added": len(to_create), 
+        "modified": len(to_update),
+        "deleted": 0,
+        "deposits_flagged": deposits_flagged
+    }
 
 # in future turn these into generators?
 # or in future make transactions ordered by dictionary (key=cashback?)
@@ -286,6 +311,8 @@ def find_cashback_removed(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}
     cashback_candidates = filter_jsons(transactions, eq=eq, gt=gt, lt=lt, lte=lte, 
                         gte=gte, metric_to_return_by=metric_to_return_by, 
                         is_cashback=is_cashback_name)
+    cashback_deleted = 0
+    deposits_flagged = 0
     for cashback in cashback_candidates:
         try:
             plaidCashbackTransaction = PlaidCashbackTransaction.objects.get(
@@ -295,30 +322,45 @@ def find_cashback_removed(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={}
             )
             if plaidCashbackTransaction.deposit is None:
                 plaidCashbackTransaction.delete()
+                cashback_deleted += 1
             else: 
                 plaidCashbackTransaction.deposit.flag = True
                 plaidCashbackTransaction.deposit.save()
+                deposits_flagged += 1
         except:
             continue
+    return {
+        "added": 0, 
+        "modified": 0,
+        "deleted": cashback_deleted,
+        "deposits_flagged": deposits_flagged
+    }
 
 @shared_task(name="update_transactions")
 @retry_on_db_error
 def update_transactions(item_id):
     item = PlaidItem.objects.get(itemId = item_id)
     uid = item.user.id
-    cursor = item.transactionsCursor
+    start_cursor = item.transactionsCursor
     try:
         added, modified, removed = transactions_sync(
             item_ids={item_id}, update_cursor=True
         )
-        find_cashback_added(uid, added)
-        find_cashback_modified(uid, modified)
-        find_cashback_removed(uid, removed)
+        added_summary = find_cashback_added(uid, added)
+        modified_summary = find_cashback_modified(uid, modified)
+        removed_summary = find_cashback_removed(uid, removed)
+
+        update_summary = {"added": 0, "modified": 0, "deleted": 0, "deposits_flagged": 0}
+        modified
+        for key in update_summary:
+            update_summary[key] = added_summary[key] + modified_summary[key] + removed_summary[key]
+        return update_summary
     except Exception as e:
         if isinstance(e, OperationalError):
             raise e
-        item.transactionsCursor = cursor
-        return e
+        item.transactionsCursor = start_cursor
+        item.save()
+        return {"error": str(e)}
         # some sort of CTE / view made from celery logs
 
 

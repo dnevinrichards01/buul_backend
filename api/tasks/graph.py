@@ -14,7 +14,7 @@ from dateutil.relativedelta import relativedelta
 from zoneinfo import ZoneInfo
 import json
 
-from accumate_backend.retry_db import retry_on_db_error
+from buul_backend.retry_db import retry_on_db_error
 
 @shared_task(name="refresh_stock_data_by_interval")
 @retry_on_db_error
@@ -165,7 +165,7 @@ def delete_non_closing_times():
 
 @shared_task(name="get_graph_data")
 @retry_on_db_error
-def get_graph_data(uid, symbols=["VOO", "VOOG", "QQQ", "IBIT"]):
+def get_graph_data(uid, symbols=["VOO", "VOOG", "QQQ", "IBIT", "BTC"]):
     try:
         # import pdb 
         # breakpoint()

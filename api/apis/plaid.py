@@ -1,6 +1,6 @@
 from plaid import ApiClient, Configuration
 from plaid.api import plaid_api
-from accumate_backend.settings import PLAID_CLIENT_ID, PLAID_SECRET, PLAID_HOST
+from buul_backend.settings import PLAID_CLIENT_ID, PLAID_SECRET, PLAID_HOST
 
 def get_plaid_client():
     """

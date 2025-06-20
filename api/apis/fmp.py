@@ -1,4 +1,4 @@
-from accumate_backend.settings import FMP_KEY
+from buul_backend.settings import FMP_KEY
 
 from django.utils import timezone
 from django.db.models import OuterRef, Subquery
