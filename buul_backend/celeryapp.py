@@ -4,11 +4,11 @@ from .settings import SQS_LONG_RUNNING_URL, SQS_USER_INTERACTION_URL, SQS_DLQ_UR
 import django
 from kombu import Queue
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'accumate_backend.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'buul_backend.settings')
 # django.setup()
 
 app = Celery(
-    "accumate_backend",
+    "buul_backend",
 )
 
 

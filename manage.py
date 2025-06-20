@@ -3,10 +3,15 @@
 import os
 import sys
 
-
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'accumate_backend.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'buul_backend.settings')
+
+    # import debugpy
+    # debugpy.listen(("0.0.0.0", 5678))  # Listening on port 5678
+    # print("Waiting for debugger attach...")
+    # debugpy.wait_for_client()
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

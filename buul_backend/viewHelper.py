@@ -63,13 +63,15 @@ def log(logger, instance, status, state, errors=None, user=None,
     log.save()
 
 def validate(logger, serializer, instance, fields_to_correct=[], fields_to_fail=[],
+             correct_all = False, fail_all = False, 
              edit_error_message=lambda x: x, rename_field=lambda x: x):
     try:
         serializer.is_valid(raise_exception=True)
     except ValidationError as e:
         # validation errors which we have no tolerance for
         error_messages = {}
-        for field in fields_to_fail:
+        fields_to_fail_final = e.detail if fail_all else fields_to_fail
+        for field in fields_to_fail_final:
             if field in e.detail and len(e.detail[field]) >= 1:
                 error_messages[field] = e.detail[field][0]
         if len(error_messages) > 0:
@@ -86,7 +88,8 @@ def validate(logger, serializer, instance, fields_to_correct=[], fields_to_fail=
             )
         # validation errors which we send error messages for
         error_messages = {}
-        for field in fields_to_correct:
+        fields_to_correct_final = e.detail if correct_all else fields_to_correct
+        for field in fields_to_correct_final:
             if field in e.detail and len(e.detail[field]) >= 1:
                 error_message = e.detail[field][0]
                 error_messages[rename_field(field)] = edit_error_message(error_message)
