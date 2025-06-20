@@ -165,7 +165,7 @@ def delete_non_closing_times():
 
 @shared_task(name="get_graph_data")
 @retry_on_db_error
-def get_graph_data(uid, symbols=["VOO", "VOOG", "QQQ", "IBIT"]):
+def get_graph_data(uid, symbols=["VOO", "VOOG", "QQQ", "IBIT", "BTC"]):
     try:
         # import pdb 
         # breakpoint()

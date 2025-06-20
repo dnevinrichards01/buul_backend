@@ -90,7 +90,7 @@ def plaid_balance_get(uid, item_id=None, account_ids_by_item_id={}):
                     access_token=plaidItem.accessToken,
                     options={
                         "account_ids": account_ids_by_item_id[plaidItem.itemId],
-                        "min_last_updated_datetime": timezone.now().replace(hour=0, minute=0, second=0, microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ')
+                        "min_last_updated_datetime": timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)#.strftime('%Y-%m-%dT%H:%M:%SZ')
                     }
                 )
             else:
@@ -234,7 +234,8 @@ def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_acc
             if plaid_account["balances"]["iso_currency_code"] != "USD":
                 raise Exception("not USD")
             # if we find an account both in plaid and in rh, add to candidate list
-            if plaid_account["balances"]["available"] >= amount:
+            if plaid_account["balances"]["available"] is not None and \
+                plaid_account["balances"]["available"] >= amount:
                 if not brokerage_plaid_match_required or \
                     plaid_account["mask"] == rh_account["bank_account_number"]:
                     if not brokerage_plaid_match_required:
@@ -518,7 +519,7 @@ def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True,
         for transaction in transactions:
             transaction.deposit = deposit
         PlaidCashbackTransaction.objects.bulk_update(transactions, ['deposit'])
-    return transfer_result["state"]
+    return transfer_result["state"], transfer_result["early_access_amount"]
 
 
 # untested

@@ -48,6 +48,7 @@ class User(AbstractUser):
     email = models.EmailField(blank=True, max_length=254, unique=True)
     username = models.CharField(unique=True, max_length=50)
     date_joined = models.DateTimeField(auto_now_add=True)
+    app_version = models.CharField(default="pre_build_8")
 
     def save(self, *args, **kwargs):
         self.username = str(self.id)
@@ -57,7 +58,7 @@ class LogAnon(models.Model):
     name = models.CharField()
     method = models.CharField()
     user = models.CharField(default=None, null=True)
-    date = models.DateTimeField(auto_now=True)
+    date = models.DateTimeField(auto_now_add=True)
     errors = models.JSONField(default=None, null=True)
     state = models.CharField()
     status = models.IntegerField()
@@ -74,7 +75,7 @@ class Log(models.Model):
     method = models.CharField()
     user = models.ForeignKey(User, default=None, null=True, 
                              on_delete=models.SET_NULL, related_name='api_logs')
-    date = models.DateTimeField(auto_now=True)
+    date = models.DateTimeField(auto_now_add=True)
     errors = models.JSONField(default=None, null=True)
     state = models.CharField()
     status = models.IntegerField()
@@ -118,7 +119,7 @@ class Log(models.Model):
 
 class WaitlistEmail(models.Model):
     email = models.EmailField(primary_key=True)
-    date_enrolled = models.DateTimeField(auto_now=True)
+    date_enrolled = models.DateTimeField(auto_now_add=True)
 
 class UserBrokerageInfo(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
@@ -413,7 +414,26 @@ class Investment(models.Model):
         logAnonInvestment.save()
 
 
+class PlaidLinkWebhook(models.Model):
+    event_name = models.CharField(null=True)
+    event_id = models.UUIDField(null=True)
+    link_session_id = models.CharField(null=True)
+    link_token = models.CharField()
+    request_id = models.CharField(null=True)
+    institution_name = models.CharField(null=True)
+    view_name = models.CharField(null=True)
+    webhook_code = models.CharField()
+    exit_status = models.CharField(null=True)
+    error_code = models.CharField(null=True)
+    error_message = models.CharField(null=True)
+    error_type = models.CharField(null=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    time_created = models.DateTimeField(default=timezone.now)
 
-
-
-
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'link_session_id', 'event_id'], name='plaidevent')
+        ]
+        indexes = [
+            models.Index(fields=['user', 'link_session_id', 'event_id'])
+        ]

@@ -24,7 +24,6 @@ from ..models import PlaidItem, User, PlaidCashbackTransaction, \
     PlaidPersonalFinanceCategories
 
 from buul_backend.retry_db import retry_on_db_error
-
 # plaid transactions 
 
 
@@ -166,7 +165,12 @@ def find_cashback_added(uid, transactions, eq={}, gt={}, lt={}, lte={}, gte={},
         all_cashback.append(plaidCashbackTransaction)
     try:
         PlaidCashbackTransaction.objects.bulk_create(all_cashback, batch_size=100)
-        return {"added": len(all_cashback)}
+        return {
+            "added": len(all_cashback), 
+            "modified": 0,
+            "deleted": 0,
+            "deposits_flagged": 0
+        }
     except:
         # if bulk create fails
         cashback_added = 0
@@ -347,6 +351,7 @@ def update_transactions(item_id):
         removed_summary = find_cashback_removed(uid, removed)
 
         update_summary = {"added": 0, "modified": 0, "deleted": 0, "deposits_flagged": 0}
+        modified
         for key in update_summary:
             update_summary[key] = added_summary[key] + modified_summary[key] + removed_summary[key]
         return update_summary
@@ -355,7 +360,7 @@ def update_transactions(item_id):
             raise e
         item.transactionsCursor = start_cursor
         item.save()
-        return e
+        return {"error": str(e)}
         # some sort of CTE / view made from celery logs
 
 

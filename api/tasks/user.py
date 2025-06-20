@@ -48,11 +48,10 @@ def plaid_item_public_tokens_exchange(**kwargs):
     uid = kwargs.pop('uid')
     public_tokens = kwargs.pop('public_tokens')
     context = kwargs.pop('context')
-    
+
     try:
         plaidUser = PlaidUser.objects.get(user__id=uid) # make sure we have a user
         item_get_error_messages = {}
-        item_remove_error_messages = {}
         for public_token in public_tokens:
             exchange_request = ItemPublicTokenExchangeRequest(public_token=public_token)
 
@@ -73,6 +72,13 @@ def plaid_item_public_tokens_exchange(**kwargs):
             plaidItem.save()
 
             # get new item's institution
+            existing_connections_to_institution = PlaidItem.objects.filter(
+                user__id=uid, 
+                institution_id=plaidItem.institution_id
+            )
+            if existing_connections_to_institution.count() > 1:
+                continue
+
             item_get_result = plaid_item_get(
                 uid=uid,
                 item_ids=[validated_data['item_id']]
@@ -84,18 +90,6 @@ def plaid_item_public_tokens_exchange(**kwargs):
                 plaidItem.institution_id = item_get_result["success"]["institution_id"]
                 plaidItem.save()
 
-                # if got institution, delete duplicates of institution
-                duplicate_institutions = PlaidItem.objects.filter(
-                    user__id=uid, 
-                    institution_id=plaidItem.institution_id
-                ).exclude(itemId=plaidItem.itemId)
-                for item in duplicate_institutions:
-                    item_remove_result = plaid_item_remove(uid, item.itemId)
-                    if item_remove_result['error']:
-                        item_remove_error_messages[validated_data['item_id']] = item_remove_result['error']
-                    else:
-                        item.delete()
-
         plaidUser.link_token = None
         plaidUser.save()
         cache.delete(f"uid_{uid}_plaid_item_public_token_exchange")
@@ -105,10 +99,9 @@ def plaid_item_public_tokens_exchange(**kwargs):
             timeout=120
         )
 
-        if item_get_error_messages or item_remove_error_messages:
+        if item_get_error_messages:
             return f"cached plaid public token exchange success but " + \
-                "item_get failures: {item_get_error_messages} + " \
-                "item_remove failures: {item_remove_error_messages}"
+                "item_get failures: {item_get_error_messages}"
         else:
             return "cached plaid public token exchange success"
     except ApiException as e:

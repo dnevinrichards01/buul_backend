@@ -34,6 +34,7 @@ class MyTokenObtainPairSerializer(serializers.Serializer):
         write_only=True,
         error_messages={"invalid": invalid_password_error_message}
     )
+    app_version = serializers.CharField(required=False)
 
     def validate(self, attrs):
         email = attrs.pop('email').lower()
@@ -60,6 +61,12 @@ class MyTokenRefreshSerializer(TokenRefreshSerializer):
             user = User.objects.get(id=user_id)
         else:
             raise ValidationError("User not found")
+        
+        app_version = attrs.get('app_version', None)
+        if app_version != user.app_version or \
+            (app_version is not None or user.app_version != "pre_build_8"):
+            user.app_version = app_version
+            user.save()
         
         data = super().validate(attrs)
 

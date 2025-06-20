@@ -344,6 +344,7 @@ def rh_save_order_from_order_info(uid, order_id, deposit=None, symbol=None):
         cum_quant = {symbol: order["quantity"]}
     investment.cumulative_quantities = cum_quant
     investment.save()
+    return executed_amount
 
 @retry_on_db_error
 def rh_invest(uid, deposit, repeat_day_range=5, 

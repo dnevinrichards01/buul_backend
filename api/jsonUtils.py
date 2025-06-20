@@ -4,8 +4,8 @@ from django.db.utils import OperationalError
 
 def filter_jsons(jsons, eq={}, neq={}, gt={}, lt={}, lte={}, gte={}, metric_to_return_by=None,
                  **kwargs):
-    import pdb
-    breakpoint()
+    # import pdb
+    # breakpoint()
 
     # create pairings of ops, 
     # and filtersets which describe the attribute and value for the op 

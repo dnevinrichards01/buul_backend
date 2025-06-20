@@ -32,7 +32,7 @@ from django.core.mail import send_mail
 from django.urls import reverse
 import secrets 
 
-import pdb
+# import pdb
 
 import pyotp
 
@@ -131,7 +131,7 @@ class MyModelTestCase(TestCase):
         return
 
     def test_login_endpoint(self):
-        breakpoint()
+        import pdb; breakpoint()
         response = self.client.post(
             "/rh/login/",
             {
@@ -144,7 +144,7 @@ class MyModelTestCase(TestCase):
         )
     
     # def test_login_method(self):
-    #     breakpoint()
+    #     import pdb; breakpoint()
         # response = self.client.post(
         #     "/rh/login/",
         #     {
@@ -170,8 +170,7 @@ class MyModelTestCase(TestCase):
 
 
 # def test_login(uid):
-# 	import pdb
-# 	breakpoint()
+# 	import pdb; breakpoint()
 	# login_res = r.login(
     #     session=r.create_session(), 
     #     mfa_code=None,#pyotp.TOTP("6YRNMXMB4WDWX4ML").now(), 

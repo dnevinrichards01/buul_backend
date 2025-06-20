@@ -1,6 +1,6 @@
 # from django.contrib.auth.models import User
 from .models import User, WaitlistEmail, PlaidUser, UserBrokerageInfo, PlaidItem, \
-    UserInvestmentGraph, Log, PlaidPersonalFinanceCategories
+    UserInvestmentGraph, Log, PlaidPersonalFinanceCategories, PlaidLinkWebhook
 from rest_framework.views import APIView
 from .serializers.buul import WaitlistEmailSerializer, \
     UserBrokerageInfoSerializer, NamePasswordValidationSerializer, \
@@ -13,7 +13,7 @@ from .serializers.plaid.link import \
     LinkTokenCreateRequestTransactionsSerializer, LinkTokenCreateRequestSerializer
 from .serializers.plaid.webhook import \
     PlaidSessionFinishedSerializer, WebhookSerializer, PlaidTransactionSyncUpdatesAvailable, \
-    PlaidItemWebhookSerializer
+    PlaidItemWebhookSerializer, LinkEventWebhookSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -68,6 +68,11 @@ class MyTokenObtainPairView(TokenObtainPairView):
             serializer.is_valid(raise_exception=True)
 
             user = serializer.validated_data['user']
+            app_version = serializer.validated_data.get('app_version', None)
+            if app_version != user.app_version or \
+                (app_version is not None or user.app_version != "pre_build_8"):
+                user.app_version = app_version
+                user.save()
             refresh = RefreshToken.for_user(user)
 
             status = 200
@@ -668,14 +673,17 @@ class PlaidItemWebhook(APIView):
             )
             if validation_error_respose:
                 status = 400
-                error_message = f"Invalid webhook of type {webhook_type} and code \
-                            {webhook_code}."
+                display_error_message = f"Invalid webhook of type {webhook_type} and code {webhook_code}."
+                internal_error_message = f"{display_error_message} causes: " + \
+                    f"{json.loads(validation_error_respose.content)["error"]}"
                 log(Log, self, status, LogState.ERR_NO_MESSAGE, 
-                    errors = {"error": error_message})
+                    errors = internal_error_message
+                )
+                    # errors = {"error": error_message})
                 return JsonResponse(
                     {
                         "success": None, 
-                        "error": error_message
+                        "error": display_error_message
                     }, 
                     status = status
                 )
@@ -684,11 +692,11 @@ class PlaidItemWebhook(APIView):
             cached_uid = cache.get(f"link_token_{link_token}_user")
             if cached_uid:
                 # maybe change this to be in the db itself... so it cant expire
+                # just add link_token to PlaidUser, delete potential duplicates before doing so
                 uid = json.loads(cached_uid)["uid"]
-                cache.delete(f"link_token_{link_token}_user")
             else:
                 status = 400
-                error_message = "corresponding link token and user are no longer cached"
+                error_message = f"{webhook_type}, {webhook_code}: corresponding link token and user are no longer cached"
                 log(Log, self, status, LogState.ERR_NO_MESSAGE, 
                     errors = {"error": error_message})
                 return JsonResponse(
@@ -705,16 +713,37 @@ class PlaidItemWebhook(APIView):
                 json.dumps({"success": None, "error": None}),
                 timeout=120
             )
-            plaid_item_public_tokens_exchange.apply_async(
-                kwargs = {
-                    "uid": uid,
-                    "public_tokens": serializer.validated_data["public_tokens"],
-                    "context": {}
-                }
+
+            if serializer.validated_data['status'] in ["SUCCESS", "success"]:
+                plaid_item_public_tokens_exchange.apply_async(
+                    kwargs = {
+                        "uid": uid,
+                        "public_tokens": serializer.validated_data["public_tokens"],
+                        "context": {}
+                    }
+                )
+
+            plaidLinkWebhook = PlaidLinkWebhook(
+                event_name = None,
+                link_session_id = serializer.validated_data["link_session_id"],
+                link_token = link_token,
+                request_id = None,
+                institution_name = None,
+                view_name = None,
+                webhook_code = webhook_code,
+                exit_status = serializer.validated_data['status'],
+                error_code = None,
+                error_message = None,
+                error_type = None,
+                user = User.objects.get(id=uid)
             )
+            plaidLinkWebhook.save()
 
             status = 200
-            log(Log, self, status, webhook_code)#LogState.SUCCESS)
+            errors = None
+            if serializer.validated_data['status'] not in ["SUCCESS", "success"]:
+                errors = {"status": serializer.validated_data['status']} 
+            log(Log, self, status, webhook_code, errors=errors)
             return JsonResponse(
                 {
                     "success": "recieved", 
@@ -733,14 +762,15 @@ class PlaidItemWebhook(APIView):
             )
             if validation_error_respose:
                 status = 400
-                error_message = f"Invalid webhook of type {webhook_type} and code \
-                            {webhook_code}."
+                display_error_message = f"Invalid webhook of type {webhook_type} and code {webhook_code}."
+                internal_error_message = f"{display_error_message} caused: " + \
+                    f"{json.loads(validation_error_respose.content)["error"]}"
                 log(Log, self, status, LogState.ERR_NO_MESSAGE,
-                    errors = {"error": error_message})
+                    errors = {"error": internal_error_message})
                 return JsonResponse(
                     {
                         "success": None, 
-                        "error": error_message
+                        "error": display_error_message
                     }, 
                     status = status
                 )
@@ -771,14 +801,15 @@ class PlaidItemWebhook(APIView):
             )
             if validation_error_respose:
                 status = 400
-                error_message = f"Invalid webhook of type {webhook_type} and code \
-                            {webhook_code}."
+                display_error_message = f"Invalid webhook of type {webhook_type} and code {webhook_code}."
+                internal_error_message = f"{display_error_message} caused: " + \
+                    f"{json.loads(validation_error_respose.content)["error"]}"
                 log(Log, self, status, LogState.ERR_NO_MESSAGE,
-                    errors = {"error": error_message})
+                    errors = {"error": internal_error_message})
                 return JsonResponse(
                     {
                         "success": None, 
-                        "error": error_message
+                        "error": display_error_message
                     }, 
                     status = status
                 )
@@ -821,6 +852,81 @@ class PlaidItemWebhook(APIView):
                 status = status
             )
 
+        elif webhook_type == "LINK" and webhook_code == "EVENTS":
+            serializer = LinkEventWebhookSerializer(data=request.data)
+            validation_error_respose = validate(Log, serializer, self, correct_all=True)
+            if validation_error_respose:
+                status = 400
+                display_error_message = f"Invalid webhook of type {webhook_type} and code {webhook_code}."
+                internal_error_message = f"{display_error_message} caused: " + \
+                    f"{json.loads(validation_error_respose.content)["error"]}"
+                log(Log, self, status, LogState.ERR_NO_MESSAGE,
+                    errors = {"error": internal_error_message})
+                return JsonResponse(
+                    {
+                        "success": None, 
+                        "error": display_error_message
+                    }, 
+                    status = status
+                )
+            
+            link_token = serializer.validated_data["link_token"]
+            cached_uid = cache.get(f"link_token_{link_token}_user")
+            if cached_uid:
+                # maybe change this to be in the db itself... so it cant expire
+                # just add link_token to PlaidUser, delete potential duplicates before doing so
+                uid = json.loads(cached_uid)["uid"]
+            else:
+                status = 400
+                error_message = f"{webhook_type}, {webhook_code}: corresponding link token and user are no longer cached"
+                log(Log, self, status, LogState.ERR_NO_MESSAGE, 
+                    errors = {"error": error_message})
+                return JsonResponse(
+                    {
+                        "success": None,
+                        "error": error_message
+                    }, 
+                    status = status
+                )
+
+            
+            events = serializer.validated_data["events"]
+            log(Log, self, 300, "all the events",
+                    errors = {"error": len(events)})
+            for event in events:
+                event_id = event.pop("event_id", None)
+                metadata = event["event_metadata"]
+                user = User.objects.get(id=uid)
+                if PlaidLinkWebhook.objects.filter(
+                    user=user, event_id=event.get("event_id", None), request_id=metadata["request_id"]
+                ).count() == 0:
+                    plaidLinkWebhook = PlaidLinkWebhook(
+                        user = user,
+                        webhook_code = webhook_code,
+                        link_session_id = serializer.validated_data["link_session_id"],
+                        link_token = serializer.validated_data["link_token"],
+                        event_name = event.get("event_name", None),
+                        event_id = event_id,
+                        request_id = metadata["request_id"],
+                        institution_name = metadata.get("institution_name", None),
+                        view_name = metadata.get("view_name", None),
+                        exit_status = metadata.get("exit_status", None),
+                        error_code = metadata.get("error_code", None),
+                        error_message = metadata.get("error_message", None),
+                        error_type = metadata.get("error_type", None),
+                        time_created = event.get("timestamp", None)
+                    )
+                    plaidLinkWebhook.save()
+
+            status = 200
+            log(Log, self, status, webhook_code)
+            return JsonResponse(
+                {
+                    "success": "recieved", 
+                    "error": None
+                }, 
+                status = status
+            )
         
         else:
             status = 400
@@ -1498,7 +1604,7 @@ class RequestVerificationCode(APIView):
         elif field == "brokerage":
             try: 
                 userBrokerageInfo = UserBrokerageInfo.objects.get(user=user)
-                userBrokerageInfo.full_name = serializer.validated_data["brokerage"]
+                userBrokerageInfo.brokerage = serializer.validated_data["brokerage"]
                 userBrokerageInfo.save()
             except Exception as e:
                 if isinstance(e, OperationalError):
