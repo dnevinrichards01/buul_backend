@@ -18,5 +18,9 @@ class Migration(migrations.Migration):
             name='BTC',
             field=models.FloatField(default=None, null=True),
         ),
+        migrations.AddField(
+            model_name='stockdata',
+            name='BTCUSD',
+            field=models.FloatField(default=None, null=True),
+        ),
     ]
-

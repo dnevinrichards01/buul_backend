@@ -42,7 +42,7 @@ def get_all_option_orders(info=None, account_number=None, start_date=None):
     return(filter_data(data, info))
 
 @login_required
-def get_all_crypto_orders(info=None):
+def get_all_crypto_orders(session, info=None):
     """Returns a list of all the crypto orders that have been processed for the account.
 
     :param info: Will filter the results to get a specific value.
@@ -52,7 +52,7 @@ def get_all_crypto_orders(info=None):
 
     """
     url = crypto_orders_url()
-    data = request_get(url, 'pagination')
+    data = request_get(url, session, dataType='pagination')
     return(filter_data(data, info))
 
 @login_required
@@ -140,7 +140,7 @@ def get_option_order_info(order_id):
     return data
 
 @login_required
-def get_crypto_order_info(order_id):
+def get_crypto_order_info(session, order_id):
     """Returns the information for a single crypto order.
 
     :param order_id: The ID associated with the option order.
@@ -149,7 +149,7 @@ def get_crypto_order_info(order_id):
 
     """
     url = crypto_orders_url(order_id)
-    data = request_get(url)
+    data = request_get(url, session, pagin)
     return data
 
 
@@ -1466,7 +1466,7 @@ def order_sell_crypto_limit_by_price(symbol, amountInDollars, limitPrice, timeIn
     return order_crypto(symbol, "sell", amountInDollars, "price", limitPrice, timeInForce, jsonify)
 
 @login_required
-def order_crypto(symbol, side, quantityOrPrice, amountIn="quantity", limitPrice=None, timeInForce="gtc", jsonify=True):
+def order_crypto(session, symbol, side, quantityOrPrice, amount=None, amountIn="quantity", limitPrice=None, timeInForce="gtc", jsonify=True):
     """Submits an order for a crypto.
 
     :param symbol: The crypto ticker of the crypto to trade.
@@ -1489,6 +1489,7 @@ def order_crypto(symbol, side, quantityOrPrice, amountIn="quantity", limitPrice=
     the price, and the quantity.
 
     """
+
     try:
         symbol = symbol.upper().strip()
     except AttributeError as message:
@@ -1507,30 +1508,49 @@ def order_crypto(symbol, side, quantityOrPrice, amountIn="quantity", limitPrice=
         price = limitPrice
         orderType = "limit"
     else:
-        price = round_price(get_crypto_quote_from_id(crypto_id, info=priceType))
+        price = round_price(get_crypto_quote_from_id(session, crypto_id, info=priceType))
 
     if amountIn == "quantity":
         quantity = quantityOrPrice
     else:
         quantity = round_price(quantityOrPrice/price)
+    
+    if amount:
+        if amount < 1:
+            raise Exception("ERROR: Fractional share price should meet minimum 1.00.")
+        # turn the money amount into decimal number of shares
+        fractional_shares = 0 if (price == 0.00) else round_price(amount/float(price))
 
-    payload = {
-        'account_id': load_crypto_profile(info="id"),
-        'currency_pair_id': crypto_id,
-        'price': price,
-        'quantity': quantity,
-        'ref_id': str(uuid4()),
-        'side': side,
-        'time_in_force': timeInForce,
-        'type': orderType
-    }
+        payload = {
+            'account_id': load_crypto_profile(info="id"),
+            'currency_pair_id': crypto_id,
+            "entered_amount": amount,
+            "is_quantity_collared": False,
+            'price': price,
+            'quantity': fractional_shares,
+            'ref_id': str(uuid4()),
+            'side': side,
+            'time_in_force': timeInForce,
+            'type': orderType
+        }
+    else:
+        payload = {
+            'account_id': load_crypto_profile(info="id"),
+            'currency_pair_id': crypto_id,
+            'price': price,
+            'quantity': quantity,
+            'ref_id': str(uuid4()),
+            'side': side,
+            'time_in_force': timeInForce,
+            'type': orderType
+        }
 
     url = order_crypto_url()
 
     # This is safe because 'ref_id' guards us from duplicate orders
     attempts = 3
     while attempts > 0:
-        data = request_post(url, payload, json=True, jsonify_data=jsonify)
+        data = request_post(url, session, payload, json=True, jsonify_data=jsonify)
         if data is not None:
             break
 

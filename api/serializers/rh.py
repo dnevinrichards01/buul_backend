@@ -49,7 +49,32 @@ class StockOrderSerializer(serializers.Serializer):
         if url[:38] !=  "https://api.robinhood.com/instruments/":
             raise ValidationError("instrument_url")
         return url
-    
+
+class CryptoOrderSerializer(serializers.Serializer):
+    account_id = serializers.CharField()
+    cancel_url = serializers.URLField(required=False, allow_null=True)
+    created_at = serializers.DateTimeField()
+    cumulative_quantity = serializers.DecimalField(max_digits=30, decimal_places=18)
+    currency_code = serializers.CharField()
+    currency_pair_id = serializers.CharField()
+    derived_state = serializers.CharField()
+    entered_amount = serializers.DecimalField(max_digits=30, decimal_places=18)
+    entered_price = serializers.DecimalField(max_digits=30, decimal_places=18)
+    id = serializers.UUIDField()
+    last_transaction_at = serializers.DateTimeField()
+    price = serializers.DecimalField(max_digits=30, decimal_places=18)
+    quantity = serializers.DecimalField(max_digits=30, decimal_places=18)
+    ref_id = serializers.UUIDField()
+    replaces_order_id = serializers.UUIDField(required=False, allow_null=True)
+    rounded_estimated_notional_with_estimated_fee = serializers.DecimalField(max_digits=30, decimal_places=18)
+    rounded_executed_notional = serializers.DecimalField(max_digits=30, decimal_places=18)
+    rounded_executed_notional_with_fee = serializers.DecimalField(max_digits=30, decimal_places=18)
+    side = serializers.CharField()
+    state = serializers.CharField()
+    time_in_force = serializers.CharField()
+    type = serializers.CharField()
+    updated_at = serializers.DateTimeField()
+
 class DepositSerializer(serializers.Serializer):
     ach_relationship = serializers.CharField() # the account
     id = serializers.CharField()

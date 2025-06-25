@@ -154,7 +154,7 @@ def get_crypto_quote(symbol, info=None):
 
 
 @login_required
-def get_crypto_quote_from_id(id, info=None):
+def get_crypto_quote_from_id(session, id, info=None):
     """Gets information about a crypto including low price, high price, and open price. Uses the id instead of crypto ticker.
 
     :param id: The id of a crypto.
@@ -175,7 +175,7 @@ def get_crypto_quote_from_id(id, info=None):
 
     """
     url = crypto_quote_url(id)
-    data = request_get(url)
+    data = request_get(url, session)
     return(filter_data(data, info))
 
 
