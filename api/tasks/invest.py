@@ -135,7 +135,7 @@ def rh_order_buy_fractional_by_price(uid, symbol, amount, crypto=False):
         if isinstance(e, OperationalError):
             raise e
         return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
-    
+
     if not crypto:
         result = r.order(session, symbol, 0, "buy", amount=amount)
     else:
@@ -221,9 +221,7 @@ def rh_get_stock_order_info(uid, order_id, crypto=False):
             if isinstance(e, OperationalError):
                 raise e
             return {"error": f"{str(e)}"}
-        
     return serializer.validated_data
-
 
 # make something with improved search ability
 @shared_task(name="rh_cancel_stock_order")
@@ -269,7 +267,8 @@ def rh_cancel_stock_order(uid, order_id):
 # and another helper one which filters them by any given attribute
 @shared_task(name="rh_find_stock_orders_custom")
 @retry_on_db_error
-def rh_find_stock_orders_custom(uid, eq={}, lt={}, gt={}, lte={}, gte={}, crypto=False):
+def rh_find_stock_orders_custom(uid, eq={}, lt={}, gt={}, lte={}, gte={},
+                                crypto=False):
     
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
@@ -303,10 +302,14 @@ def rh_find_stock_orders_custom(uid, eq={}, lt={}, gt={}, lte={}, gte={}, crypto
 
 
 # invest based on a deposit / cashback
+
 @retry_on_db_error
 def rh_save_order_from_order_info(uid, order_id, deposit=None, symbol=None, crypto=False):
     import pdb; breakpoint()
     order = rh_get_stock_order_info(uid, order_id, crypto=crypto)
+
+    if symbol == "BTC" and crypto:
+        symbol = "BTCUSD"
 
     if not crypto:
         pending_cancel_open_agent = order["pending_cancel_open_agent"]
@@ -372,6 +375,7 @@ def rh_save_order_from_order_info(uid, order_id, deposit=None, symbol=None, cryp
         .order_by('-date')
     if recent_investment_query.exists():
         cum_quant = recent_investment_query.first().cumulative_quantities.copy()
+        # can simplify with .get(x, default=0)
         if symbol in cum_quant:
             cum_quant[symbol] += order["quantity"]
         else:
@@ -383,8 +387,8 @@ def rh_save_order_from_order_info(uid, order_id, deposit=None, symbol=None, cryp
     return executed_amount
 
 @retry_on_db_error
-def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False, 
-              crypto=False):
+def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False,
+              crypto=False, ignore_repeats=True, amount_factor=1):
     
     import pdb; breakpoint()
 
@@ -399,15 +403,17 @@ def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False
     
     import pdb; breakpoint()
     
-    potential_db_repeats, potential_rh_repeats = check_repeat_order(
-        uid,
-        deposit, 
-        repeat_day_range,
-        crypto=crypto
-    )
-    if potential_db_repeats or potential_rh_repeats:
-        raise Exception("potential db repeats {potential_db_repeats} " + 
-                        "potential rh repeats {potential_rh_repeats}")
+    if not ignore_repeats:
+        potential_db_repeats, potential_rh_repeats = check_repeat_order(
+            uid,
+            deposit, 
+            repeat_day_range,
+            crypto=crypto,
+            amount_factor=amount_factor
+        )
+        if potential_db_repeats or potential_rh_repeats:
+            raise Exception("potential db repeats {potential_db_repeats} " + 
+                            "potential rh repeats {potential_rh_repeats}")
     
     import pdb; breakpoint()
 
@@ -435,11 +441,14 @@ def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False
             raise e
         raise Exception(f"no userBrokerageInfo for user {uid}")
     
+    if userBrokerageInfo.symbol == "BTC" and crypto:
+        symbol = "BTCUSD"
+    
     import pdb; breakpoint()
     order = rh_order_buy_fractional_by_price(
         uid, 
-        userBrokerageInfo.symbol, 
-        deposit.amount,
+        symbol, 
+        deposit.amount*amount_factor,
         crypto=crypto
     )
 
@@ -460,19 +469,21 @@ def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False
         user_cancel_request_state = None
         cancel_url = order["cancel_url"]
 
+    import pdb; breakpoint()
+    
     user = User.objects.get(id=uid)
     robinhoodStockOrder = RobinhoodStockOrder(
         user = user,
         order_id = order["id"],
         cancel = cancel_url,
-        symbol = userBrokerageInfo.symbol,
+        symbol = symbol,
         state = order["state"],
         side = order["side"],
         quantity = order["quantity"],
         created_at = order["created_at"],
         updated_at = order["updated_at"],
-        pending_cancel_open_agent = pending_cancel_open_agent,
-        requested_amount = notional_amount,
+        pending_cancel_open_agent =pending_cancel_open_agent,
+        requested_amount = notional_amount, 
         executed_amount = executed_amount, 
         user_cancel_request_state = user_cancel_request_state
     )
@@ -488,37 +499,38 @@ def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False
         .order_by('-date')
     if recent_investment_query.exists():
         cum_quant = recent_investment_query.first().cumulative_quantities.copy()
-        if userBrokerageInfo.symbol in cum_quant:
-            cum_quant[userBrokerageInfo.symbol] += order["quantity"]
+        if symbol in cum_quant:
+            cum_quant[symbol] += order["quantity"]
         else:
-            cum_quant[userBrokerageInfo.symbol] = order["quantity"]
+            cum_quant[symbol] = order["quantity"]
     else:
-        cum_quant = {userBrokerageInfo.symbol: order["quantity"]}
+        cum_quant = {symbol: order["quantity"]}
     investment.cumulative_quantities = cum_quant
     investment.save()
     
 
 @retry_on_db_error
-def check_repeat_order(uid, deposit, repeat_day_range, crypto=False):
+def check_repeat_order(uid, deposit, repeat_day_range, crypto=False, amount_factor=1):
     # check for duplicate deposit
     lower_limit = timezone.now() - timedelta(days=repeat_day_range)
     old_orders = RobinhoodStockOrder.objects.filter(
         user__id=uid,
         updated_at__gt=lower_limit
     )
+
+    amount_field = "rounded_executed_notional_with_fee" if crypto else "amount"
     potential_db_repeats = []
     for order in old_orders:
         if order.requested_amount == deposit.amount \
            or order.deposit.deposit_id == deposit.deposit_id:
             potential_db_repeats.append(order)
     
-    amount_field = "rounded_executed_notional_with_fee" if crypto else "amount"
     potential_rh_repeats = rh_find_stock_orders_custom(
         uid, 
-        lt={amount_field:[deposit.amount+0.05]}, 
+        lt={amount_field:[(deposit.amount*amount_factor)+0.05]}, 
         gt={
             "created_at":[timezone.now() - timedelta(days=repeat_day_range)],
-            amount_field:[deposit.amount-0.05]
+            amount_field:[(deposit.amount*amount_factor)-0.05]
         },
         crypto=crypto
     )

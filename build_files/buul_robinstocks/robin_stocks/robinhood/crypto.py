@@ -3,7 +3,7 @@ from robin_stocks.robinhood.helper import *
 from robin_stocks.robinhood.urls import *
 
 @login_required
-def load_crypto_profile(info=None):
+def load_crypto_profile(session, info=None):
     """Gets the information associated with the crypto account.
 
     :param info: The name of the key whose value is to be returned from the function.
@@ -22,7 +22,7 @@ def load_crypto_profile(info=None):
 
     """
     url = crypto_account_url()
-    data = request_get(url, 'indexzero')
+    data = request_get(url, session, 'indexzero')
     return(filter_data(data, info))
 
 
@@ -76,7 +76,7 @@ def get_crypto_currency_pairs(info=None):
     return(filter_data(data, info))
 
 
-def get_crypto_info(symbol, info=None):
+def get_crypto_info(session, symbol, info=None):
     """Gets information about a crpyto currency.
 
     :param symbol: The crypto ticker.
@@ -99,7 +99,7 @@ def get_crypto_info(symbol, info=None):
 
     """
     url = crypto_currency_pairs_url()
-    data = request_get(url, 'results')
+    data = request_get(url, session, 'results')
     data = [x for x in data if x['asset_currency']['code'] == symbol]
     if len(data) > 0:
         data = data[0]
@@ -109,7 +109,7 @@ def get_crypto_info(symbol, info=None):
 
 
 SYMBOL_TO_ID_CACHE = {}
-def get_crypto_id(symbol):
+def get_crypto_id(session, symbol):
     """Gets the Robinhood ID of the given cryptocurrency used to make trades.
     This function uses an in-memory cache of the IDs to save a network round-trip when possible.
 
@@ -120,7 +120,7 @@ def get_crypto_id(symbol):
     if symbol in SYMBOL_TO_ID_CACHE:
         return SYMBOL_TO_ID_CACHE[symbol]
 
-    id = get_crypto_info(symbol, 'id')
+    id = get_crypto_info(session, symbol, 'id')
     if id:
         SYMBOL_TO_ID_CACHE[symbol] = id
     return id

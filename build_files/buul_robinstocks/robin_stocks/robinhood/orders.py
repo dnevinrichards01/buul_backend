@@ -149,7 +149,7 @@ def get_crypto_order_info(session, order_id):
 
     """
     url = crypto_orders_url(order_id)
-    data = request_get(url, session, pagin)
+    data = request_get(url, session)
     return data
 
 
@@ -1489,14 +1489,13 @@ def order_crypto(session, symbol, side, quantityOrPrice, amount=None, amountIn="
     the price, and the quantity.
 
     """
-
     try:
         symbol = symbol.upper().strip()
     except AttributeError as message:
         print(message, file=get_output())
         return None
 
-    crypto_id = get_crypto_id(symbol)
+    crypto_id = get_crypto_id(session, symbol)
     orderType = "market"
 
     if side == "buy":
@@ -1508,26 +1507,26 @@ def order_crypto(session, symbol, side, quantityOrPrice, amount=None, amountIn="
         price = limitPrice
         orderType = "limit"
     else:
-        price = round_price(get_crypto_quote_from_id(session, crypto_id, info=priceType))
+        price_unrounded = get_crypto_quote_from_id(session, crypto_id, info=priceType)
+        price = round_price(price_unrounded)
 
     if amountIn == "quantity":
         quantity = quantityOrPrice
     else:
         quantity = round_price(quantityOrPrice/price)
-    
+
     if amount:
         if amount < 1:
             raise Exception("ERROR: Fractional share price should meet minimum 1.00.")
         # turn the money amount into decimal number of shares
-        fractional_shares = 0 if (price == 0.00) else round_price(amount/float(price))
-
+        fractional_shares = 0 if (price == 0.00) else amount/float(price_unrounded)
         payload = {
-            'account_id': load_crypto_profile(info="id"),
+            'account_id': load_crypto_profile(session, info="id"),
             'currency_pair_id': crypto_id,
-            "entered_amount": amount,
+            "entered_amount": f"{amount:.2f}",
             "is_quantity_collared": False,
             'price': price,
-            'quantity': fractional_shares,
+            'quantity': f"{fractional_shares:.8f}",
             'ref_id': str(uuid4()),
             'side': side,
             'time_in_force': timeInForce,
@@ -1548,6 +1547,7 @@ def order_crypto(session, symbol, side, quantityOrPrice, amount=None, amountIn="
     url = order_crypto_url()
 
     # This is safe because 'ref_id' guards us from duplicate orders
+    # but maybe just do it once anyways?
     attempts = 3
     while attempts > 0:
         data = request_post(url, session, payload, json=True, jsonify_data=jsonify)
