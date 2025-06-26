@@ -50,6 +50,30 @@ class StockOrderSerializer(serializers.Serializer):
             raise ValidationError("instrument_url")
         return url
     
+class CryptoOrderSerializer(serializers.Serializer):
+    account_id = serializers.CharField()
+    cancel_url = serializers.URLField(required=False, allow_null=True)
+    created_at = serializers.DateTimeField()
+    cumulative_quantity = serializers.FloatField()
+    currency_code = serializers.CharField()
+    currency_pair_id = serializers.CharField()
+    derived_state = serializers.CharField()
+    entered_amount = serializers.FloatField()
+    entered_price = serializers.FloatField()
+    id = serializers.UUIDField()
+    price = serializers.FloatField()
+    quantity = serializers.FloatField()
+    ref_id = serializers.UUIDField()
+    replaces_order_id = serializers.UUIDField(required=False, allow_null=True)
+    rounded_estimated_notional_with_estimated_fee = serializers.FloatField()
+    rounded_executed_notional = serializers.FloatField()
+    rounded_executed_notional_with_fee = serializers.FloatField()
+    side = serializers.CharField()
+    state = serializers.CharField()
+    time_in_force = serializers.CharField()
+    type = serializers.CharField()
+    updated_at = serializers.DateTimeField()
+
 class DepositSerializer(serializers.Serializer):
     ach_relationship = serializers.CharField() # the account
     id = serializers.CharField()

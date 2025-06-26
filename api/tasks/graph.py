@@ -18,7 +18,7 @@ from buul_backend.retry_db import retry_on_db_error
 
 @shared_task(name="refresh_stock_data_by_interval")
 @retry_on_db_error
-def refresh_stock_data_by_interval(symbols=["VOO", "VOOG", "QQQ", "IBIT"], 
+def refresh_stock_data_by_interval(symbols=["VOO", "VOOG", "QQQ", "IBIT", "BTC", "BTCUSD"], 
                        interval="1d", refresh_all=False):
     # import pdb
     # breakpoint()
@@ -165,13 +165,12 @@ def delete_non_closing_times():
 
 @shared_task(name="get_graph_data")
 @retry_on_db_error
-def get_graph_data(uid, symbols=["VOO", "VOOG", "QQQ", "IBIT", "BTC"]):
+def get_graph_data(uid):
     try:
         # import pdb 
         # breakpoint()
 
         user = User.objects.get(id=uid)
-
 
         # the last time they requested graph data
         last_saved_date_query = UserInvestmentGraph.objects.filter(user=user)\
