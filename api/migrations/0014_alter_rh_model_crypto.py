@@ -18,6 +18,11 @@ class Migration(migrations.Migration):
             name='pending_cancel_open_agent',
             field=models.CharField(max_length=255, null=True),
         ),
+        migrations.AlterField(
+            model_name='robinhoodstockorder',
+            name='user_cancel_request_state',
+            field=models.CharField(max_length=255, null=True),
+        ),
     ]
 
 
