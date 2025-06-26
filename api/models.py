@@ -359,7 +359,7 @@ class RobinhoodStockOrder(models.Model):
     pending_cancel_open_agent = models.CharField(max_length=255, null=True)
     requested_amount = models.FloatField()
     executed_amount = models.FloatField(null=True)
-    
+    user_cancel_request_state = models.CharField(max_length=255, null=True) # 'no_cancel_requested', 'order_finalized'
 
     class Meta:
         constraints = [
