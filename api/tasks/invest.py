@@ -388,7 +388,7 @@ def rh_save_order_from_order_info(uid, order_id, deposit=None, symbol=None, cryp
 
 @retry_on_db_error
 def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False,
-              crypto=False, ignore_repeats=True, amount_factor=1):
+              crypto=False, ignore_repeats=False, amount_factor=1):
     
     import pdb; breakpoint()
 
@@ -428,10 +428,8 @@ def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False
         account_info = account_info[0]
     # improve with 'instant' stuff?
     # maybe check if enough instant or cash exists before making the deposit
-    if account_info["buying_power"] < deposit.amount \
-        and account_info["portfolio_cash"] < deposit.amount:
-        raise Exception(f"Buying power is {account_info["buying_power"]} " +\
-                        f"and portfolio cash is {account_info["portfolio_cash"]} " +\
+    if account_info["portfolio_cash"] < deposit.amount:
+        raise Exception(f"Portfolio cash is {account_info["portfolio_cash"]} " +\
                         f"but investment requires {deposit.amount}")
     
     try:
@@ -441,16 +439,18 @@ def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False
             raise e
         raise Exception(f"no userBrokerageInfo for user {uid}")
     
-    if userBrokerageInfo.symbol == "BTC" and crypto:
-        symbol = "BTCUSD"
-    
     import pdb; breakpoint()
     order = rh_order_buy_fractional_by_price(
         uid, 
-        symbol, 
+        userBrokerageInfo.symbol, 
         deposit.amount*amount_factor,
         crypto=crypto
     )
+
+    if userBrokerageInfo.symbol == "BTC" and crypto:
+        symbol = "BTCUSD"
+    else: 
+        symbol = userBrokerageInfo.symbol
 
     if not crypto:
         pending_cancel_open_agent = order["pending_cancel_open_agent"]

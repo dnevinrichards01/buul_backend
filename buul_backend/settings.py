@@ -43,7 +43,7 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 
 REST_FRAMEWORK = {
-    "EXCEPTION_HANDLER": 'accumate_backend.retry_db.custom_exception_handler',
+    "EXCEPTION_HANDLER": 'buul_backend.retry_db.custom_exception_handler',
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
