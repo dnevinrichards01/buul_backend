@@ -585,7 +585,7 @@ def get_stock_historicals(inputSymbols, interval='hour', span='week', bounds='re
     return(filter_data(histData, info))
 
 
-def get_stock_quote_by_id(stock_id, info=None):
+def get_stock_quote_by_id(session, stock_id, info=None):
     """
     Represents basic stock quote information
 
@@ -613,7 +613,7 @@ def get_stock_quote_by_id(stock_id, info=None):
                       * instrument
     """
     url = marketdata_quotes_url(stock_id)
-    data = request_get(url)
+    data = request_get(url, session)
 
     return (filter_data(data, info))
 

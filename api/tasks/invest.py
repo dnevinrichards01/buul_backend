@@ -8,18 +8,16 @@ from rest_framework.exceptions import ValidationError
 from django.db.utils import OperationalError
 from datetime import datetime, timedelta
 import json
-
+from .shared_utilities import rh_load_account_profile
 from ..jsonUtils import filter_jsons
 
 from ..models import RobinhoodStockOrder, UserBrokerageInfo, User, Investment
-from ..serializers.rh import StockOrderSerializer, RobinhoodAccountListSerializer, \
-    RobinhoodAccountSerializer, CryptoOrderSerializer
+from ..serializers.rh import StockOrderSerializer, CryptoOrderSerializer
 from .deposit import rh_update_deposit
 
 from buul_backend.retry_db import retry_on_db_error
 
 # transactions
-
 
 
 # deposit
@@ -536,37 +534,6 @@ def check_repeat_order(uid, deposit, repeat_day_range, crypto=False, amount_fact
     )
     return potential_db_repeats, potential_rh_repeats
 
-@retry_on_db_error
-def rh_load_account_profile(uid):
-
-    import pdb
-    breakpoint()
-
-    try:
-        session, userRobinhoodInfo = r.rh_create_session(uid)
-    except Exception as e:
-        if isinstance(e, OperationalError):
-            raise e
-        return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
-    result = r.load_account_profile(session)
-
-    try:
-        serializer = RobinhoodAccountListSerializer(data=result)
-        serializer.is_valid(raise_exception=True)
-        return serializer.validated_data
-    except ValidationError as e:
-        try:
-            serializer = RobinhoodAccountSerializer(data=result)
-            serializer.is_valid(raise_exception=True)
-            return serializer.validated_data
-        except Exception as e:
-            if isinstance(e, OperationalError):
-                raise e
-            return {"error": f"{str(e)}"}
-    except Exception as e:
-        if isinstance(e, OperationalError):
-            raise e
-        return {"error": f"{str(e)}"}
 
 @receiver(post_save, sender=RobinhoodStockOrder)
 @retry_on_db_error

@@ -1,7 +1,6 @@
 """Contains all functions for the purpose of logging in and out to Robinhood."""
 import getpass
 import os
-import pickle
 import random
 
 from robin_stocks.robinhood.helper import *
@@ -119,36 +118,6 @@ def save_cred(data, payload, uid, session):
 def login(session=None, uid=None, username=None, password=None, expiresIn=86400, 
           scope='internal', by_sms=True, mfa_code=None, challenge_code=None,
           device_approval=False, default_to_sms=False):
-    """This function will effectively log the user into robinhood by getting an
-    authentication token and saving it to the session header. By default, it
-    will store the authentication token in a pickle file and load that value
-    on subsequent logins.
-
-    :param username: The username for your robinhood account, usually your email.
-        Not required if credentials are already cached and valid.
-    :type username: Optional[str]
-    :param password: The password for your robinhood account. Not required if
-        credentials are already cached and valid.
-    :type password: Optional[str]
-    :param expiresIn: The time until your login session expires. This is in seconds.
-    :type expiresIn: Optional[int]
-    :param scope: Specifies the scope of the authentication.
-    :type scope: Optional[str]
-    :param by_sms: Specifies whether to send an email(False) or an sms(True)
-    :type by_sms: Optional[boolean]
-    :param store_session: Specifies whether to save the log in authorization
-        for future log ins.
-    :type store_session: Optional[boolean]
-    :param mfa_code: MFA token if enabled.
-    :type mfa_code: Optional[str]
-    :param pickle_path: Allows users to specify the path of the pickle file.
-        Accepts both relative and absolute paths.
-    :param pickle_name: Allows users to name Pickle token file in order to switch
-        between different accounts without having to re-login every time.
-    :returns:  A dictionary with log in information. The 'access_token' keyword contains the access token, and the 'detail' keyword \
-    contains information on whether the access token was generated or loaded from pickle file.
-
-    """
 
     # load or generate device token
     if challenge_code is not None or mfa_code is not None or device_approval:

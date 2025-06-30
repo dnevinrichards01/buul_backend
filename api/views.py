@@ -890,8 +890,6 @@ class PlaidItemWebhook(APIView):
 
             
             events = serializer.validated_data["events"]
-            log(Log, self, 300, "all the events",
-                    errors = {"error": len(events)})
             for event in events:
                 event_id = event.pop("event_id", None)
                 metadata = event["event_metadata"]

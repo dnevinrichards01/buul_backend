@@ -2,7 +2,6 @@
 from requests import Session
 
 DATA_DIR_NAME = ".tokens"
-PICKLE_NAME = "tda.pickle"
 RETURN_PARSED_JSON_RESPONSE = False # Flag on whether to automatically parse request responses.
 LOGGED_IN = False  # Flag on whether or not the user is logged in.
 

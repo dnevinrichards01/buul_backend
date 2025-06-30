@@ -22,7 +22,7 @@ from plaid.model.accounts_balance_get_request import AccountsBalanceGetRequest
 from plaid.model.accounts_balance_get_request_options import AccountsBalanceGetRequestOptions
 from plaid.exceptions import ApiException
 
-from api.tasks import rh_load_account_profile
+from .shared_utilities import rh_load_account_profile
 from django.db.utils import OperationalError
 
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \
@@ -433,9 +433,8 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
         account_info = account_info[0]
     if account_info["portfolio_cash"] < cashback_amount or \
         account_info["eligible_deposit_as_instant"] < cashback_amount:
-        raise Exception(f"Neither ortfolio cash is {account_info["portfolio_cash"]} or " +\
-                        f"eligible instant is {account_info["eligible_deposit_as_instant"]} " +\
-                        account_info["eligible_deposit_as_instant"]
+        raise Exception(f"Neither portfolio cash {account_info["portfolio_cash"]} or " +\
+                        f"eligible instant {account_info["eligible_deposit_as_instant"]} " +\
                         f"would allow us to immediately invest this deposit of {deposit.amount}")
 
     # make the deposit

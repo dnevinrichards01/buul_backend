@@ -92,7 +92,8 @@ def refresh_stock_data_by_interval(symbols=["VOO", "VOOG", "QQQ", "IBIT", "BTC",
             most_recent_refresh_date_rounded
         )        
     else:
-        return
+        cache.set("stock_data_refresh_complete", True)
+        return 
 
     # for each security...
     for symbol in symbols:
@@ -187,10 +188,7 @@ def get_graph_data(uid):
 
         # if mid-refresh, fetch stale data to let refresh complete. mb unnecessary
         if not cache.get("stock_data_refresh_complete"):
-            end_date = FPMUtils.round_date_down(
-                timezone.now() - relativedelta(years=5), 
-                granularity="1min"
-            )
+            return
         else:
             end_date = FPMUtils.round_date_down(
                 timezone.now(), 
