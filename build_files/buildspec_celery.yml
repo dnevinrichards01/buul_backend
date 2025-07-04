@@ -2,30 +2,34 @@ version: 0.2
 
 env:
   variables:
-    ENV_NAME: "prod" # can make ENV_NAME, REGION_LIST env vars with tf
-    REGION_LIST: "us-west-1"
+    ENV_NAME: "prod" 
+    # REGION_LIST: "us-west-1"
     IMAGE: "celery"
-    INITIAL_REGION: "us-west-1"
+    # INITIAL_REGION: "us-west-1"
 
 phases:
   pre_build:
     commands:
       - echo Logging / auth in to Amazon ECR
-      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-      - echo ${ACCOUNT_ID} > account_id.txt
+      - _ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - export ACCOUNT_ID=$(echo $_ACCOUNT_ID)
+      - DOCKER_CREDS=$(aws secretsmanager get-secret-value --secret-id codebuild/prod/DOCKER_CREDENTIALS --query SecretString --output text)
+      - export DOCKER_USERNAME=$(echo $DOCKER_CREDS | jq -r .username)
+      - export DOCKER_PASSWORD=$(echo $DOCKER_CREDS | jq -r .password)
+      - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+      - export REGION_LIST=$(aws ssm get-parameter --name "/codebuild/prod/REGION_LIST" --with-decryption --query "Parameter.Value" --output text)
+      - export INITIAL_REGION=$(aws ssm get-parameter --name "/codebuild/prod/INITIAL_REGION" --with-decryption --query "Parameter.Value" --output text)
 
   build:
     commands:
       - echo Build started
       - echo Building the ${IMAGE} docker image
-      - ACCOUNT_ID=$(cat account_id.txt)
       - docker build -t "${ACCOUNT_ID}.dkr.ecr.${INITIAL_REGION}.amazonaws.com/${ENV_NAME}-${IMAGE}:latest" -f build_files/Dockerfile.${IMAGE} .
 
   post_build:
     commands:
       - echo build completed
       - echo pushing ${IMAGE} image in to docker ECR...
-      - ACCOUNT_ID=$(cat account_id.txt)
       - |
         PREV_TAG="${ACCOUNT_ID}.dkr.ecr.${INITIAL_REGION}.amazonaws.com/${ENV_NAME}-${IMAGE}:latest"
         for REGION in ${REGION_LIST}; do
@@ -35,5 +39,4 @@ phases:
           PREV_TAG=${IMAGE_TAG}
           docker push "$IMAGE_TAG"
         done
-      - rm account_id.txt
       - echo Writing ${IMAGE} image definition file..
