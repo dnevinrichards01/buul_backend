@@ -5,6 +5,10 @@ from django.db.models import OuterRef, Subquery
 
 from api.models import StockData, UserInvestmentGraph
 
+from django.db.models import Max
+from django.db.models.functions import ExtractYear, ExtractWeek, \
+    ExtractHour, ExtractDay, ExtractMonth
+
 import requests
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -103,42 +107,117 @@ class FPMUtils:
         if interval[1] == "m":
             return
         if interval[1] == "h":
-            delta = relativedelta(months=3)
-            kwargs = {
-                "date__hour": OuterRef("date__hour"),
-                "date__date": OuterRef("date__date")
-            }
+            delta = relativedelta(days=1)
+            # kwargs = {
+            #     "date__hour": OuterRef("date__hour"),
+            #     "date__date": OuterRef("date__date")
+            # }
+            latest_stock_data_dates = (
+                StockData.objects
+                .filter(date__lte = current_date_rounded - delta)
+                .annotate(hour=ExtractHour('date'),day=ExtractDay('date'), month=ExtractMonth('date'), year=ExtractYear('date'))
+                .values('hour', 'day', 'month', 'year')
+                .annotate(latest=Max('date'))
+                .values_list('latest', flat=True)
+            )
+            latest_user_graph_dates = (
+                UserInvestmentGraph.objects
+                .filter(date__lte = current_date_rounded - delta)
+                .annotate(hour=ExtractHour('date'),day=ExtractDay('date'), month=ExtractMonth('date'), year=ExtractYear('date'))
+                .values('hour', 'day', 'month', 'year')
+                .annotate(latest=Max('date'))
+                .values_list('latest', flat=True)
+            )
         elif interval[1] == "d":
-            delta = relativedelta(years=1)
-            kwargs = {
-                "date__date": OuterRef("date__date")
-            }
+            delta = relativedelta(months=3)
+            # kwargs = {
+            #     "date__date": OuterRef("date__date")
+            # }
+            latest_stock_data_dates = (
+                StockData.objects
+                .filter(date__lte = current_date_rounded - delta)
+                .annotate(day=ExtractDay('date'), month=ExtractMonth('date'), year=ExtractYear('date'))
+                .values('day', 'month', 'year')
+                .annotate(latest=Max('date'))
+                .values_list('latest', flat=True)
+            )
+            latest_user_graph_dates = (
+                UserInvestmentGraph.objects
+                .filter(date__lte = current_date_rounded - delta)
+                .annotate(day=ExtractDay('date'), month=ExtractMonth('date'), year=ExtractYear('date'))
+                .values('day', 'month', 'year')
+                .annotate(latest=Max('date'))
+                .values_list('latest', flat=True)
+            )
         elif interval[1] == "w":
             delta = relativedelta(years=1)
-            kwargs = {
-                "date__week": OuterRef("date__week"),
-                "date__year": OuterRef("date__year")
-            }
+            # kwargs = {
+            #     "date__week": OuterRef("date__week"),
+            #     "date__year": OuterRef("date__year")
+            # }
+            latest_stock_data_dates = (
+                StockData.objects
+                .filter(date__lte = current_date_rounded - delta)
+                .annotate(week=ExtractWeek('date'), year=ExtractYear('date'))
+                .values('week', 'year')
+                .annotate(latest=Max('date'))
+                .values_list('latest', flat=True)
+            )
+            latest_user_graph_dates = (
+                UserInvestmentGraph.objects
+                .filter(date__lte = current_date_rounded - delta)
+                .annotate(week=ExtractWeek('date'), year=ExtractYear('date'))
+                .values('week', 'year')
+                .annotate(latest=Max('date'))
+                .values_list('latest', flat=True)
+            )
         elif interval[1] == "M":
             delta = relativedelta(years=5)
-            kwargs = {
-                "date__month": OuterRef("date__month"),
-                "date__year": OuterRef("date__year")
-            }
+            # kwargs = {
+            #     "date__month": OuterRef("date__month"),
+            #     "date__year": OuterRef("date__year")
+            # }
+            latest_stock_data_dates = (
+                StockData.objects
+                .filter(date__lte = current_date_rounded - delta)
+                .annotate(month=ExtractMonth('date'), year=ExtractYear('date'))
+                .values('month', 'year')
+                .annotate(latest=Max('date'))
+                .values_list('latest', flat=True)
+            )
+            latest_user_graph_dates = (
+                UserInvestmentGraph.objects
+                .filter(date__lte = current_date_rounded - delta)
+                .annotate(month=ExtractMonth('date'), year=ExtractYear('date'))
+                .values('month', 'year')
+                .annotate(latest=Max('date'))
+                .values_list('latest', flat=True)
+            )
         
-        latest_date_subquery = StockData.objects.filter(**kwargs) \
-            .order_by("-date").values("date")[:1]
-        StockData.objects \
-            .filter(date__lte = current_date_rounded - delta) \
-            .exclude(date=Subquery(latest_date_subquery)) \
-            .delete()
+        StockData.objects.filter(
+            date__lte = current_date_rounded - delta
+        ).exclude(
+            date__in = latest_stock_data_dates
+        ).delete()
+
+        UserInvestmentGraph.objects.filter(
+            date__lte = current_date_rounded - delta
+        ).exclude(
+            date__in = latest_user_graph_dates
+        ).delete()
+        # latest_date_subquery = StockData.objects.filter(**kwargs) \
+        #     .order_by("-date").values("date")[:1]
+        # StockData.objects \
+        #     .filter(date__lte = current_date_rounded - delta) \
+        #     .exclude(date=Subquery(latest_date_subquery)) \
+        #     .delete()
         
-        latest_date_subquery = UserInvestmentGraph.objects.filter(**kwargs) \
-            .order_by("-date").values("date")[:1]
-        UserInvestmentGraph.objects \
-            .filter(date__lte = current_date_rounded - delta) \
-            .exclude(date=Subquery(latest_date_subquery)) \
-            .delete()
+        # latest_date_subquery = UserInvestmentGraph.objects.filter(**kwargs) \
+        #     .order_by("-date").values("date")[:1]
+        # UserInvestmentGraph.objects \
+        #     .filter(date__lte = current_date_rounded - delta) \
+        #     .exclude(date=Subquery(latest_date_subquery)) \
+        #     .delete()
         return
        
 

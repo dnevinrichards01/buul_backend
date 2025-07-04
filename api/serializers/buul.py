@@ -63,8 +63,7 @@ class MyTokenRefreshSerializer(TokenRefreshSerializer):
             raise ValidationError("User not found")
         
         app_version = attrs.get('app_version', None)
-        if app_version != user.app_version or \
-            (app_version is not None or user.app_version != "pre_build_8"):
+        if app_version != user.app_version and app_version is not None:
             user.app_version = app_version
             user.save()
         

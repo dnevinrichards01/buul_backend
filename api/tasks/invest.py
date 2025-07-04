@@ -8,18 +8,16 @@ from rest_framework.exceptions import ValidationError
 from django.db.utils import OperationalError
 from datetime import datetime, timedelta
 import json
-
+from .shared_utilities import rh_load_account_profile
 from ..jsonUtils import filter_jsons
 
 from ..models import RobinhoodStockOrder, UserBrokerageInfo, User, Investment
-from ..serializers.rh import StockOrderSerializer, RobinhoodAccountListSerializer, \
-    RobinhoodAccountSerializer, CryptoOrderSerializer
+from ..serializers.rh import StockOrderSerializer, CryptoOrderSerializer
 from .deposit import rh_update_deposit
 
 from buul_backend.retry_db import retry_on_db_error
 
 # transactions
-
 
 
 # deposit
@@ -388,7 +386,7 @@ def rh_save_order_from_order_info(uid, order_id, deposit=None, symbol=None, cryp
 
 @retry_on_db_error
 def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False,
-              crypto=False, ignore_repeats=True, amount_factor=1):
+              crypto=False, ignore_repeats=False, amount_factor=1):
     
     import pdb; breakpoint()
 
@@ -428,10 +426,8 @@ def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False
         account_info = account_info[0]
     # improve with 'instant' stuff?
     # maybe check if enough instant or cash exists before making the deposit
-    if account_info["buying_power"] < deposit.amount \
-        and account_info["portfolio_cash"] < deposit.amount:
-        raise Exception(f"Buying power is {account_info["buying_power"]} " +\
-                        f"and portfolio cash is {account_info["portfolio_cash"]} " +\
+    if account_info["portfolio_cash"] < deposit.amount:
+        raise Exception(f"Portfolio cash is {account_info["portfolio_cash"]} " +\
                         f"but investment requires {deposit.amount}")
     
     try:
@@ -441,16 +437,18 @@ def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False
             raise e
         raise Exception(f"no userBrokerageInfo for user {uid}")
     
-    if userBrokerageInfo.symbol == "BTC" and crypto:
-        symbol = "BTCUSD"
-    
     import pdb; breakpoint()
     order = rh_order_buy_fractional_by_price(
         uid, 
-        symbol, 
+        userBrokerageInfo.symbol, 
         deposit.amount*amount_factor,
         crypto=crypto
     )
+
+    if userBrokerageInfo.symbol == "BTC" and crypto:
+        symbol = "BTCUSD"
+    else: 
+        symbol = userBrokerageInfo.symbol
 
     if not crypto:
         pending_cancel_open_agent = order["pending_cancel_open_agent"]
@@ -536,37 +534,6 @@ def check_repeat_order(uid, deposit, repeat_day_range, crypto=False, amount_fact
     )
     return potential_db_repeats, potential_rh_repeats
 
-@retry_on_db_error
-def rh_load_account_profile(uid):
-
-    import pdb
-    breakpoint()
-
-    try:
-        session, userRobinhoodInfo = r.rh_create_session(uid)
-    except Exception as e:
-        if isinstance(e, OperationalError):
-            raise e
-        return {"error": f"could not find userRobinhoodInfo object for that {uid}"}
-    result = r.load_account_profile(session)
-
-    try:
-        serializer = RobinhoodAccountListSerializer(data=result)
-        serializer.is_valid(raise_exception=True)
-        return serializer.validated_data
-    except ValidationError as e:
-        try:
-            serializer = RobinhoodAccountSerializer(data=result)
-            serializer.is_valid(raise_exception=True)
-            return serializer.validated_data
-        except Exception as e:
-            if isinstance(e, OperationalError):
-                raise e
-            return {"error": f"{str(e)}"}
-    except Exception as e:
-        if isinstance(e, OperationalError):
-            raise e
-        return {"error": f"{str(e)}"}
 
 @receiver(post_save, sender=RobinhoodStockOrder)
 @retry_on_db_error

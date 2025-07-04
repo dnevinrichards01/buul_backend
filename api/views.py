@@ -69,8 +69,7 @@ class MyTokenObtainPairView(TokenObtainPairView):
 
             user = serializer.validated_data['user']
             app_version = serializer.validated_data.get('app_version', None)
-            if app_version != user.app_version or \
-                (app_version is not None or user.app_version != "pre_build_8"):
+            if app_version != user.app_version and app_version is not None:
                 user.app_version = app_version
                 user.save()
             refresh = RefreshToken.for_user(user)
@@ -891,8 +890,6 @@ class PlaidItemWebhook(APIView):
 
             
             events = serializer.validated_data["events"]
-            log(Log, self, 300, "all the events",
-                    errors = {"error": len(events)})
             for event in events:
                 event_id = event.pop("event_id", None)
                 metadata = event["event_metadata"]

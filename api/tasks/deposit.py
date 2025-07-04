@@ -22,6 +22,7 @@ from plaid.model.accounts_balance_get_request import AccountsBalanceGetRequest
 from plaid.model.accounts_balance_get_request_options import AccountsBalanceGetRequestOptions
 from plaid.exceptions import ApiException
 
+from .shared_utilities import rh_load_account_profile
 from django.db.utils import OperationalError
 
 from ..models import PlaidItem, User, PlaidCashbackTransaction, \
@@ -32,6 +33,7 @@ from ..serializers.plaid.balance import \
     BalanceGetResponseSerializer, AccountsGetResponseSerializer
 
 from buul_backend.retry_db import retry_on_db_error
+
 
 # plaid balance
 
@@ -139,7 +141,7 @@ def plaid_balance_get_process(uid, item_id=None, account_ids_by_item_id={}, eq={
     if use_balance:
         balance_get = plaid_balance_get(uid, item_id=None, account_ids_by_item_id={})
     else:
-        balance_get = plaid_accounts_get(uid, item_id=None, account_ids_by_item_id={})
+        balance_get = plaid_accounts_get(uid, item_id=None, balance_ids_by_item_id={})
     balance_processed = process_plaid_balance(balance_get, eq=eq, gt=gt, lt=lt, lte=lte, 
                                               gte=gte, metric_to_return_by=None)
     return balance_processed
@@ -205,6 +207,13 @@ def comparator(account1, account2):
     elif not account1["is_cashback_source"] and account2["is_cashback_source"]:
         return 1
     
+    if plaid1["balances"] is not None and plaid2["balances"] is None:
+        return -1
+    elif plaid2["balances"] is not None and plaid1["balances"] is None:
+        return 1
+    elif plaid1["balances"] is None and plaid2["balances"] is None:
+        return -1
+
     if plaid1["balances"]["available"] > plaid2["balances"]["available"]:
         return -1
     elif plaid1["balances"]["available"] < plaid2["balances"]["available"]:
@@ -234,22 +243,27 @@ def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_acc
             if plaid_account["balances"]["iso_currency_code"] != "USD":
                 raise Exception("not USD")
             # if we find an account both in plaid and in rh, add to candidate list
-            if plaid_account["balances"]["available"] is not None and \
-                plaid_account["balances"]["available"] >= amount:
-                if not brokerage_plaid_match_required or \
-                    plaid_account["mask"] == rh_account["bank_account_number"]:
-                    if not brokerage_plaid_match_required:
-                        plaid_account_copy = plaid_account.copy()
-                        for key in plaid_account_copy:
-                            plaid_account_copy[key] = None
-                        plaid_account = plaid_account_copy
-                    match = {
-                        "rh_account": rh_account,
-                        "plaid_account": plaid_account,
-                        "is_previous_choice": plaid_account["account_id"] == latest_deposit_account_id,
-                        "is_cashback_source": plaid_account["account_id"] in cashback_account_ids
-                    }
-                    candidate_accounts[plaid_account["mask"]] = match
+            balance_exists = plaid_account["balances"]["available"] is not None
+            current_exists = plaid_account["balances"]["current"] is not None
+            limit_exists = plaid_account["balances"]["limit"] is not None
+            matching = plaid_account["mask"] == rh_account["bank_account_number"]
+            if plaid_account["type"] == "credit" and not balance_exists and \
+                current_exists and limit_exists:
+                plaid_account["balances"]["available"] = plaid_account["balances"]["limit"] - plaid_account["balances"]["current"]
+                balance_exists = True
+            if matching and balance_exists and plaid_account["balances"]["available"] >= amount:
+                matching_plaid_account = plaid_account
+            elif not brokerage_plaid_match_required:
+                matching_plaid_account = {k: None for k in plaid_account}
+            else:
+                continue
+            match = {
+                "rh_account": rh_account,
+                "plaid_account": matching_plaid_account,
+                "is_previous_choice": matching_plaid_account["account_id"] == latest_deposit_account_id,
+                "is_cashback_source": matching_plaid_account["account_id"] in cashback_account_ids
+            }
+            candidate_accounts[plaid_account["mask"]] = match
     if len(candidate_accounts) == 0:
         raise Exception("no matching accounts")
     
@@ -259,9 +273,6 @@ def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_acc
     deposit_account = matching_accounts_list[0]
     return deposit_account["rh_account"], deposit_account["plaid_account"]
 
-# cashbacks = PlaidCashbackTransaction.objects.filter(user__id=uid, deposit=None)
-
-# check for repeats or overdrafting
 
 @shared_task(name="rh_get_bank_transfers")
 @retry_on_db_error
@@ -411,6 +422,21 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
         brokerage_plaid_match_required = not ignore_overdraft_protection and overdraft_protection
     )
 
+    # check if enough cash 
+    account_info = rh_load_account_profile(uid)
+    import pdb; breakpoint()
+    if "error" in account_info:
+        return account_info
+    elif isinstance(account_info, list):
+        if len(account_info) != 1:
+            raise Exception(f"we found {len(account_info)} accounts for this user")
+        account_info = account_info[0]
+    if account_info["portfolio_cash"] < cashback_amount or \
+        account_info["eligible_deposit_as_instant"] < cashback_amount:
+        raise Exception(f"Neither portfolio cash {account_info["portfolio_cash"]} or " +\
+                        f"eligible instant {account_info["eligible_deposit_as_instant"]} " +\
+                        f"would allow us to immediately invest this deposit of {deposit.amount}")
+
     # make the deposit
     deposit = rh_deposit_funds_to_robinhood_account(
         uid, rh_account["url"], cashback_amount, 
@@ -544,7 +570,6 @@ def group_cashback_transactions(uid, grouped=True, group_size=50):
         return grouped_transactions
     else:
         return [transaction for transaction in to_deposit]
-
 
 @receiver(post_save, sender=RobinhoodDeposit)
 @retry_on_db_error

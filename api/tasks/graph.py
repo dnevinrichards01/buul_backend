@@ -11,10 +11,53 @@ from api.apis.fmp import fpm_client, FPMUtils
 
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from django.utils.timezone import make_aware, get_default_timezone
 from zoneinfo import ZoneInfo
 import json
 
 from buul_backend.retry_db import retry_on_db_error
+
+def fill_in_null_graph_values(symbols, start_date_rounded):
+    for symbol in symbols:
+
+        null_prices = StockData.objects.filter(**{
+            f"{symbol}__isnull": True,
+            "date__gte": start_date_rounded
+        }).order_by('date')
+        if null_prices.exists():
+            most_recent_prices = null_prices.annotate(
+                prev_price = Subquery((
+                    StockData.objects.filter(**{
+                        f"{symbol}__isnull": False,
+                        "date__lte": OuterRef("date")
+                    })
+                    .order_by("-date")
+                    .values(symbol)[:1]
+                ))
+            )
+            for item in most_recent_prices:
+                item[symbol] = item.prev_price
+            StockData.objects.bulk_update(most_recent_prices, [symbol])
+
+
+        null_prices = StockData.objects.filter(**{
+            f"{symbol}__isnull": True,
+            "date__gte": start_date_rounded
+        }).order_by('date')
+        if null_prices.exists():
+            prices_immediately_after = null_prices.annotate(
+                price_immediately_after = Subquery((
+                    StockData.objects.filter(**{
+                        f"{symbol}__isnull": False,
+                        "date__gte": OuterRef("date")
+                    })
+                    .order_by("date")
+                    .values(symbol)[:1]
+                ))
+            )
+            for item in prices_immediately_after:
+                item[symbol] = item.price_immediately_after
+            StockData.objects.bulk_update(prices_immediately_after, [symbol])
 
 @shared_task(name="refresh_stock_data_by_interval")
 @retry_on_db_error
@@ -23,41 +66,34 @@ def refresh_stock_data_by_interval(symbols=["VOO", "VOOG", "QQQ", "IBIT", "BTC",
     # import pdb
     # breakpoint()
 
-    curr_minute_rounded = FPMUtils.round_date_down(
-            timezone.now(), 
-            granularity="1m"
-        )
+    cache.set("stock_data_refresh_complete", False)
 
-    # decide whether to refresh, and when to refresh from
-    most_recent_refresh_date_query = StockData.objects.all()
+    # get current date and most recent refresh date
+    most_recent_refresh_date_query = StockData.objects.all().order_by("-date")
     if not refresh_all and most_recent_refresh_date_query.exists():
-        most_recent_refresh_date = most_recent_refresh_date_query\
-            .order_by("-date").first().date
+        most_recent_refresh_date = most_recent_refresh_date_query.first().date
         most_recent_refresh_date_rounded = FPMUtils.round_date_down(
             most_recent_refresh_date.replace(tzinfo=ZoneInfo("UTC")), 
             granularity=interval
         )
-        curr_date_rounded = FPMUtils.round_date_down(
-            timezone.now(), 
-            granularity=interval
-        )
-        # if current date is more recent than last refresh, then must refresh
-        if curr_date_rounded > most_recent_refresh_date_rounded:
-            oldest_queryable_data = curr_date_rounded - FPMUtils.get_maximum_range(interval)
-            # refresh from most recent refresh date. 
-            # if that is too far in the past, refresh from oldest possible date
-            start_date_rounded = max(
-                oldest_queryable_data, 
-                most_recent_refresh_date_rounded
-            )
-        else:
-            return 
     else:
-        # if this is our first time
-        start_date_rounded = FPMUtils.round_date_down(
-            timezone.now() - relativedelta(years=5), 
-            granularity=interval
-        )
+        most_recent_refresh_date_rounded = make_aware(datetime(1900, 1, 1), get_default_timezone())
+    curr_date_rounded = FPMUtils.round_date_down(
+        timezone.now(), 
+        granularity=interval
+    )
+    
+    # if current date is more recent than last refresh, then must refresh
+    if curr_date_rounded > most_recent_refresh_date_rounded:
+        oldest_queryable_data = curr_date_rounded - FPMUtils.get_maximum_range(interval)
+        # if that is too far in the past, refresh from oldest possible date
+        start_date_rounded = max(
+            oldest_queryable_data, 
+            most_recent_refresh_date_rounded
+        )        
+    else:
+        cache.set("stock_data_refresh_complete", True)
+        return 
 
     # for each security...
     for symbol in symbols:
@@ -79,72 +115,10 @@ def refresh_stock_data_by_interval(symbols=["VOO", "VOOG", "QQQ", "IBIT", "BTC",
                 stockData[symbol] = item_price 
                 stockData.save()
 
-    # for symbol in symbols:
+    fill_in_null_graph_values(symbols, start_date_rounded)
 
-        null_prices = StockData.objects.filter(**{
-            f"{symbol}__isnull": True,
-            "date__gte": start_date_rounded
-        })
-        if null_prices.exists():
-            most_recent_prices = null_prices.annotate(
-                prev_price = Subquery((
-                    StockData.objects.filter(**{
-                        f"{symbol}__isnull": False,
-                        "date__lte": OuterRef("date")
-                    })
-                    .order_by("-date")
-                    .values(symbol)[:1]
-                ))
-            )
-            for item in most_recent_prices:
-                item[symbol] = item.prev_price
-            StockData.objects.bulk_update(most_recent_prices, [symbol])
-
-
-        null_prices = StockData.objects.filter(**{
-            f"{symbol}__isnull": True,
-            "date__gte": start_date_rounded
-        })
-        if null_prices.exists():
-            prices_immediately_after = null_prices.annotate(
-                price_immediately_after = Subquery((
-                    StockData.objects.filter(**{
-                        f"{symbol}__isnull": False,
-                        "date__gte": OuterRef("date")
-                    })
-                    .order_by("date")
-                    .values(symbol)[:1]
-                ))
-            )
-            for item in prices_immediately_after:
-                item[symbol] = item.price_immediately_after
-            StockData.objects.bulk_update(prices_immediately_after, [symbol])
-
-        # if interval == "1m":
-        #     time_gap_query = StockData.objects.filter(
-        #         date__gte=curr_minute_rounded-relativedelta(hours=24))\
-        #         .annotate(**{
-        #             "next_date": Window(
-        #                 expression=Lead('date'),
-        #                 order_by=F('date').asc()
-        #             ),
-        #             "time_gap": ExpressionWrapper(
-        #                 F('next_date') - F('date'),
-        #                 output_field=DurationField()
-        #             )
-        #         }) \
-        #         .filter(time_gap__gt=relativedelta(minutes=1))
-        #     for item in time_gap_query:
-        #         created = True
-        #         item_date = item.date + relativedelta(minutes=1)
-        #         while created and item_date < item.next_date:
-        #             stockData, created = StockData.objects.get_or_create(
-        #                 date = item_date,
-        #                 defaults={symbol: item[symbol]}
-        #             )
-        #             item_date += relativedelta(minutes=1)
-
-    return "done"
+    cache.set("stock_data_refresh_complete", True)
+    return
 
 @retry_on_db_error
 def refresh_stock_data_all():
@@ -211,9 +185,19 @@ def get_graph_data(uid):
             .order_by("-date")
             .values("cumulative_quantities")[:1]
         )
+
+        # if mid-refresh, fetch stale data to let refresh complete. mb unnecessary
+        if not cache.get("stock_data_refresh_complete"):
+            return
+        else:
+            end_date = FPMUtils.round_date_down(
+                timezone.now(), 
+                granularity="1min"
+            )
+
         # Annotate Investment with the JSON-aggregated cumulative quantities
         queryset = StockData.objects \
-            .filter(date__gte=start_date) \
+            .filter(date__gte=start_date, date__lte=end_date) \
             .annotate(
                 cumulative_quantities=Subquery(cumulative_quantity_subquery)
             )
@@ -223,13 +207,18 @@ def get_graph_data(uid):
         for stockData in queryset:
             quantities = stockData.cumulative_quantities or {}
             price = 0
+            null_stock_price = False
             for symbol in quantities:
+                if stockData[symbol] is None:
+                    null_stock_price = True
+                    break
                 price += stockData[symbol] * (quantities[symbol] or 0)
-            userInvestmentGraph, created = UserInvestmentGraph.objects.get_or_create(
-                user = user,
-                date = stockData.date,
-                defaults = {'value': price}
-            )
+            if not null_stock_price:
+                userInvestmentGraph, created = UserInvestmentGraph.objects.get_or_create(
+                    user = user,
+                    date = stockData.date,
+                    defaults = {'value': price}
+                )
             if created:
                 userInvestmentGraph.save()
         
