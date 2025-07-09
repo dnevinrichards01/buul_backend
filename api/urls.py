@@ -20,6 +20,7 @@ urlpatterns = [
     path('user/getstockgraphdata/', views.StockGraphData.as_view(), name='get_stock_graph_data'),
     path('user/getspendingrecommendations/', views.GetSpendingRecommendations.as_view(), name='get_spending_recommendations'),
     path('user/getplaiditems/', views.GetPlaidItems.as_view(), name='get_plaid_items'),
+    path('user/getuserinvestmentinfo/', views.GetUserInvestmentsInfo.as_view(), name='get_user_investment_info'),
 
     # update info
     path('user/resetpassword/', views.ResetPassword.as_view(), name='reset_password'),

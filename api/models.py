@@ -378,6 +378,12 @@ class LogAnonInvestment(models.Model):
     buy = models.BooleanField()
 
 class Investment(models.Model):
+    _id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=True,
+        unique=True
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     rh = models.OneToOneField(RobinhoodStockOrder, on_delete=models.CASCADE, null=True, default=None)
     symbol = models.CharField(max_length=255, null=True, default=None)
@@ -439,3 +445,11 @@ class PlaidLinkWebhook(models.Model):
         indexes = [
             models.Index(fields=['user', 'link_session_id', 'event_id'])
         ]
+
+
+class UserInvestmentGoal(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField()
+    icon = models.CharField()
+    amount = models.FloatField()
+    inflation = models.FloatField(default=False)

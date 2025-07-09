@@ -1,11 +1,13 @@
 # from django.contrib.auth.models import User
 from .models import User, WaitlistEmail, PlaidUser, UserBrokerageInfo, PlaidItem, \
-    UserInvestmentGraph, Log, PlaidPersonalFinanceCategories, PlaidLinkWebhook
+    UserInvestmentGraph, Log, PlaidPersonalFinanceCategories, PlaidLinkWebhook, \
+    Investment, UserInvestmentGoal
 from rest_framework.views import APIView
 from .serializers.buul import WaitlistEmailSerializer, \
     UserBrokerageInfoSerializer, NamePasswordValidationSerializer, \
     VerificationCodeResponseSerializer, VerificationCodeRequestSerializer, SendEmailSerializer, \
-    DeleteAccountVerifySerializer, MyTokenRefreshSerializer, RequestLinkTokenSerializer
+    DeleteAccountVerifySerializer, MyTokenRefreshSerializer, RequestLinkTokenSerializer, \
+    GetUserInvestmentsSerializer
 from .serializers.buul import UserSerializer, \
     WaitlistEmailSerializer, GraphDataRequestSerializer
 from .serializers.plaid.item import ItemPublicTokenExchangeRequestSerializer
@@ -17,7 +19,7 @@ from .serializers.plaid.webhook import \
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from django.db.models import Case, When, Value, CharField, F, Func
 from django.http import JsonResponse
 from rest_framework.exceptions import ValidationError
 from django.core.cache import cache
@@ -31,7 +33,7 @@ from .tasks.graph import refresh_stock_data_by_interval, get_graph_data
 from .tasks.identify import update_transactions
 from .tasks.deposit import match_brokerage_plaid_accounts
 from robin_stocks.models import UserRobinhoodInfo
-
+import math
 import secrets 
 
 from django.db.utils import OperationalError
@@ -1018,6 +1020,72 @@ class GetUserInfo(APIView):
                 "overdraft_protection": overdraft_protection,
                 "brokerage_completed": brokerage_completed,
                 "link_completed": PlaidItem.objects.filter(user=user).exists()
+            }, 
+            status = status
+        )
+
+class GetUserInvestmentsInfo(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = self.request.user        
+        serializer = GetUserInvestmentsSerializer(data=request.data)
+        validation_error_response = validate(
+            Log, serializer, self,
+            fields_to_fail = ["page", "goals", "non_field_errors"]
+        )
+        if validation_error_response:
+            return validation_error_response
+        
+        page = serializer.validated_data.get("page", None)
+        goals = serializer.validated_data.get("goals", False)
+
+        investments = None
+        start_index = None
+        count = None
+        if page is not None:
+            investments_all = Investment.objects.filter(
+                user=user, 
+                rh__executed_amount__gt=0
+            )
+            count = investments_all.count()
+            start_index = min((count//10)*10, page*10)
+            investments_query = investments_all\
+                .order_by("-date")\
+                .annotate(
+                    _symbol=Case(
+                        When(symbol="BTC", then=Value("BTC ETF")),
+                        When(symbol="btcusd", then=Value("BTC")),
+                        default=F("symbol"),
+                        output_field=CharField()
+                    ),
+                    _date=Func(
+                        F("date"),
+                        function="to_char",
+                        template="to_char(%(expressions)s AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"+00:00\"')",
+                        output_field=CharField()
+                    ),
+                    amount=F("rh__executed_amount")
+                )\
+                [start_index:start_index+10]\
+                .values("_symbol", "quantity", "amount", "_date", "_id")
+            investments = list(investments_query)
+        
+        goals = None
+        if goals:
+            goals = list(UserInvestmentGoal.objects.filter(user=user).values())
+        
+        status = 200
+        log(Log, self, status, LogState.SUCCESS)
+        return JsonResponse(
+            {
+                "success": { 
+                    "investments": investments,
+                    "page": None if count is None else start_index//10,
+                    "max_pages": None if count is None else max(1, math.ceil(count/10)),
+                    "goals": goals
+                },
+                "error": None
             }, 
             status = status
         )

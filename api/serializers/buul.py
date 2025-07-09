@@ -213,6 +213,9 @@ class SendEmailSerializer(serializers.Serializer):
         attrs['email'] = attrs['email'].lower()
         return attrs
 
+class GetUserInvestmentsSerializer(serializers.Serializer):
+    page = serializers.IntegerField(required=False, allow_null=True)
+    goals = serializers.BooleanField(required=False, allow_null=True)
 
 class DeleteAccountVerifySerializer(serializers.Serializer):
     code = serializers.RegexField(
