@@ -431,11 +431,19 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
         if len(account_info) != 1:
             raise Exception(f"we found {len(account_info)} accounts for this user")
         account_info = account_info[0]
-    if account_info["portfolio_cash"] < cashback_amount or \
-        account_info["eligible_deposit_as_instant"] < cashback_amount:
-        raise Exception(f"Neither portfolio cash {account_info["portfolio_cash"]} or " +\
-                        f"eligible instant {account_info["eligible_deposit_as_instant"]} " +\
-                        f"would allow us to immediately invest this deposit of {deposit.amount}")
+    if account_info["portfolio_cash"] < cashback_amount:
+        if account_info.get("margin_balances", None) is not None:
+            if account_info["margin_balances"]["eligible_deposit_as_instant"] < cashback_amount:
+                raise Exception(f"Neither portfolio cash {account_info["portfolio_cash"]} or " +\
+                            f"eligible instant {account_info["margin_balances"]["eligible_deposit_as_instant"]} " +\
+                            f"would allow us to immediately invest this deposit of {deposit.amount}")
+        elif account_info.get("cash_balances", None) is not None:
+            if account_info["cash_balances"]["eligible_deposit_as_instant"] < cashback_amount:
+                raise Exception(f"Neither portfolio cash {account_info["portfolio_cash"]} or " +\
+                            f"eligible instant {account_info["cash_balances"]["eligible_deposit_as_instant"]} " +\
+                            f"would allow us to immediately invest this deposit of {deposit.amount}")
+        else:
+            raise Exception("unexpected account info format")
 
     # make the deposit
     deposit = rh_deposit_funds_to_robinhood_account(

@@ -143,7 +143,7 @@ class MarginBalancesSerializer(serializers.Serializer):
     cash_held_for_restrictions = serializers.CharField()
     cash_held_for_options_collateral = serializers.CharField()
     cash_held_for_orders = serializers.CharField()
-    eligible_deposit_as_instant = serializers.CharField()
+    eligible_deposit_as_instant = serializers.FloatField()
     instant_used = serializers.CharField()
     outstanding_interest = serializers.CharField()
     pending_debit_card_debits = serializers.CharField()
@@ -177,6 +177,10 @@ class MarginBalancesSerializer(serializers.Serializer):
     is_primary_account = serializers.BooleanField()
     is_pdt_forever = serializers.BooleanField()
 
+class CashBalancesSerializer(serializers.Serializer):
+    eligible_deposit_as_instant = serializers.FloatField() # 
+    instant_used = serializers.FloatField()
+
 class RobinhoodAccountSerializer(serializers.Serializer):
     url = serializers.URLField()
     portfolio_cash = serializers.FloatField() # this one
@@ -192,14 +196,14 @@ class RobinhoodAccountSerializer(serializers.Serializer):
     amount_eligible_for_deposit_cancellation = serializers.CharField()
     cash_held_for_orders = serializers.CharField()
     uncleared_deposits = serializers.CharField()
-    sma = serializers.CharField()
-    sma_held_for_orders = serializers.CharField()
+    sma = serializers.CharField(allow_null=True) #
+    sma_held_for_orders = serializers.CharField(allow_null=True) #
     unsettled_funds = serializers.CharField()
     unsettled_debit = serializers.CharField()
     crypto_buying_power = serializers.CharField()
     max_ach_early_access_amount = serializers.CharField()
-    cash_balances = serializers.CharField(allow_null=True)
-    margin_balances = MarginBalancesSerializer()
+    cash_balances = CashBalancesSerializer(allow_null=True) #
+    margin_balances = MarginBalancesSerializer(allow_null=True) #
 
 class RobinhoodAccountListSerializer(serializers.Serializer):
     next = serializers.CharField(allow_null=True)

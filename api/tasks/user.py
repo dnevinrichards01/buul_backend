@@ -386,7 +386,7 @@ def plaid_user_remove(uid, code):
         #     timeout=120
         # )
         # return f"cached plaid user remove success"
-        True
+        return True
     
     exchange_request = UserRemoveRequest(
         user_token = plaidUser.userToken

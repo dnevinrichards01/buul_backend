@@ -301,6 +301,7 @@ def rh_find_stock_orders_custom(uid, eq={}, lt={}, gt={}, lte={}, gte={},
 
 # invest based on a deposit / cashback
 
+# make so you can input an investment object here too...
 @retry_on_db_error
 def rh_save_order_from_order_info(uid, order_id, deposit=None, symbol=None, crypto=False):
     import pdb; breakpoint()
