@@ -7,7 +7,7 @@ from ..models import User, StockData, Investment, UserInvestmentGraph
 
 from django.db.models import OuterRef, Subquery
 
-from api.apis.fmp import fpm_client, FPMUtils
+from api.apis.yf import yf_client, FPMUtils
 
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -40,24 +40,24 @@ def fill_in_null_graph_values(symbols, start_date_rounded):
             StockData.objects.bulk_update(most_recent_prices, [symbol])
 
 
-        null_prices = StockData.objects.filter(**{
-            f"{symbol}__isnull": True,
-            "date__gte": start_date_rounded
-        }).order_by('date')
-        if null_prices.exists():
-            prices_immediately_after = null_prices.annotate(
-                price_immediately_after = Subquery((
-                    StockData.objects.filter(**{
-                        f"{symbol}__isnull": False,
-                        "date__gte": OuterRef("date")
-                    })
-                    .order_by("date")
-                    .values(symbol)[:1]
-                ))
-            )
-            for item in prices_immediately_after:
-                item[symbol] = item.price_immediately_after
-            StockData.objects.bulk_update(prices_immediately_after, [symbol])
+        # null_prices = StockData.objects.filter(**{
+        #     f"{symbol}__isnull": True,
+        #     "date__gte": start_date_rounded
+        # }).order_by('date')
+        # if null_prices.exists():
+        #     prices_immediately_after = null_prices.annotate(
+        #         price_immediately_after = Subquery((
+        #             StockData.objects.filter(**{
+        #                 f"{symbol}__isnull": False,
+        #                 "date__gte": OuterRef("date")
+        #             })
+        #             .order_by("date")
+        #             .values(symbol)[:1]
+        #         ))
+        #     )
+        #     for item in prices_immediately_after:
+        #         item[symbol] = item.price_immediately_after
+        #     StockData.objects.bulk_update(prices_immediately_after, [symbol])
 
 @shared_task(name="refresh_stock_data_by_interval")
 @retry_on_db_error
@@ -98,7 +98,7 @@ def refresh_stock_data_by_interval(symbols=["VOO", "VOOG", "QQQ", "IBIT", "BTC",
     # for each security...
     for symbol in symbols:
         # fetch data...
-        response = fpm_client.get_historical(symbol, start_date_rounded, 
+        response = yf_client.get_historical(symbol, start_date_rounded, 
                                             timezone.now(), interval)
         # and save it to db
         for item in response:
@@ -141,8 +141,8 @@ def delete_non_closing_times():
 @retry_on_db_error
 def get_graph_data(uid):
     try:
-        # import pdb 
-        # breakpoint()
+        import pdb 
+        breakpoint()
 
         user = User.objects.get(id=uid)
 

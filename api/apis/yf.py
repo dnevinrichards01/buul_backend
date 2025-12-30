@@ -15,6 +15,9 @@ from dateutil.relativedelta import relativedelta
 from zoneinfo import ZoneInfo
 import json
 
+import yfinance as yf
+import pandas as pd
+from typing import Any, Dict, List, Optional
 
 class FPMUtils:
     interval_char_to_str = {
@@ -94,6 +97,12 @@ class FPMUtils:
     
     @classmethod
     def no_timezone_to_with_timezone(cls, date_str, interval):
+        # yf uses utc by default:
+        dt = datetime.fromisoformat(date_str)
+        if dt.tzinfo is None:
+            return dt.astimezone(ZoneInfo("UTC"))
+        return dt
+
         if interval[1] in ["m", "h"]:
             naive_dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S") 
         else:
@@ -221,67 +230,38 @@ class FPMUtils:
         return
        
 
-class FPMClient:
-    root_url = "https://financialmodelingprep.com/stable/"
+class YFClient:
     possible_intervals = ["1min", "5min", "15min", "30min", "1hour", "4hour"]
-    
-
-    def __init__(self, key):
-        self.key = key
+    _allowed = {"1m", "5m", "15m", "30m", "1h", "1d", "1M"}
 
     def get_historical(self, symbol, start, end, interval):
-        
-        if interval[1] in ["m", "h"]:
-            return self.get_intra_day(symbol, start, end, interval)
-        elif interval[1] in ["d", "M"]:
-            return self.get_eod(symbol, start, end)
-        else: 
-           interval_formatted = interval
-        if not interval_formatted in self.possible_intervals:
-            raise ValueError(f"interval must be in {self.possible_intervals}")
-    
-    def get_intra_day(self, symbol, start, end, interval):
-        if interval[1] == "m":
-            interval_formatted = f"{interval[0]}min"
-        elif interval[1] == "h":
-            interval_formatted = f"{interval[0]}hour"
-        else: 
-            interval_formatted = interval
-        if not interval_formatted in self.possible_intervals:
-            raise ValueError(f"interval must be in {["m", "h"]}")
-        
-        response = requests.get(
-            self.root_url + f"historical-chart/{interval_formatted}",
-            params={
-                "from": start.strftime("%Y-%m-%d"),
-                "to": end.strftime("%Y-%m-%d"),
-                "apikey": self.key,
-                "nonadjusted": False,
-                "symbol": symbol
-            }
+        if interval not in self._allowed:
+            raise ValueError(f"interval must be one of {sorted(self._allowed)}")
+        yf_interval = self._to_yf_interval(interval)
+        df = yf.download(
+            tickers=symbol if symbol != "BTCUSD" else "BTC-USD",
+            start=start,
+            end=end,
+            interval=yf_interval,
+            auto_adjust=True,
+            progress=False,
+            group_by="column",
+            threads=True,
         )
-        if response.status_code < 200 or response.status_code > 299:
-            raise ConnectionError(f"fpm response has status code {response.status_code}: {response.content}")
-        return json.loads(response.content.decode("utf-8"))
-
-    def get_eod(self, symbol, start, end):
-        response = requests.get(
-            self.root_url + f"historical-price-eod/full",
-            params={
-                "from": start.strftime("%Y-%m-%d"),
-                "to": end.strftime("%Y-%m-%d"),
-                "apikey": self.key,
-                "symbol": symbol
+        close_series = df["Close"]
+        close_series = close_series.dropna()
+        return [
+            {
+                "date": ts.isoformat(),
+                "close": float(close_series.loc[ts].iloc[0])
             }
-        )
-        if response.status_code < 200 or response.status_code > 299:
-            raise ConnectionError(f"fpm response has status code {response.status_code}: {response.content}")
-        return json.loads(response.content.decode("utf-8"))
+            for ts in close_series.index
+        ]
 
-   
-
-
-
+    def _to_yf_interval(self, interval: str):
+        if interval == "1M":
+            return "1mo"
+        return interval
 
 
-fpm_client = FPMClient(FMP_KEY)
+yf_client = YFClient()

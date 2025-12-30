@@ -31,8 +31,8 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 LOAD_BALANCER_ENDPOINT = env("LOAD_BALANCER_ENDPOINT", default="")
 
 EMAIL_HOST = "smtp.gmail.com"
-EMAIL_HOST_USER = "notifications@bu-ul.com"
-EMAIL_HOST_PASSWORD = "izyaqueugqtaiiwh"
+EMAIL_HOST_USER = "nevintesting00@gmail.com"
+EMAIL_HOST_PASSWORD = "ucdhwygmbntbrkni"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

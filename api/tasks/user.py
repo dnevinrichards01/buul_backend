@@ -508,92 +508,117 @@ def buul_user_remove(results_from_dependencies, uid, code, ignore_dependencies=F
 
 # send notifications
 
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
+
+def send_email(subject: str, to_email: str, text_body: str, html_body: str | None = None):
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[to_email],
+    )
+    if html_body:
+        msg.attach_alternative(html_body, "text/html")
+    msg.send(fail_silently=False)
+
 @shared_task(name="send_verification_code")
 @retry_on_db_error
 def send_verification_code(**kwargs):
-    if kwargs["useEmail"]:
-        message = Mail(
-            from_email=NOTIFICATIONS_EMAIL,
-            to_emails=kwargs["sendTo"],
-            subject="Buul verification code",
-            html_content=f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}.\nIf you didn't request this code, please ignore this email.",
-        )
-        try:
-            response = sendgrid_client.send(message)
-            return response.status_code
-        except Exception as e:
-            if isinstance(e, OperationalError):
-                raise e
-            return f"error: {str(e)}"
-        # send_mail(
-        #     "Buul verification code",
-        #     f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}.\nIf you didn't request this code, please ignore this email.",
-        #     "buul-verify@buulwealth.com",
-        #     [kwargs["sendTo"]],
-        #     fail_silently=False,
-        # )
-    else:
+    if not kwargs.get("useEmail"):
         return
-        # twilio_client.messages.create(
-        #     to = kwargs["sendTo"],
-        #     from_ = TWILIO_PHONE_NUMBER,
-        #     body = f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}"
-        # )
+
+    code = kwargs["code"]
+    to_email = kwargs["sendTo"]
+
+    subject = "Buul verification code"
+
+    text_body = (
+        f"Enter this code in the Buul app to verify your identity: {code}.\n\n"
+        "If you didn't request this code, please ignore this email."
+    )
+
+    html_body = (
+        f"<p>Enter this code in the Buul app to verify your identity:</p>"
+        f"<h2>{code}</h2>"
+        "<p>If you didn't request this code, please ignore this email.</p>"
+    )
+
+    try:
+        send_email(subject, to_email, text_body, html_body)
+        return 200
+    except Exception as e:
+        if isinstance(e, OperationalError):
+            raise
+        return f"error: {str(e)}"
+
 
 @shared_task(name="send_forgot_email")
 @retry_on_db_error
 def send_forgot_email(**kwargs):
-    if kwargs["useEmail"]:
-        message = Mail(
-            from_email=NOTIFICATIONS_EMAIL,
-            to_emails=kwargs["sendTo"],
-            subject="Buul Email Verification",
-            html_content=f"We were asked to send an email to this address to remind you that " + \
-                "you have an Buul account registered with this email. \nIf you " + \
-                "didn't request this email, please ignore this.",
-        )
-        try:
-            response = sendgrid_client.send(message)
-            return response.status_code
-        except Exception as e:
-            if isinstance(e, OperationalError):
-                raise e
-            return f"error: {str(e)}"
-    else:
+    if not kwargs.get("useEmail"):
         return
-        # twilio_client.messages.create(
-        #     to = kwargs["sendTo"],
-        #     from_ = TWILIO_PHONE_NUMBER,
-        #     body = f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}"
-        # )
+
+    to_email = kwargs["sendTo"]
+
+    subject = "Buul account reminder"
+
+    text_body = (
+        "We were asked to send an email to this address to remind you that "
+        "you have a Buul account registered with this email.\n\n"
+        "If you didn't request this email, please ignore it."
+    )
+
+    html_body = (
+        "<p>We were asked to send an email to this address to remind you that "
+        "<strong>you have a Buul account</strong> registered with this email.</p>"
+        "<p>If you didn't request this email, please ignore it.</p>"
+    )
+
+    try:
+        send_email(subject, to_email, text_body, html_body)
+        return 200
+    except Exception as e:
+        if isinstance(e, OperationalError):
+            raise
+        return f"error: {str(e)}"
+
 
 @shared_task(name="send_waitlist_email")
 @retry_on_db_error
 def send_waitlist_email(**kwargs):
-    if kwargs["useEmail"]:
-        message = Mail(
-            from_email=NOTIFICATIONS_EMAIL,
-            to_emails=kwargs["sendTo"],
-            subject="You're on the Buul waitlist!",
-            html_content=f"We look forward to working with you to maximize your cashback " \
-                "and grow your wealth! Stay tuned for updates. \nIf you would like " \
-                "to unsubscribe, respond to this email address requesting to be taken " \
-                "off. \n\nThank you, \nthe Buul team",
-        )
-        try:
-            response = sendgrid_client.send(message)
-            return response.status_code
-        except Exception as e:
-            if isinstance(e, OperationalError):
-                raise e
-            return f"error: {str(e)}"
-    else:
+    if not kwargs.get("useEmail"):
         return
-        # twilio_client.messages.create(
-        #     to = kwargs["sendTo"],
-        #     from_ = TWILIO_PHONE_NUMBER,
-        #     body = f"Enter this code in the Buul app to verify your identity: {kwargs["code"]}"
-        # )
+
+    to_email = kwargs["sendTo"]
+
+    subject = "You're on the Buul waitlist!"
+
+    text_body = (
+        "We look forward to working with you to maximize your cashback "
+        "and grow your wealth! Stay tuned for updates.\n\n"
+        "If you would like to unsubscribe, reply to this email requesting "
+        "to be taken off the waitlist.\n\n"
+        "Thank you,\n"
+        "The Buul Team"
+    )
+
+    html_body = (
+        "<p>We look forward to working with you to maximize your cashback "
+        "and grow your wealth! Stay tuned for updates.</p>"
+        "<p>If you would like to unsubscribe, reply to this email requesting "
+        "to be taken off the waitlist.</p>"
+        "<p>Thank you,<br><strong>The Buul Team</strong></p>"
+    )
+
+    try:
+        send_email(subject, to_email, text_body, html_body)
+        return 200
+    except Exception as e:
+        if isinstance(e, OperationalError):
+            raise
+        return f"error: {str(e)}"
+
 
 
 

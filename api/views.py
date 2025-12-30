@@ -22,7 +22,7 @@ from django.http import JsonResponse
 from rest_framework.exceptions import ValidationError
 from django.core.cache import cache
 import json
-from api.apis.fmp import FPMUtils
+from api.apis.yf import FPMUtils
 from celery import current_app, chain, chord
 from .tasks.user import plaid_item_public_tokens_exchange, \
     plaid_link_token_create, plaid_user_create, buul_user_remove, \
