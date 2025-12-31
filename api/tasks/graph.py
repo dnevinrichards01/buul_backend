@@ -19,7 +19,6 @@ from buul_backend.retry_db import retry_on_db_error
 
 def fill_in_null_graph_values(symbols, start_date_rounded):
     for symbol in symbols:
-
         null_prices = StockData.objects.filter(**{
             f"{symbol}__isnull": True,
             "date__gte": start_date_rounded
@@ -40,32 +39,10 @@ def fill_in_null_graph_values(symbols, start_date_rounded):
             StockData.objects.bulk_update(most_recent_prices, [symbol])
 
 
-        # null_prices = StockData.objects.filter(**{
-        #     f"{symbol}__isnull": True,
-        #     "date__gte": start_date_rounded
-        # }).order_by('date')
-        # if null_prices.exists():
-        #     prices_immediately_after = null_prices.annotate(
-        #         price_immediately_after = Subquery((
-        #             StockData.objects.filter(**{
-        #                 f"{symbol}__isnull": False,
-        #                 "date__gte": OuterRef("date")
-        #             })
-        #             .order_by("date")
-        #             .values(symbol)[:1]
-        #         ))
-        #     )
-        #     for item in prices_immediately_after:
-        #         item[symbol] = item.price_immediately_after
-        #     StockData.objects.bulk_update(prices_immediately_after, [symbol])
-
 @shared_task(name="refresh_stock_data_by_interval")
 @retry_on_db_error
 def refresh_stock_data_by_interval(symbols=["VOO", "VOOG", "QQQ", "IBIT", "BTC", "BTCUSD"], 
                        interval="1d", refresh_all=False):
-    # import pdb
-    # breakpoint()
-
     cache.set("stock_data_refresh_complete", False)
 
     # get current date and most recent refresh date
@@ -126,7 +103,7 @@ def refresh_stock_data_all():
         refresh_stock_data_by_interval(interval=interval, refresh_all=True)
     delete_non_closing_times()
 
-# on a timer?
+
 @shared_task(name="delete_non_closing_times")
 @retry_on_db_error
 def delete_non_closing_times():
@@ -137,13 +114,11 @@ def delete_non_closing_times():
         )
         FPMUtils.delete_non_closing_times(current_date_rounded, interval)
 
+
 @shared_task(name="get_graph_data")
 @retry_on_db_error
 def get_graph_data(uid):
     try:
-        import pdb 
-        breakpoint()
-
         user = User.objects.get(id=uid)
 
         # the last time they requested graph data
@@ -202,8 +177,6 @@ def get_graph_data(uid):
                 cumulative_quantities=Subquery(cumulative_quantity_subquery)
             )
         
-        # breakpoint()
-        
         for stockData in queryset:
             quantities = stockData.cumulative_quantities or {}
             price = 0
@@ -221,8 +194,6 @@ def get_graph_data(uid):
                 )
             if created:
                 userInvestmentGraph.save()
-        
-        # breakpoint()
         
         cache.delete(f"uid_{uid}_get_investment_graph_data")
         cache.set(

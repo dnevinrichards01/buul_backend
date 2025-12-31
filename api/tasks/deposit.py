@@ -40,9 +40,6 @@ from buul_backend.retry_db import retry_on_db_error
 @shared_task(name="plaid_accounts_get")
 @retry_on_db_error
 def plaid_accounts_get(uid, item_id=None, balance_ids_by_item_id={}):
-    import pdb
-    breakpoint()
-    
     try:
         plaidItems = PlaidItem.objects.filter(user__id=uid)
         accounts_get_by_item = {}
@@ -78,9 +75,6 @@ def plaid_accounts_get(uid, item_id=None, balance_ids_by_item_id={}):
 @shared_task(name="plaid_balance_get")
 @retry_on_db_error
 def plaid_balance_get(uid, item_id=None, account_ids_by_item_id={}):
-    import pdb
-    breakpoint()
-    
     try:
         plaidItems = PlaidItem.objects.filter(user__id=uid)
         balance_get_by_item = {}
@@ -153,11 +147,6 @@ def plaid_balance_get_process(uid, item_id=None, account_ids_by_item_id={}, eq={
 @retry_on_db_error
 def rh_get_linked_bank_accounts(uid, eq={}, gt={}, lt={}, lte={}, gte={}, 
                                 metric_to_return_by=None):
-    import pdb
-    breakpoint()
-
-    # uid = kwargs.pop('uid')
-
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
@@ -237,6 +226,18 @@ def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_acc
                             rh_accounts, brokerage_plaid_match_required=True):
     # find candidate accounts
     candidate_accounts = {}
+    if len(plaid_accounts) == 0: # empty plaid account if running local / without plaid 
+        plaid_accounts = [{
+            "balances": {
+                "iso_currency_code": "USD", 
+                "available": None, 
+                "current": None,
+                "limit": None
+            }, 
+            "mask": None,
+            "account_id": None,
+            "type": None
+        }]
     for plaid_account in plaid_accounts:
         for rh_account in rh_accounts:
             # only support USD for now
@@ -278,10 +279,6 @@ def select_deposit_account(uid, amount, cashback_account_ids, latest_deposit_acc
 @retry_on_db_error
 def rh_get_bank_transfers(uid, eq={}, neq={}, gt={}, lt={}, lte={}, gte={}, 
                           metric_to_return_by=None):
-    import pdb
-    breakpoint()
-    # uid = kwargs.pop('uid')
-
     try:
         session, userRobinhtoodInfo = r.rh_create_session(uid)
     except Exception as e:
@@ -331,11 +328,6 @@ def check_repeat_deposit(uid, amount, repeat_day_range, return_failed=True):
 @shared_task(name="rh_deposit_funds_to_robinhood_account")
 @retry_on_db_error
 def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount, force=False, limit=50):
-    import pdb
-    breakpoint()
-
-    # uid = kwargs.pop('uid')
-
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
@@ -351,7 +343,7 @@ def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount, force=F
         cumulative_amount = cumulative_amount_query.get('cumulative_amount') or 0
         if cumulative_amount + amount > limit:
             raise Exception(
-                "Cumulative amount deposited would be > 50. " + \
+                f"Cumulative amount deposited would be > {limit}. " + \
                 "Set force=True to override this message."
             )
 
@@ -384,8 +376,6 @@ def rh_deposit_funds_to_robinhood_account(uid, ach_relationship, amount, force=F
 def rh_deposit(uid, transactions, repeat_day_range=5, force=False, 
                limit=50, check_failed_deposits=True, 
                ignore_overdraft_protection=False):
-    import pdb; breakpoint()
-    # get previous deposit to help decide which account to use
     old_deposits = RobinhoodDeposit.objects.filter(user__id=uid)\
         .order_by("-updated_at")
     if old_deposits.exists():
@@ -408,23 +398,21 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
                         f"potential rh repeats {rh_repeat_ids}")
     
     # find accounts matching in Plaid and RH
-    plaid_accounts = plaid_balance_get_process(uid)
+    plaid_accounts = plaid_balance_get_process(uid) 
     rh_accounts = rh_get_linked_bank_accounts(uid)
-    import pdb; breakpoint()
     overdraft_protection = UserBrokerageInfo.objects.get(user_id=uid).overdraft_protection
     rh_account, plaid_account = select_deposit_account(
         uid,
         cashback_amount,
         cashback_account_ids,
         latest_deposit,
-        plaid_accounts,
+        plaid_accounts, 
         rh_accounts,
         brokerage_plaid_match_required = not ignore_overdraft_protection and overdraft_protection
     )
 
     # check if enough cash 
     account_info = rh_load_account_profile(uid)
-    import pdb; breakpoint()
     if "error" in account_info:
         return account_info
     elif isinstance(account_info, list):
@@ -432,9 +420,9 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
             raise Exception(f"we found {len(account_info)} accounts for this user")
         account_info = account_info[0]
     if account_info["portfolio_cash"] < cashback_amount or \
-        account_info["eligible_deposit_as_instant"] < cashback_amount:
+        float(account_info['margin_balances']["eligible_deposit_as_instant"] or float('inf')) < cashback_amount:
         raise Exception(f"Neither portfolio cash {account_info["portfolio_cash"]} or " +\
-                        f"eligible instant {account_info["eligible_deposit_as_instant"]} " +\
+                        f"eligible instant {account_info['margin_balances']["eligible_deposit_as_instant"]} " +\
                         f"would allow us to immediately invest this deposit of {deposit.amount}")
 
     # make the deposit
@@ -471,9 +459,6 @@ def rh_deposit(uid, transactions, repeat_day_range=5, force=False,
 @retry_on_db_error
 def rh_update_deposit(uid, deposit_id, transactions=None, get_bank_info=True,
                       ignore_plaid=False):
-
-    import pdb; breakpoint()
-
     transfers = rh_get_bank_transfers(
         uid, 
         eq={"id": [deposit_id]}

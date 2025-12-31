@@ -3,7 +3,8 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from django.utils.timezone import make_aware
 from django.contrib.auth import get_user_model
-from api.models import Investment
+from api.models import *
+from api.tasks import *
 
 User = get_user_model()
 user = User.objects.order_by("id").first()
@@ -30,3 +31,5 @@ for i in range(num_months):
         date=investment_date,
         buy=buy,
     )
+Investment.objects.all().delete()
+UserInvestmentGraph.objects.all().delete()
