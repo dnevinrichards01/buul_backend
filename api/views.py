@@ -449,9 +449,6 @@ class PlaidUserCreate(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        # import pdb
-        # breakpoint()
-        
         user = self.request.user
         uid = user.id
         if PlaidUser.objects.filter(user__id=uid).count() != 0:
@@ -517,9 +514,6 @@ class PlaidLinkTokenCreate(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        # import pdb
-        # breakpoint()
-
         user_request_serializer = RequestLinkTokenSerializer(data=request.data)
         validation_error_respose = validate(
             Log, user_request_serializer, self, 
@@ -636,7 +630,6 @@ class PlaidLinkTokenCreate(APIView):
             )
 
 class PlaidItemWebhook(APIView):
-    #make it so that it also takes webhooks for ITEM_REMOVED or needing update flow later
     permission_classes = [AllowAny]
     authentication_classes = []
 

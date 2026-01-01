@@ -6,10 +6,6 @@ from django.db.utils import OperationalError
 
 @retry_on_db_error
 def rh_load_account_profile(uid):
-
-    import pdb
-    breakpoint()
-
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:

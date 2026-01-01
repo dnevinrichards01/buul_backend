@@ -337,7 +337,7 @@ class PlaidCashbackTransaction(models.Model):
     name = models.CharField()
     deposit = models.ForeignKey(Deposit, on_delete=models.SET_NULL, 
                                 default=None, null=True)
-    flag =  models.BooleanField(default=False)
+    flag =  models.BooleanField(default=False) 
 
     class Meta:
         constraints = [

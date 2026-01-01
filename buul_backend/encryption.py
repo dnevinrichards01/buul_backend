@@ -1,6 +1,8 @@
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 import os
 
+# comments are used in production to use AWS KMS  
+
 def generate_dek():
     return os.urandom(32)
 def encrypt_dek(plaintext_dek, alias, context=None):
@@ -21,8 +23,6 @@ def encrypt_data(plaintext_dek, data):
     return data_blob
 def encrypt(model_instance, value, field_name, dek_field_name,
             context_fields=[], alias=None):
-    # import pdb
-    # breakpoint()
     dek = generate_dek()
     data_blob = encrypt_data(dek, value)
     object.__setattr__(model_instance, f"_{field_name}", data_blob)
@@ -48,8 +48,6 @@ def decrypt_data(dek, iv, tag, data_ciphertext):
     return data
 def decrypt(model_instance, field_name, dek_field_name, 
             context_fields=[], alias=None):
-    # import pdb
-    # breakpoint()
     data_blob = model_instance.__dict__[f"_{field_name}"]
     iv, tag, data_ciphertext = parse_data_blob(data_blob)
     dek = decrypt_dek(model_instance.__dict__[dek_field_name])

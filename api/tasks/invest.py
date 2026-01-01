@@ -17,116 +17,10 @@ from .deposit import rh_update_deposit
 
 from buul_backend.retry_db import retry_on_db_error
 
-# transactions
 
-
-# deposit
-
-
-
-# select account to use to withdraw 
-# get linked accounts. 
-# checking, then savings, then others?
-# check what the most recent deposit was made with? (could check in rh, but potentially plaid too...)
-# check balance
-
-# once withdraw then check transactions - mb with get to make sure it went through?
-# optional maybe?
-
-
-
-# (1)
-# rewrite some of the methods so that they are in the pattern of the latter ones 
-# make a transaction and cancel
-# then make sure you can sell a stock (never use this tho)
-
-# (3)
-# transaction search function which creates a transaction object
-
-# (4)
-# create a deposit and an invest function which saves data to db. 
-#   and a transaction object from which we start the deposit,
-#   and user info on which investment they want
-
-# (2)
-# function to match rh and plaid accounts and pick one (by checking balance)
-
-# match accounts in rh and plaid w mask
-# get rh accounts - mask type name longer-name
-# get matching plaid accounts
-# decide on one (cashback depositted one, then checking, then savings) 
-# check their validity 
-# store check if rh mask etc matches
-
-# so we will need to store the cashback transaction
-# then upon successful triggering of rh deposit, 
-#   store from which account we did it from by matching it to a mask / plaid account id
-#   log in cache and in celery error message if the deposit was made but function failed
-#       then need to search for it ig 
-# then keep checking if deposit done, and if it succeeds add that to deposit table
-# if fails then same, but retry from the top
-
-# --
-
-# then make the investment in rh and store in a table
-#   as before with deposit, log in cache / error message if you made the investment but error happened AFTER
-#   including if you sent a message but got no response. search for that investment b4 retrying
-
-# then keep checking, and as before store if is failure or success. 
-# if failure then try this investment step only again 
-
-# -------
-
-# get transactions summarizing code to work
-
-# get the graph data thing working
-
-# get redis and backend working on AWS
-# in the process figure out how to do all your debuging etc on AWS from VSCode
-# get Plaid approval
-
-# work on plaid link flow + app. 
-# then test on ourselves till we're ready
-
-# --------
-
-# while waiting for app approval, change deployment to be manual. 
-# and create a testing environment where we can test deployments
-# mb even write some tests and work on logging if time
-# and eventually want to increasingly automate backend
-#   but if deposit or invest fails then we look at it MANUALLY. ALWAYS. set up logging
-
-
-
-
-
-# json filtering utility functions
-
-
-# later on need to look into the pagination in get request in robin stocks
-# optimize getting only data we want rather than pulling it all here, serializing it all..
-# mb scroll to end to get most recent? or mb we only need the start...
-
-
-
-# investing
-# order, track it
-
-# if it errors, then upon repeat we search for an identical investment 
-# to what we want to make being made in the past 3 days
-# if found, do nothing.
-
-# rh endpoints
-
-# plaid get accounts / items???
 @shared_task(name="rh_order_buy_fractional_by_price")
 @retry_on_db_error
 def rh_order_buy_fractional_by_price(uid, symbol, amount, crypto=False):
-    import pdb
-    breakpoint()
-
-    # uid = kwargs.pop('uid')
-
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
@@ -159,15 +53,10 @@ def rh_order_buy_fractional_by_price(uid, symbol, amount, crypto=False):
                 "recent_crypto_orders" if crypto else "recent_orders": orders}
     return serializer.validated_data
 
-# note that you must trade DURING hours
+
 @shared_task(name="rh_order_sell_fractional_by_price")
 @retry_on_db_error
 def rh_order_sell_fractional_by_price(uid, symbol, amount):
-    import pdb
-    breakpoint()
-
-    # uid = kwargs.pop('uid')
-
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
@@ -189,11 +78,6 @@ def rh_order_sell_fractional_by_price(uid, symbol, amount):
 @shared_task(name="rh_get_stock_order_info")
 @retry_on_db_error
 def rh_get_stock_order_info(uid, order_id, crypto=False):
-    import pdb
-    breakpoint()
-
-    # uid = kwargs.pop('uid')
-
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
@@ -221,15 +105,10 @@ def rh_get_stock_order_info(uid, order_id, crypto=False):
             return {"error": f"{str(e)}"}
     return serializer.validated_data
 
-# make something with improved search ability
+
 @shared_task(name="rh_cancel_stock_order")
 @retry_on_db_error
 def rh_cancel_stock_order(uid, order_id):
-    import pdb
-    breakpoint()
-
-    # uid = kwargs.pop('uid')
-
     try:
         session, userRobinhoodInfo = r.rh_create_session(uid)
     except Exception as e:
@@ -252,17 +131,7 @@ def rh_cancel_stock_order(uid, order_id):
         return {"error": f"{str(e)}"}
     return serializer.validated_data
 
-    
-    # try:
-    #     serializer = StockOrderSerializer(data=result)
-    #     serializer.is_valid(raise_exception=True)
-    # except Exception as e:
-        # if isinstance(e, OperationalError):
-        #     raise e
-    #     return {"error": str(e)}
-    # return serializer.validated_data
 
-# and another helper one which filters them by any given attribute
 @shared_task(name="rh_find_stock_orders_custom")
 @retry_on_db_error
 def rh_find_stock_orders_custom(uid, eq={}, lt={}, gt={}, lte={}, gte={},
@@ -298,12 +167,8 @@ def rh_find_stock_orders_custom(uid, eq={}, lt={}, gt={}, lte={}, gte={},
                         gte=gte, lte=lte, metric_to_return_by="id")
 
 
-
-# invest based on a deposit / cashback
-
 @retry_on_db_error
 def rh_save_order_from_order_info(uid, order_id, deposit=None, symbol=None, crypto=False):
-    import pdb; breakpoint()
     order = rh_get_stock_order_info(uid, order_id, crypto=crypto)
 
     if symbol == "BTC" and crypto:
@@ -373,7 +238,6 @@ def rh_save_order_from_order_info(uid, order_id, deposit=None, symbol=None, cryp
         .order_by('-date')
     if recent_investment_query.exists():
         cum_quant = recent_investment_query.first().cumulative_quantities.copy()
-        # can simplify with .get(x, default=0)
         if symbol in cum_quant:
             cum_quant[symbol] += order["quantity"]
         else:
@@ -387,19 +251,12 @@ def rh_save_order_from_order_info(uid, order_id, deposit=None, symbol=None, cryp
 @retry_on_db_error
 def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False,
               crypto=False, ignore_repeats=False, amount_factor=1):
-    
-    import pdb; breakpoint()
-
     # check for duplicate deposits
-    
     if deposit.flag:
         raise Exception(f"deposit flagged")
     if deposit.early_access_amount < deposit.amount:
         if not ignore_early_access_amount:
             raise Exception(f"early_access_amount {deposit.early_access_amount} < {deposit.amount}")
-        
-    
-    import pdb; breakpoint()
     
     if not ignore_repeats:
         potential_db_repeats, potential_rh_repeats = check_repeat_order(
@@ -412,32 +269,26 @@ def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False
         if potential_db_repeats or potential_rh_repeats:
             raise Exception("potential db repeats {potential_db_repeats} " + 
                             "potential rh repeats {potential_rh_repeats}")
-    
-    import pdb; breakpoint()
 
     # check if enough cash 
     account_info = rh_load_account_profile(uid)
-    import pdb; breakpoint()
     if "error" in account_info:
         return account_info
     elif isinstance(account_info, list):
         if len(account_info) != 1:
             raise Exception(f"we found {len(account_info)} accounts for this user")
         account_info = account_info[0]
-    # improve with 'instant' stuff?
-    # maybe check if enough instant or cash exists before making the deposit
     if account_info["portfolio_cash"] < deposit.amount:
         raise Exception(f"Portfolio cash is {account_info["portfolio_cash"]} " +\
                         f"but investment requires {deposit.amount}")
     
+    # make order
     try:
         userBrokerageInfo = UserBrokerageInfo.objects.get(user__id=uid)
     except Exception as e:
         if isinstance(e, OperationalError):
             raise e
         raise Exception(f"no userBrokerageInfo for user {uid}")
-    
-    import pdb; breakpoint()
     order = rh_order_buy_fractional_by_price(
         uid, 
         userBrokerageInfo.symbol, 
@@ -450,6 +301,7 @@ def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False
     else: 
         symbol = userBrokerageInfo.symbol
 
+    # save order
     if not crypto:
         pending_cancel_open_agent = order["pending_cancel_open_agent"]
         notional_amount = order["total_notional"]["amount"]
@@ -466,8 +318,6 @@ def rh_invest(uid, deposit, repeat_day_range=5, ignore_early_access_amount=False
             executed_amount = order["rounded_executed_notional_with_fee"]
         user_cancel_request_state = None
         cancel_url = order["cancel_url"]
-
-    import pdb; breakpoint()
     
     user = User.objects.get(id=uid)
     robinhoodStockOrder = RobinhoodStockOrder(
